@@ -20,7 +20,6 @@
       --ok:#059669;
       --warn:#f59e0b;
       --shadow:0 18px 50px rgba(26, 44, 78, 0.10);
-      --radius:26px;
     }
 
     *{box-sizing:border-box}
@@ -323,8 +322,7 @@
       font-size:13px;
     }
 
-    .login-btn,
-    .primary-btn{
+    .login-btn{
       height:58px;
       border:0;
       border-radius:18px;
@@ -334,9 +332,9 @@
       font-weight:800;
       cursor:pointer;
       box-shadow:0 16px 28px rgba(79,70,229,.18);
+      width:100%;
     }
 
-    .login-btn{width:100%}
     .msg{
       margin-top:14px;
       padding:14px 16px;
@@ -350,11 +348,6 @@
       background:#fff1f2;
       color:#be123c;
       border:1px solid #fecdd3;
-    }
-    .msg.ok{
-      background:#ecfdf5;
-      color:#065f46;
-      border:1px solid #bbf7d0;
     }
 
     .guide{
@@ -988,7 +981,6 @@
 
       <div class="content-card">
 
-        <!-- HOME -->
         <div class="view" id="view-home">
           <div class="section-head">
             <div>
@@ -1049,7 +1041,6 @@
           </div>
         </div>
 
-        <!-- NOTICE -->
         <div class="view hidden" id="view-notice">
           <div class="section-head">
             <div>
@@ -1084,7 +1075,6 @@
           </div>
         </div>
 
-        <!-- SCHEDULE -->
         <div class="view hidden" id="view-schedule">
           <div class="section-head">
             <div>
@@ -1140,12 +1130,11 @@
           </div>
         </div>
 
-        <!-- AGGREGATION -->
         <div class="view hidden" id="view-aggregate">
           <div class="section-head">
             <div>
               <h4 id="aggregateTitle">익일취합</h4>
-              <p id="aggregateDesc">날짜 기준으로 익일 일정 취합을 확인하고 복사할 수 있어.</p>
+              <p id="aggregateDesc">선택한 날짜의 다음날 일정을 취합해서 보여줘.</p>
             </div>
           </div>
 
@@ -1165,7 +1154,7 @@
               <thead>
                 <tr>
                   <th>섭외자</th>
-                  <th>날짜</th>
+                  <th>익일 날짜</th>
                   <th>시간</th>
                   <th>업체</th>
                   <th>키맨</th>
@@ -1178,28 +1167,29 @@
           </div>
         </div>
 
-        <!-- PERFORMANCE SAVE -->
         <div class="view hidden" id="view-performance-save">
           <div class="section-head">
             <div>
               <h4 id="perfSaveTitle">실적저장</h4>
-              <p id="perfSaveDesc">상조 / 건식 / 보험 구조를 현재 웹 화면에 맞게 입력 폼으로 정리했어.</p>
+              <p id="perfSaveDesc">직원모드에서는 직원명이 자동 고정되고 상품별 단위가 반영돼.</p>
             </div>
           </div>
 
           <div class="form-grid">
-            <input id="perfSaveStaff" placeholder="직원명">
-            <select id="perfSaveType">
+            <input id="perfSaveStaff" placeholder="직원명" readonly>
+            <select id="perfSaveType" onchange="onPerformanceTypeChange()">
               <option value="상조">상조</option>
               <option value="건식">건식</option>
               <option value="보험">보험</option>
-              <option value="기타">기타</option>
             </select>
-            <input id="perfSaveQty" type="number" min="1" placeholder="건수">
+
+            <input id="perfSaveQty" type="number" min="0" placeholder="건수">
             <input id="perfSaveAmount" type="number" min="0" placeholder="금액">
-            <input id="perfSaveTake" type="number" min="0" placeholder="직원수익(직접입력 가능)">
-            <input id="perfSaveMargin" type="number" min="0" placeholder="내마진(직접입력 가능)">
-            <textarea id="perfSaveMemo" class="full" placeholder="실적 메모"></textarea>
+
+            <input id="perfSaveUnit" placeholder="단위" readonly>
+            <input id="perfSaveTake" type="number" min="0" placeholder="수익">
+
+            <textarea id="perfSaveMemo" class="full" placeholder="메모"></textarea>
           </div>
 
           <div class="toolbar">
@@ -1207,12 +1197,12 @@
           </div>
 
           <div class="notice-inline">
-            <span class="status-badge">상조 / 건식 / 보험 구조 반영</span>
-            <span class="status-badge">직원/관리자 모드 연동</span>
+            <span class="status-badge">상조=구좌</span>
+            <span class="status-badge">건식=박스</span>
+            <span class="status-badge">보험=원</span>
           </div>
         </div>
 
-        <!-- PERFORMANCE REPORT -->
         <div class="view hidden" id="view-performance-report">
           <div class="section-head">
             <div>
@@ -1243,14 +1233,14 @@
               <div class="s">조회 조건 합계</div>
             </div>
             <div class="summary-card">
-              <div class="k">직원 수익 합</div>
+              <div class="k">총 수익</div>
               <div class="v" id="perfReportTake">0</div>
-              <div class="s">직원 귀속 합계</div>
+              <div class="s">직원 수익 합계</div>
             </div>
             <div class="summary-card">
-              <div class="k">내 마진 합</div>
-              <div class="v" id="perfReportMargin">0</div>
-              <div class="s">관리/지점 마진 합계</div>
+              <div class="k">상품 종류 수</div>
+              <div class="v" id="perfReportKinds">0</div>
+              <div class="s">조회 상품 종류</div>
             </div>
           </div>
 
@@ -1260,11 +1250,10 @@
                 <tr>
                   <th>날짜</th>
                   <th>직원명</th>
-                  <th>항목</th>
+                  <th>상품항목</th>
                   <th>건수</th>
                   <th>금액</th>
-                  <th>직원수익</th>
-                  <th>내마진</th>
+                  <th>수익</th>
                   <th>메모</th>
                 </tr>
               </thead>
@@ -1273,7 +1262,6 @@
           </div>
         </div>
 
-        <!-- PROGRESS -->
         <div class="view hidden" id="view-progress">
           <div class="section-head">
             <div>
@@ -1316,7 +1304,6 @@
           </div>
         </div>
 
-        <!-- STAFF -->
         <div class="view hidden" id="view-staff">
           <div class="section-head">
             <div>
@@ -1354,7 +1341,6 @@
           </div>
         </div>
 
-        <!-- LEAD -->
         <div class="view hidden" id="view-lead">
           <div class="section-head">
             <div>
@@ -1391,7 +1377,6 @@
           </div>
         </div>
 
-        <!-- SETTINGS -->
         <div class="view hidden" id="view-settings">
           <div class="section-head">
             <div>
@@ -1426,14 +1411,12 @@
           <div id="settingsPanePay" class="hidden">
             <div class="panel">
               <h5>단가 / 수익 설정</h5>
-              <p>상조직원, 상조마진, 건식직원, 건식마진, 보험직원율, 보험마진율 구조를 반영할 수 있게 잡아놨어.</p>
+              <p>상조직원, 상조마진, 건식직원, 건식마진, 보험직원율 구조를 반영할 수 있게 잡아놨어.</p>
               <div class="form-grid">
                 <input placeholder="상조 직원수익">
-                <input placeholder="상조 마진">
                 <input placeholder="건식 직원수익">
-                <input placeholder="건식 마진">
-                <input placeholder="보험 직원수익율">
-                <input placeholder="보험 마진율">
+                <input placeholder="보험 수익율">
+                <input placeholder="기본 기준값">
               </div>
             </div>
           </div>
@@ -1488,7 +1471,7 @@
         company:"예시상조",
         manager:"홍길동",
         phone:"01011112222",
-        address:"인천 서구 예시로 10 상세 101호",
+        address:"인천 서구 청마로 66-7",
         people:"2명",
         gap:"갑사A",
         bank:"국민",
@@ -1505,7 +1488,7 @@
         company:"루원케어",
         manager:"김민수",
         phone:"01033334444",
-        address:"인천 서구 샘플로 21 3층",
+        address:"서울 서초구 방배로 123 4층",
         people:"3명",
         gap:"갑사B",
         bank:"신한",
@@ -1521,10 +1504,9 @@
       {
         staff:"김성우",
         type:"상조",
-        count:3,
+        qty:3,
         amount:300000,
         take:210000,
-        margin:90000,
         memo:"관리자 입력",
         date:"2026-03-10",
         createdByNo:"1379"
@@ -1532,10 +1514,9 @@
       {
         staff:"이상혁",
         type:"건식",
-        count:2,
+        qty:2,
         amount:80000,
         take:60000,
-        margin:20000,
         memo:"직원 입력",
         date:"2026-03-10",
         createdByNo:"1218"
@@ -1554,8 +1535,8 @@
       return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
     }
 
-    function tomorrowStr() {
-      const now = new Date();
+    function tomorrowStr(baseDateStr) {
+      const now = baseDateStr ? new Date(baseDateStr + "T00:00:00") : new Date();
       now.setDate(now.getDate() + 1);
       return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
     }
@@ -1637,22 +1618,13 @@
       if (digits.length === 3) {
         const h = Number(digits.slice(0,1));
         const m = Number(digits.slice(1));
-        if (h <= 23 && m <= 59) {
-          return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
-        }
+        if (h <= 23 && m <= 59) return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
       }
 
       if (digits.length === 4) {
         const h = Number(digits.slice(0,2));
         const m = Number(digits.slice(2));
-        if (h <= 23 && m <= 59) {
-          return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
-        }
-      }
-
-      if (digits.length <= 2) {
-        const h = Math.max(0, Math.min(23, Number(digits)));
-        return `${String(h).padStart(2,"0")}:00`;
+        if (h <= 23 && m <= 59) return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;
       }
 
       return raw;
@@ -1666,18 +1638,8 @@
     function simplifyAddress(address){
       const src = normalizeText(address);
       if (!src) return "";
-
       const parts = src.split(/\s+/).filter(Boolean);
-      const picked = [];
-      const endPattern = /(시|도|구|군|읍|면|동|리|가|로|길|내)$/;
-
-      for (let i = 0; i < parts.length; i++) {
-        picked.push(parts[i]);
-        if (endPattern.test(parts[i]) && picked.length >= 2) break;
-        if (picked.length >= 3) break;
-      }
-
-      return picked.join(" ");
+      return parts.slice(0, 3).join(" ");
     }
 
     function isTomorrowDate(dateStr){
@@ -1856,13 +1818,13 @@
 
       $("aggregateTitle").textContent = admin ? "전직원 익일취합" : "내 익일취합";
       $("aggregateDesc").textContent = admin
-        ? "전직원 익일 일정 취합을 날짜 기준으로 볼 수 있어."
-        : "내 익일 일정만 날짜 기준으로 확인할 수 있어.";
+        ? "선택한 날짜의 다음날 일정을 전직원 기준으로 볼 수 있어."
+        : "선택한 날짜의 다음날 내 일정만 볼 수 있어.";
 
       $("perfSaveTitle").textContent = admin ? "전체 기준 실적저장" : "내 실적저장";
       $("perfSaveDesc").textContent = admin
         ? "관리자 기준 전체 실적 입력 화면이야."
-        : "본인 실적 입력 중심 화면이야.";
+        : "직원명은 로그인 계정 기준으로 자동 고정돼.";
 
       $("performanceTitle").textContent = admin ? "전체 실적조회" : "내 실적조회";
       $("performanceDesc").textContent = admin
@@ -1901,6 +1863,12 @@
         $("aggScope").querySelector('option[value="all"]').disabled = !admin;
         if(!admin) $("aggScope").value = "mine";
       }
+
+      if ($("perfSaveStaff")) {
+        $("perfSaveStaff").value = currentStaffName();
+      }
+
+      onPerformanceTypeChange();
     }
 
     function setView(view){
@@ -1919,7 +1887,7 @@
         home:["홈", isAdminMode() ? "관리자 홈 화면입니다." : "직원 홈 화면입니다."],
         notice:["공지사항","공지 등록과 확인 화면이야."],
         schedule:["일정등록","갑섭외 입력 구조를 포함한 일정등록 화면이야."],
-        aggregate:["익일취합","날짜 기준으로 익일 일정 취합을 보는 화면이야."],
+        aggregate:["익일취합","선택한 날짜의 다음날 일정을 취합하는 화면이야."],
         "performance-save":["실적저장","실적 입력 화면이야."],
         "performance-report":["실적조회","실적 조회 화면이야."],
         progress:["진행률","당월 / 선택일 진행률 화면이야."],
@@ -1948,7 +1916,7 @@
       const todayReg = schedules.filter(s => s.createdAt === today).length;
       const todayCalls = performances
         .filter(p => p.date === today)
-        .reduce((sum, p) => sum + Number(p.count || 0), 0);
+        .reduce((sum, p) => sum + Number(p.qty || 0), 0);
       const tomorrowCount = schedules.filter(s => s.date === tomorrow).length;
       const monthReg = schedules.filter(s => String(s.createdAt || "").startsWith(month)).length;
 
@@ -1968,7 +1936,7 @@
       const myTodayReg = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
       const myTodayCalls = performances
         .filter(p => p.date === today && (p.createdByNo === no || p.staff === name))
-        .reduce((sum, p) => sum + Number(p.count || 0), 0);
+        .reduce((sum, p) => sum + Number(p.qty || 0), 0);
       const myTomorrow = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       const myMonthReg = schedules.filter(s => String(s.createdAt || "").startsWith(month) && s.createdByNo === no).length;
 
@@ -1984,7 +1952,7 @@
     }
 
     function getVisiblePerformances(){
-      if(isAdminMode()) return performances;
+      if(isAdminMode()) return performances.slice();
       return performances.filter(p => p.createdByNo === currentStaffNo() || p.staff === currentStaffName());
     }
 
@@ -2287,38 +2255,15 @@
       }, {});
     }
 
-    function buildAggregateCopyText(dateStr, rows){
-      const grouped = groupByAssignee(rows);
-      const lines = [`[익일취합] ${dateStr}`];
-
-      Object.keys(grouped).forEach(name => {
-        lines.push("");
-        lines.push(`■ ${name}`);
-        grouped[name].forEach((row, idx) => {
-          const parts = [
-            `${idx + 1}.`,
-            row.time || "",
-            row.company || "",
-            row.people ? `/${row.people}` : "",
-            row.manager ? `/${row.manager}` : "",
-            row.phone ? `/${formatPhone(row.phone)}` : "",
-            row.memo ? `/${row.memo}` : ""
-          ].filter(Boolean);
-          lines.push(parts.join(" "));
-        });
-      });
-
-      return lines.join("\n");
-    }
-
     function loadAggregate(){
-      const targetDate = $("aggDate").value || tomorrowStr();
+      const baseDate = $("aggDate").value || todayStr();
+      const nextDate = tomorrowStr(baseDate);
       const scope = $("aggScope").value || "mine";
       const summaryEl = $("aggregateSummary");
       const body = $("aggregateTableBody");
 
       const rows = schedules.filter(row => {
-        if(String(row.date || "") !== String(targetDate)) return false;
+        if(String(row.date || "") !== String(nextDate)) return false;
         if(scope === "all" && isAdminMode()) return true;
         return row.createdByNo === currentStaffNo();
       }).sort((a,b) => {
@@ -2331,98 +2276,115 @@
       body.innerHTML = "";
 
       if(!rows.length){
-        summaryEl.innerHTML = `<div class="empty">해당 날짜 기준 익일취합 데이터가 없어.</div>`;
+        summaryEl.innerHTML = `<div class="empty">${escapeHtml(baseDate)} 기준 익일(${escapeHtml(nextDate)}) 일정이 없어.</div>`;
         body.innerHTML = `<tr><td colspan="7"><div class="empty">조회된 일정이 없어.</div></td></tr>`;
         return;
       }
 
-      const staffSet = [...new Set(rows.map(r => r.assignee).filter(Boolean))];
+      const grouped = groupByAssignee(rows);
+      const names = Object.keys(grouped);
 
       summaryEl.innerHTML = `
         <div class="stack-item">
-          <b>${escapeHtml(targetDate)} 기준 익일취합</b>
-          <span>총 ${rows.length}건 · 섭외자 ${staffSet.length}명 · ${escapeHtml(staffSet.join(", "))}</span>
-          <div style="margin-top:10px;">
-            <button class="small-btn" type="button" onclick="copyAggregateText()">익일취합 복사</button>
-          </div>
+          <b>${escapeHtml(baseDate)} 기준 익일취합</b>
+          <span>익일 날짜: ${escapeHtml(nextDate)} · 총 ${rows.length}건 · 섭외자 ${names.length}명</span>
         </div>
       `;
 
-      rows.forEach(row => {
-        body.innerHTML += `
+      body.innerHTML = names.map(name => {
+        const first = grouped[name][0];
+        const lines = grouped[name].map(row =>
+          `${row.time || ""} / ${row.company || ""} / ${row.manager || ""} / ${formatPhone(row.phone || "")} / ${row.memo || ""}`
+        ).join("<br>");
+
+        return `
           <tr>
-            <td>${escapeHtml(row.assignee || "")}</td>
-            <td>${escapeHtml(row.date || "")}</td>
-            <td>${escapeHtml(row.time || "")}</td>
-            <td>${escapeHtml(row.company || "")}</td>
-            <td>${escapeHtml(row.manager || "")}</td>
-            <td>${escapeHtml(formatPhone(row.phone || ""))}</td>
-            <td>${escapeHtml(row.memo || "")}</td>
+            <td>${escapeHtml(name)}</td>
+            <td>${escapeHtml(nextDate)}</td>
+            <td>${escapeHtml(first.time || "")}</td>
+            <td>${lines}</td>
+            <td>${escapeHtml(first.manager || "")}</td>
+            <td>${escapeHtml(formatPhone(first.phone || ""))}</td>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="small-btn" type="button" onclick='copyAggregateGroup("${escapeHtml(name).replace(/"/g, "&quot;")}", "${nextDate}")'>복사</button>
+              </div>
+            </td>
           </tr>
         `;
-      });
+      }).join("");
     }
 
-    function copyAggregateText(){
-      const targetDate = $("aggDate").value || tomorrowStr();
-      const scope = $("aggScope").value || "mine";
-      const rows = schedules.filter(row => {
-        if(String(row.date || "") !== String(targetDate)) return false;
-        if(scope === "all" && isAdminMode()) return true;
-        return row.createdByNo === currentStaffNo();
-      });
-
+    function copyAggregateGroup(assignee, nextDate){
+      const rows = schedules.filter(row => row.assignee === assignee && row.date === nextDate);
       if(!rows.length){
-        alert("복사할 익일취합 데이터가 없어.");
+        alert("복사할 일정이 없어.");
         return;
       }
 
-      safeCopy(buildAggregateCopyText(targetDate, rows));
+      const text = rows.map(row => buildFullCopyText(row)).join("\n\n");
+      safeCopy(text);
     }
 
-    function calcAutoTake(type, count, amount){
-      const qty = Number(count || 0);
-      const amt = Number(amount || 0);
-      if(type === "상조") return { take: qty * 70000, margin: qty * 30000 };
-      if(type === "건식") return { take: qty * 30000, margin: qty * 10000 };
-      if(type === "보험") return { take: Math.round(amt * 0.7), margin: Math.round(amt * 0.375) };
-      return { take: 0, margin: 0 };
+    function performanceUnit(type){
+      if(type === "상조") return "구좌";
+      if(type === "건식") return "박스";
+      if(type === "보험") return "원";
+      return "";
+    }
+
+    function onPerformanceTypeChange(){
+      const type = $("perfSaveType")?.value || "상조";
+      if ($("perfSaveUnit")) $("perfSaveUnit").value = performanceUnit(type);
+
+      if ($("perfSaveQty")) {
+        $("perfSaveQty").placeholder = type === "상조" ? "건수(구좌 수)" : type === "건식" ? "건수(박스 수)" : "건수";
+      }
+
+      if ($("perfSaveAmount")) {
+        $("perfSaveAmount").placeholder = type === "보험" ? "금액(원)" : "금액";
+      }
+    }
+
+    function calcAutoTake(type, qty, amount){
+      const q = Number(qty || 0);
+      const a = Number(amount || 0);
+      if(type === "상조") return q * 70000;
+      if(type === "건식") return q * 30000;
+      if(type === "보험") return Math.round(a * 0.7);
+      return 0;
     }
 
     function addPerformance(){
       if(!state.currentUser) return;
 
       const type = $("perfSaveType").value;
-      const count = Number($("perfSaveQty").value || 0);
+      const qty = Number($("perfSaveQty").value || 0);
       const amount = Number($("perfSaveAmount").value || 0);
-      const staffInput = $("perfSaveStaff").value.trim();
       const memo = $("perfSaveMemo").value.trim();
-      const staffName = isAdminMode() ? (staffInput || currentStaffName()) : currentStaffName();
+      const staffName = currentStaffName();
+      const take = Number($("perfSaveTake").value || calcAutoTake(type, qty, amount) || 0);
 
-      if(!count){
+      if(!qty){
         alert("건수는 꼭 입력해줘.");
         return;
       }
 
-      const auto = calcAutoTake(type, count, amount);
-      const take = Number($("perfSaveTake").value || auto.take || 0);
-      const margin = Number($("perfSaveMargin").value || auto.margin || 0);
-
       performances.unshift({
         staff: staffName,
         type,
-        count,
+        qty,
         amount,
         take,
-        margin,
         memo,
         date: todayStr(),
         createdByNo: currentStaffNo()
       });
 
-      [
-        "perfSaveStaff","perfSaveQty","perfSaveAmount","perfSaveTake","perfSaveMargin","perfSaveMemo"
-      ].forEach(id => $(id).value = "");
+      $("perfSaveQty").value = "";
+      $("perfSaveAmount").value = "";
+      $("perfSaveTake").value = "";
+      $("perfSaveMemo").value = "";
 
       renderPerformances();
       runHomeSummary();
@@ -2449,7 +2411,7 @@
       });
 
       if(rows.length === 0){
-        body.innerHTML = `<tr><td colspan="8"><div class="empty">조회된 실적이 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="7"><div class="empty">조회된 실적이 없어.</div></td></tr>`;
       } else {
         rows.forEach(p => {
           body.innerHTML += `
@@ -2457,25 +2419,24 @@
               <td>${escapeHtml(p.date)}</td>
               <td>${escapeHtml(p.staff)}</td>
               <td>${escapeHtml(p.type)}</td>
-              <td>${escapeHtml(String(p.count))}</td>
+              <td>${escapeHtml(String(p.qty))}</td>
               <td>${money(p.amount)}</td>
               <td>${money(p.take)}</td>
-              <td>${money(p.margin)}</td>
               <td>${escapeHtml(p.memo)}</td>
             </tr>
           `;
         });
       }
 
-      const totalCount = rows.reduce((s,r)=>s+Number(r.count||0),0);
+      const totalQty = rows.reduce((s,r)=>s+Number(r.qty||0),0);
       const totalAmount = rows.reduce((s,r)=>s+Number(r.amount||0),0);
       const totalTake = rows.reduce((s,r)=>s+Number(r.take||0),0);
-      const totalMargin = rows.reduce((s,r)=>s+Number(r.margin||0),0);
+      const kinds = new Set(rows.map(r => r.type)).size;
 
-      $("perfReportCount").textContent = totalCount;
+      $("perfReportCount").textContent = totalQty;
       $("perfReportAmount").textContent = money(totalAmount);
       $("perfReportTake").textContent = money(totalTake);
-      $("perfReportMargin").textContent = money(totalMargin);
+      $("perfReportKinds").textContent = kinds;
     }
 
     function setProgressTab(tab){
@@ -2500,7 +2461,7 @@
       });
 
       const scheduleCount = scheduleRows.length;
-      const calls = perfRows.reduce((sum, p) => sum + Number(p.count || 0), 0);
+      const calls = perfRows.reduce((sum, p) => sum + Number(p.qty || 0), 0);
       const perfCount = perfRows.length;
       const rate = scheduleCount ? Math.min(100, Math.round((perfCount / scheduleCount) * 100)) : 0;
 
@@ -2651,7 +2612,7 @@
     $("progressDate").value = todayStr();
     $("perfReportStart").value = monthPrefix() + "-01";
     $("perfReportEnd").value = todayStr();
-    $("aggDate").value = tomorrowStr();
+    $("aggDate").value = todayStr();
     $("scheduleDate").value = tomorrowStr();
     bindSchedulePreviewEvents();
     updateNateonPreview();
