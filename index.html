@@ -1089,27 +1089,34 @@
           <div class="section-head">
             <div>
               <h4 id="scheduleTitle">일정등록</h4>
-              <p id="scheduleDesc">갑섭외 일정과 일반 일정 입력 구조를 현재 디자인에 맞게 합친 화면이야.</p>
+              <p id="scheduleDesc">갑섭외 일정 입력, 풀 양식 복사, 네이트온 간단 양식 복사를 할 수 있어.</p>
             </div>
           </div>
 
           <div class="form-grid">
             <input id="scheduleAssignee" placeholder="섭외자">
             <input id="scheduleDate" type="date">
-            <input id="scheduleTime" type="time">
-            <input id="scheduleCompany" placeholder="업체명">
-            <input id="scheduleManager" placeholder="키맨 / 담당자">
-            <input id="schedulePhone" placeholder="연락처">
+
+            <input id="scheduleTime" placeholder="시간 예: 1000 / 1700 / 09:30">
+            <input id="scheduleCompany" placeholder="업체">
+
+            <input id="scheduleManager" placeholder="키맨">
+            <input id="schedulePhone" placeholder="번호">
+
             <input id="scheduleAddress" class="full" placeholder="주소">
             <input id="schedulePeople" placeholder="인원">
+
             <input id="scheduleGap" placeholder="갑사">
             <input id="scheduleBank" placeholder="은행">
-            <textarea id="scheduleMemo" class="full" placeholder="특이사항 / 메모"></textarea>
+
+            <textarea id="scheduleMemo" class="full" placeholder="특이사항"></textarea>
+
+            <textarea id="scheduleNateonPreview" class="full" readonly placeholder="네이트온 양식"></textarea>
           </div>
 
           <div class="toolbar">
             <button class="small-btn" onclick="addSchedule()">일정 추가</button>
-            <button class="ghost-btn" onclick="seedExampleSchedule()">예시 채우기</button>
+            <button class="ghost-btn" type="button" onclick="copyNateonPreview()">네이트온 양식 복사</button>
           </div>
 
           <div class="table-wrap">
@@ -1119,12 +1126,13 @@
                   <th>섭외자</th>
                   <th>날짜</th>
                   <th>시간</th>
-                  <th>업체명</th>
+                  <th>업체</th>
                   <th>키맨</th>
-                  <th>연락처</th>
+                  <th>번호</th>
                   <th>인원</th>
                   <th>갑사</th>
-                  <th>메모</th>
+                  <th>특이사항</th>
+                  <th>관리</th>
                 </tr>
               </thead>
               <tbody id="scheduleTableBody"></tbody>
@@ -1137,7 +1145,7 @@
           <div class="section-head">
             <div>
               <h4 id="aggregateTitle">익일취합</h4>
-              <p id="aggregateDesc">기존 전산의 익일취합 흐름을 현재 웹 화면에 맞게 분리했어.</p>
+              <p id="aggregateDesc">날짜 기준으로 익일 일정 취합을 확인하고 복사할 수 있어.</p>
             </div>
           </div>
 
@@ -1159,9 +1167,9 @@
                   <th>섭외자</th>
                   <th>날짜</th>
                   <th>시간</th>
-                  <th>업체명</th>
+                  <th>업체</th>
                   <th>키맨</th>
-                  <th>연락처</th>
+                  <th>번호</th>
                   <th>특이사항</th>
                 </tr>
               </thead>
@@ -1479,7 +1487,7 @@
         time:"14:00",
         company:"예시상조",
         manager:"홍길동",
-        phone:"010-1111-2222",
+        phone:"01011112222",
         address:"인천 서구 예시로 10",
         people:"2명",
         gap:"갑사A",
@@ -1487,7 +1495,8 @@
         memo:"재상담",
         createdBy:"김성우",
         createdByNo:"1379",
-        createdAt:"2026-03-10"
+        createdAt:"2026-03-10",
+        createdAtTs:174153000001
       },
       {
         assignee:"이상혁",
@@ -1495,7 +1504,7 @@
         time:"16:00",
         company:"루원케어",
         manager:"김민수",
-        phone:"010-3333-4444",
+        phone:"01033334444",
         address:"인천 서구 샘플로 21",
         people:"3명",
         gap:"갑사B",
@@ -1503,7 +1512,8 @@
         memo:"상담 예정",
         createdBy:"이상혁",
         createdByNo:"1218",
-        createdAt:"2026-03-10"
+        createdAt:"2026-03-10",
+        createdAtTs:174153000002
       }
     ];
 
@@ -1768,11 +1778,14 @@
       $("homeCardLabel4").textContent = admin ? "이번달 직원 총 섭외" : "내 이번달 등록 일정";
       $("homeCardDesc4").textContent = admin ? "이번달 등록된 전체 일정 기준" : "이번달 등록 누적";
 
-      $("perfReportScope").querySelector('option[value="all"]').disabled = !admin;
-      $("aggScope").querySelector('option[value="all"]').disabled = !admin;
-      if(!admin){
-        $("perfReportScope").value = "mine";
-        $("aggScope").value = "mine";
+      if ($("perfReportScope")) {
+        $("perfReportScope").querySelector('option[value="all"]').disabled = !admin;
+        if(!admin) $("perfReportScope").value = "mine";
+      }
+
+      if ($("aggScope")) {
+        $("aggScope").querySelector('option[value="all"]').disabled = !admin;
+        if(!admin) $("aggScope").value = "mine";
       }
     }
 
@@ -1916,138 +1929,6 @@
       $("noticeBody").value = "";
       renderNotices();
       alert("공지 등록 완료");
-    }
-
-    function renderSchedules(){
-      const body = $("scheduleTableBody");
-      body.innerHTML = "";
-      const rows = getVisibleSchedules();
-
-      if(rows.length === 0){
-        body.innerHTML = `<tr><td colspan="9"><div class="empty">등록된 일정이 없어.</div></td></tr>`;
-        return;
-      }
-
-      rows.forEach(s => {
-        body.innerHTML += `
-          <tr>
-            <td>${escapeHtml(s.assignee)}</td>
-            <td>${escapeHtml(s.date)}</td>
-            <td>${escapeHtml(s.time)}</td>
-            <td>${escapeHtml(s.company)}</td>
-            <td>${escapeHtml(s.manager)}</td>
-            <td>${escapeHtml(s.phone)}</td>
-            <td>${escapeHtml(s.people)}</td>
-            <td>${escapeHtml(s.gap)}</td>
-            <td>${escapeHtml(s.memo)}</td>
-          </tr>
-        `;
-      });
-    }
-
-    function seedExampleSchedule(){
-      $("scheduleAssignee").value = currentStaffName();
-      $("scheduleDate").value = tomorrowStr();
-      $("scheduleTime").value = "14:00";
-      $("scheduleCompany").value = "예시업체";
-      $("scheduleManager").value = "홍길동";
-      $("schedulePhone").value = "010-0000-0000";
-      $("scheduleAddress").value = "인천 서구 예시로 123";
-      $("schedulePeople").value = "3명";
-      $("scheduleGap").value = "갑사";
-      $("scheduleBank").value = "국민";
-      $("scheduleMemo").value = "예시 메모";
-    }
-
-    function addSchedule(){
-      if(!state.currentUser) return;
-
-      const assignee = ($("scheduleAssignee").value.trim() || currentStaffName());
-      const date = $("scheduleDate").value;
-      const time = $("scheduleTime").value;
-      const company = $("scheduleCompany").value.trim();
-      const manager = $("scheduleManager").value.trim();
-      const phone = $("schedulePhone").value.trim();
-      const address = $("scheduleAddress").value.trim();
-      const people = $("schedulePeople").value.trim();
-      const gap = $("scheduleGap").value.trim();
-      const bank = $("scheduleBank").value.trim();
-      const memo = $("scheduleMemo").value.trim();
-
-      if(!assignee || !date || !time || !company){
-        alert("섭외자, 날짜, 시간, 업체명은 꼭 입력해줘.");
-        return;
-      }
-
-      schedules.unshift({
-        assignee,
-        date,
-        time,
-        company,
-        manager,
-        phone,
-        address,
-        people,
-        gap,
-        bank,
-        memo,
-        createdBy: currentStaffName(),
-        createdByNo: currentStaffNo(),
-        createdAt: todayStr()
-      });
-
-      [
-        "scheduleAssignee","scheduleDate","scheduleTime","scheduleCompany","scheduleManager",
-        "schedulePhone","scheduleAddress","schedulePeople","scheduleGap","scheduleBank","scheduleMemo"
-      ].forEach(id => $(id).value = "");
-
-      renderSchedules();
-      runHomeSummary();
-      loadAggregate();
-      alert("일정 추가 완료");
-    }
-
-    function loadAggregate(){
-      const body = $("aggregateTableBody");
-      const box = $("aggregateSummary");
-      body.innerHTML = "";
-      box.innerHTML = "";
-
-      const targetDate = $("aggDate").value || tomorrowStr();
-      const scope = $("aggScope").value;
-      const rows = schedules.filter(s => {
-        if(s.date !== targetDate) return false;
-        if(scope === "all" && isAdminMode()) return true;
-        return s.createdByNo === currentStaffNo();
-      });
-
-      if(rows.length === 0){
-        box.innerHTML = `<div class="empty">해당 날짜 기준 익일취합 데이터가 없어.</div>`;
-        body.innerHTML = `<tr><td colspan="7"><div class="empty">조회된 일정이 없어.</div></td></tr>`;
-        return;
-      }
-
-      const staffSet = [...new Set(rows.map(r => r.assignee))];
-      box.innerHTML = `
-        <div class="stack-item">
-          <b>${escapeHtml(targetDate)} 기준 익일취합</b>
-          <span>총 ${rows.length}건 · 섭외자 ${staffSet.length}명 · ${staffSet.join(", ")}</span>
-        </div>
-      `;
-
-      rows.forEach(r => {
-        body.innerHTML += `
-          <tr>
-            <td>${escapeHtml(r.assignee)}</td>
-            <td>${escapeHtml(r.date)}</td>
-            <td>${escapeHtml(r.time)}</td>
-            <td>${escapeHtml(r.company)}</td>
-            <td>${escapeHtml(r.manager)}</td>
-            <td>${escapeHtml(r.phone)}</td>
-            <td>${escapeHtml(r.memo)}</td>
-          </tr>
-        `;
-      });
     }
 
     function calcAutoTake(type, count, amount){
@@ -2300,14 +2181,16 @@
 
     function renderAll(){
       renderNotices();
-      renderSchedules();
       renderPerformances();
       renderStaffs();
       renderLeads();
-      loadAggregate();
       loadProgress();
       applyRoleUI();
       if(state.currentUser) runHomeSummary();
+
+      if (typeof renderSchedules === "function") renderSchedules();
+      if (typeof loadAggregate === "function") loadAggregate();
+      if (typeof updateNateonPreview === "function") updateNateonPreview();
     }
 
     $("staffId").addEventListener("keydown", e => {
@@ -2318,7 +2201,6 @@
     });
 
     renderNotices();
-    $("aggDate").value = tomorrowStr();
     $("progressDate").value = todayStr();
     $("perfReportStart").value = monthPrefix() + "-01";
     $("perfReportEnd").value = todayStr();
