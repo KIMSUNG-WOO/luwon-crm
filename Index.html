@@ -1,1 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
 
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>LUWON CRM</title>
+
+<style>
+
+body{
+margin:0;
+font-family:Arial;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+}
+
+.login-container{
+width:360px;
+padding:40px;
+background:#111827;
+border-radius:12px;
+box-shadow:0 20px 40px rgba(0,0,0,0.4);
+color:white;
+text-align:center;
+}
+
+.title{
+font-size:24px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:none;
+border-radius:8px;
+font-size:14px;
+}
+
+button{
+width:100%;
+padding:12px;
+margin-top:15px;
+background:#2563eb;
+border:none;
+border-radius:8px;
+color:white;
+font-size:15px;
+cursor:pointer;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+.error{
+margin-top:10px;
+color:#ff6b6b;
+font-size:13px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="login-container">
+
+<div class="title">LUWON CRM</div>
+
+<input id="staffId" placeholder="사번">
+
+<input id="password" type="password" placeholder="비밀번호">
+
+<button onclick="login()">로그인</button>
+
+<div id="error" class="error"></div>
+
+</div>
+
+<script>
+
+function login(){
+
+const id=document.getElementById("staffId").value
+const pw=document.getElementById("password").value
+
+if(id==="1379" && pw==="137900qw!!"){
+
+alert("관리자 로그인 성공")
+
+}else{
+
+document.getElementById("error").innerText="사번 또는 비밀번호가 틀렸습니다"
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
