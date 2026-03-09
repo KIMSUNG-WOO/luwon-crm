@@ -55,54 +55,86 @@
       justify-content:space-between;
       min-height:calc(100vh - 40px);
       background:linear-gradient(135deg, rgba(255,255,255,.95), rgba(245,249,255,.92));
-      position:relative; overflow:hidden;
+      position:relative;
+      overflow:hidden;
     }
 
     .left-card::before{
-      content:""; position:absolute; right:-80px; top:-80px;
-      width:260px;height:260px;border-radius:50%;
+      content:"";
+      position:absolute;
+      right:-80px;
+      top:-80px;
+      width:260px;
+      height:260px;
+      border-radius:50%;
       background:radial-gradient(circle, rgba(79,70,229,.12), transparent 70%);
     }
+
     .left-card::after{
-      content:""; position:absolute; left:-70px; bottom:-70px;
-      width:220px;height:220px;border-radius:50%;
+      content:"";
+      position:absolute;
+      left:-70px;
+      bottom:-70px;
+      width:220px;
+      height:220px;
+      border-radius:50%;
       background:radial-gradient(circle, rgba(20,184,166,.10), transparent 70%);
     }
+
     .left-card > *{position:relative; z-index:1}
 
     .brand{display:flex;align-items:center;gap:16px}
     .logo-wrap{
       width:68px;height:68px;border-radius:22px;
       background:linear-gradient(145deg,#fff,#dfe9f7);
-      box-shadow:inset 0 2px 10px rgba(255,255,255,.9), inset 0 -8px 18px rgba(79,70,229,.10), 0 14px 28px rgba(37,99,235,.16);
+      box-shadow:
+        inset 0 2px 10px rgba(255,255,255,.9),
+        inset 0 -8px 18px rgba(79,70,229,.10),
+        0 14px 28px rgba(37,99,235,.16);
       display:flex;align-items:center;justify-content:center;position:relative;
     }
+
     .logo-wrap::before{
-      content:"";position:absolute;inset:6px;border-radius:18px;
-      background:linear-gradient(145deg,#7dd3fc,#4f46e5);opacity:.16;
+      content:"";
+      position:absolute;inset:6px;border-radius:18px;
+      background:linear-gradient(145deg,#7dd3fc,#4f46e5);
+      opacity:.16;
     }
+
     .logo{
-      position:relative;font-size:34px;font-weight:800;letter-spacing:-2px;
+      position:relative;
+      font-size:34px;font-weight:800;letter-spacing:-2px;line-height:1;
       background:linear-gradient(180deg,#6ee7f9,#2563eb 55%,#312e81);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
     }
+
     .brand h1{margin:0;font-size:32px;letter-spacing:-1px}
     .brand p{margin:6px 0 0;color:var(--muted);font-size:15px}
 
     .hero{margin-top:10px}
     .hero .date-time{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+
     .chip{
       display:inline-flex;align-items:center;height:38px;padding:0 14px;
       border-radius:999px;background:#fff;border:1px solid var(--line);
-      color:#314056;font-size:13px;font-weight:700;box-shadow:0 6px 16px rgba(0,0,0,.04);
+      color:#314056;font-size:13px;font-weight:700;
+      box-shadow:0 6px 16px rgba(0,0,0,.04);
     }
-    .hero h2{margin:0;font-size:54px;line-height:1.15;letter-spacing:-2px}
-    .hero p{margin:18px 0 0;max-width:720px;color:#506176;font-size:18px;line-height:1.8}
+
+    .hero h2{
+      margin:0;font-size:54px;line-height:1.15;letter-spacing:-2px;
+    }
+
+    .hero p{
+      margin:18px 0 0;max-width:720px;color:#506176;font-size:18px;line-height:1.8;
+    }
 
     .notice-card{
       margin-top:26px;background:rgba(255,255,255,.82);
       border:1px solid var(--line);border-radius:28px;padding:24px;
     }
+
     .notice-card h3{margin:0 0 16px;font-size:22px}
     .notice-item{
       display:flex;justify-content:space-between;gap:14px;
@@ -111,46 +143,62 @@
     .notice-item:last-child{border-bottom:0}
     .notice-item b{display:block;font-size:15px;margin-bottom:6px}
     .notice-item span{color:var(--muted);font-size:13px;line-height:1.6}
+
     .pill{
       display:inline-flex;align-items:center;height:30px;padding:0 10px;
-      border-radius:999px;background:#eff6ff;color:#2563eb;border:1px solid #dbeafe;
-      font-size:12px;font-weight:800;white-space:nowrap;
+      border-radius:999px;background:#eff6ff;color:#2563eb;
+      border:1px solid #dbeafe;font-size:12px;font-weight:800;white-space:nowrap;
     }
 
     .login-card{
       padding:30px;display:flex;flex-direction:column;justify-content:center;
       min-height:calc(100vh - 40px);
     }
-    .login-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:22px}
+
+    .login-head{
+      display:flex;justify-content:space-between;align-items:flex-start;
+      gap:12px;margin-bottom:22px;
+    }
+
     .login-head h2{margin:0;font-size:36px;letter-spacing:-1px}
     .login-head p{margin:10px 0 0;color:var(--muted);font-size:14px;line-height:1.7}
+
     .secure{
       padding:10px 12px;border-radius:14px;background:#eef2ff;color:#4338ca;
       border:1px solid #c7d2fe;font-size:12px;font-weight:800;white-space:nowrap;
     }
 
     .field{margin-bottom:14px}
-    .field label{display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#334155}
+    .field label{
+      display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#334155;
+    }
+
     .input-wrap{position:relative}
     .input{
       width:100%;height:58px;border-radius:18px;border:1px solid var(--line);
       background:#f8fbff;color:var(--text);padding:0 16px 0 48px;font-size:15px;outline:none;
     }
-    .input:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.10);background:#fff}
+    .input:focus{
+      border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.10);background:#fff;
+    }
+
     .icon{
       position:absolute;left:16px;top:50%;transform:translateY(-50%);
       color:#94a3b8;font-size:16px;pointer-events:none;
     }
+
     .sub-row{
       display:flex;justify-content:space-between;align-items:center;gap:12px;
       margin:8px 0 18px;color:var(--muted);font-size:13px;
     }
+
     .login-btn{
       height:58px;border:0;border-radius:18px;
       background:linear-gradient(135deg,var(--primary),var(--primary2));
       color:#fff;font-size:16px;font-weight:800;cursor:pointer;
       box-shadow:0 16px 28px rgba(79,70,229,.18);width:100%;
     }
+
     .msg{
       margin-top:14px;padding:14px 16px;border-radius:16px;font-size:13px;line-height:1.6;display:none;
     }
@@ -189,6 +237,7 @@
     .menu{
       display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:calc(100vh - 340px);padding-right:2px;
     }
+
     .menu-item{
       display:flex;align-items:center;gap:12px;border-radius:18px;padding:14px 16px;
       background:#fff;border:1px solid #e7eef7;color:#22314a;font-size:14px;font-weight:800;cursor:pointer;
@@ -205,6 +254,7 @@
     }
 
     .main{display:flex;flex-direction:column;gap:18px}
+
     .topbar{
       padding:22px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
       background:linear-gradient(135deg,#ffffff,#f7fbff);
@@ -320,25 +370,182 @@
     .calendar-cell.other{opacity:.38}
     .calendar-cell.today{outline:2px solid rgba(79,70,229,.18)}
     .calendar-cell.selected{border-color:#7c87ff;box-shadow:0 0 0 3px rgba(79,70,229,.08)}
-    .calendar-day{
-      font-size:13px;font-weight:800;
-    }
-    .calendar-dots{
-      display:flex;flex-direction:column;gap:4px;
-    }
-    .calendar-dot{
-      font-size:11px;line-height:1.35;padding:4px 6px;border-radius:10px;background:#eef2ff;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    }
+    .calendar-day{font-size:13px;font-weight:800}
+    .calendar-dots{display:flex;flex-direction:column;gap:4px}
     .calendar-detail{
       margin-top:14px;padding:14px;border-radius:16px;background:#fff;border:1px solid var(--line);
     }
-    .calendar-detail h6{
-      margin:0 0 10px;font-size:14px;
+    .calendar-detail h6{margin:0 0 10px;font-size:14px}
+
+    .calendar-dow.sun,
+    .calendar-day.sun{
+      color:#dc2626;
     }
-    .calendar-detail-item{
-      padding:10px 12px;border-radius:12px;background:#f8fbff;border:1px solid #e8eef6;margin-bottom:8px;
+    .calendar-dow.sat,
+    .calendar-day.sat{
+      color:#2563eb;
     }
-    .calendar-detail-item:last-child{margin-bottom:0}
+    .calendar-day.holiday{
+      color:#dc2626;
+    }
+    .calendar-count{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:40px;
+      height:22px;
+      padding:0 8px;
+      border-radius:999px;
+      background:#eef2ff;
+      color:#4338ca;
+      font-size:11px;
+      font-weight:800;
+    }
+    .calendar-cell.has-events{
+      background:linear-gradient(180deg,#ffffff,#f7faff);
+    }
+    .calendar-cell.has-events:hover{
+      border-color:#a5b4fc;
+    }
+    .calendar-detail-nateon{
+      font-size:13px;
+      line-height:1.7;
+      white-space:pre-line;
+      color:#334155;
+    }
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      padding:24px;
+    }
+    .modal-backdrop.show{
+      display:flex;
+    }
+    .modal-card{
+      width:min(1100px, 100%);
+      max-height:85vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:28px;
+      border:1px solid var(--line);
+      box-shadow:0 30px 70px rgba(15,23,42,.22);
+      padding:22px;
+    }
+    .modal-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .modal-head h4{
+      margin:0;
+      font-size:24px;
+    }
+    .modal-head p{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.7;
+    }
+    .modal-close{
+      height:42px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+      padding:0 14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .modal-group{
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:#f8fbff;
+      padding:14px;
+      margin-bottom:14px;
+    }
+    .modal-group-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .modal-group-title strong{
+      font-size:16px;
+    }
+    .modal-entry{
+      border:1px solid #e5edf7;
+      border-radius:16px;
+      background:#fff;
+      padding:12px;
+      margin-bottom:10px;
+    }
+    .modal-entry:last-child{
+      margin-bottom:0;
+    }
+    .modal-entry-grid{
+      display:grid;
+      grid-template-columns:1.2fr .9fr .9fr .9fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    .modal-entry-grid select,
+    .modal-entry-grid input,
+    .modal-entry-grid textarea{
+      width:100%;
+      min-height:42px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:13px;
+      outline:none;
+      background:#fff;
+    }
+    .modal-entry-grid textarea{
+      min-height:84px;
+      resize:vertical;
+    }
+    .modal-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .bulk-box{
+      margin-top:14px;
+      border:1px dashed #cdd9e8;
+      border-radius:18px;
+      background:#f8fbff;
+      padding:16px;
+    }
+    .bulk-box h6{
+      margin:0 0 8px;
+      font-size:15px;
+    }
+    .bulk-box p{
+      margin:0 0 10px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.7;
+    }
+    .bulk-box textarea{
+      width:100%;
+      min-height:140px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      font-size:13px;
+      resize:vertical;
+      background:#fff;
+    }
 
     @media (max-width:1320px){
       .summary-grid{grid-template-columns:repeat(2,1fr)}
@@ -355,9 +562,10 @@
       .left-card,.login-card{min-height:auto}
       .hero h2{font-size:36px}
       .brand h1{font-size:25px}
-      .form-grid,.summary-grid,.calendar-grid{grid-template-columns:1fr}
+      .form-grid,.summary-grid{grid-template-columns:1fr}
       .topbar h3{font-size:25px}
       .split-grid{grid-template-columns:1fr}
+      .modal-entry-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -542,9 +750,9 @@
               <div class="calendar-head">
                 <div class="calendar-title" id="calendarTitle">2026년 3월</div>
                 <div class="calendar-nav">
-                  <button type="button" onclick="moveCalendar(-1)">이전</button>
+                  <button type="button" id="calendarPrevBtn" onclick="moveCalendar(-1)">저번달(2월)</button>
                   <button type="button" onclick="goTodayCalendar()">오늘</button>
-                  <button type="button" onclick="moveCalendar(1)">다음</button>
+                  <button type="button" id="calendarNextBtn" onclick="moveCalendar(1)">다음달(4월)</button>
                 </div>
               </div>
 
@@ -629,7 +837,19 @@
             <button class="ghost-btn" type="button" onclick="copyNateonPreview()">네이트온 양식 복사</button>
           </div>
 
-          <div class="table-wrap">
+          <div class="bulk-box">
+            <h6>수기 일정 등록</h6>
+            <p>
+              다른 곳에서 받은 텍스트를 그대로 붙여넣고 자동 분해해서 일정 등록할 수 있어.<br>
+              예: 섭외자 : 홍길동 / 날짜 : 2026-03-11 / 시간 : 14:00 / 업체 : 예시상조 ...
+            </p>
+            <textarea id="bulkScheduleText" placeholder="갑섭외 텍스트를 그대로 붙여넣어줘"></textarea>
+            <div class="toolbar" style="margin-top:10px;margin-bottom:0;">
+              <button class="small-btn" type="button" onclick="parseBulkSchedule()">붙여넣기 반영</button>
+            </div>
+          </div>
+
+          <div class="table-wrap" style="margin-top:16px;">
             <table>
               <thead>
                 <tr>
@@ -938,7 +1158,39 @@
     </main>
   </section>
 
+  <div class="modal-backdrop" id="calendarModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h4 id="calendarModalTitle">일정 상세</h4>
+          <p id="calendarModalDesc">선택한 날짜의 일정을 시간순/섭외자별로 볼 수 있어.</p>
+        </div>
+        <button class="modal-close" type="button" onclick="closeCalendarModal()">닫기</button>
+      </div>
+
+      <div id="calendarModalBody"></div>
+    </div>
+  </div>
+
   <script>
+    const HOLIDAYS_2026 = new Set([
+      "2026-01-01",
+      "2026-02-16",
+      "2026-02-17",
+      "2026-02-18",
+      "2026-03-02",
+      "2026-05-05",
+      "2026-05-25",
+      "2026-06-03",
+      "2026-08-17",
+      "2026-09-24",
+      "2026-09-25",
+      "2026-09-26",
+      "2026-10-05",
+      "2026-10-09",
+      "2026-12-25"
+    ]);
+
     const state = {
       currentUser: null,
       currentMode: "staff",
@@ -946,7 +1198,6 @@
       progressTab: "month",
       settingsTab: "staff",
       editingNoticeId: null,
-      editingPerfId: null,
       calendarYear: new Date().getFullYear(),
       calendarMonth: new Date().getMonth(),
       selectedCalendarDate: null
@@ -969,8 +1220,8 @@
     ];
 
     let schedules = [
-      { id:101, assignee:"김성우", date:"2026-03-11", time:"14:00", company:"예시상조", manager:"홍길동", phone:"01011112222", address:"인천 서구 청마로 66-7", people:"2명", gap:"갑사A", bank:"국민", memo:"재상담", createdBy:"김성우", createdByNo:"1379", createdAt:"2026-03-10" },
-      { id:102, assignee:"이상혁", date:"2026-03-11", time:"16:00", company:"루원케어", manager:"김민수", phone:"01033334444", address:"서울 서초구 방배로 123 4층", people:"3명", gap:"갑사B", bank:"신한", memo:"상담 예정", createdBy:"이상혁", createdByNo:"1218", createdAt:"2026-03-10" }
+      { id:101, assignee:"김성우", date:"2026-03-11", time:"14:00", company:"예시상조", manager:"홍길동", phone:"01011112222", address:"인천 서구 청마로 66-7", people:"2명", gap:"갑사A", bank:"국민", memo:"재상담", createdBy:"김성우", createdByNo:"1379", createdAt:"2026-03-10", progressStatus:"", progressEtc:"" },
+      { id:102, assignee:"이상혁", date:"2026-03-11", time:"16:00", company:"루원케어", manager:"김민수", phone:"01033334444", address:"서울 서초구 방배로 123 4층", people:"3명", gap:"갑사B", bank:"신한", memo:"상담 예정", createdBy:"이상혁", createdByNo:"1218", createdAt:"2026-03-10", progressStatus:"", progressEtc:"" }
     ];
 
     let performances = [
@@ -1014,6 +1265,7 @@
       msg.className = "msg show " + type;
       msg.textContent = text;
     }
+
     function clearMsg(){
       const msg = $("msg");
       msg.className = "msg";
@@ -1067,7 +1319,9 @@
       return src.split(/\s+/).filter(Boolean).slice(0,3).join(" ");
     }
 
-    function isTomorrowDate(dateStr){ return dateStr === tomorrowStr(); }
+    function isTomorrowDate(dateStr){
+      return dateStr === tomorrowStr();
+    }
 
     function safeCopy(text){
       if (!text) return alert("복사할 내용이 없어.");
@@ -1084,7 +1338,8 @@
       ta.style.position = "fixed";
       ta.style.left = "-9999px";
       document.body.appendChild(ta);
-      ta.focus(); ta.select();
+      ta.focus();
+      ta.select();
       try { document.execCommand("copy"); alert("복사 완료"); } catch(e){ alert("복사 실패"); }
       document.body.removeChild(ta);
     }
@@ -1247,9 +1502,7 @@
     }
 
     function getCallCount(){
-      const rows = isAdminMode()
-        ? leads
-        : leads.filter(l => l.ownerNo === currentStaffNo());
+      const rows = isAdminMode() ? leads : leads.filter(l => l.ownerNo === currentStaffNo());
       return rows.filter(l => normalizeText(l.memo)).length;
     }
 
@@ -1338,10 +1591,7 @@
       const tag = $("noticeTag").value.trim() || "공지";
       const body = $("noticeBody").value.trim();
 
-      if(!title || !body){
-        alert("공지 제목과 내용을 입력해줘.");
-        return;
-      }
+      if(!title || !body) return alert("공지 제목과 내용을 입력해줘.");
 
       if(state.editingNoticeId){
         const n = notices.find(x => x.id === state.editingNoticeId);
@@ -1411,6 +1661,17 @@
       ].filter(Boolean).join("/");
     }
 
+    function buildCalendarNateonLine(row){
+      return [
+        row.company || "",
+        row.people || "",
+        shortDateMMDD(row.date),
+        row.time || "",
+        simplifyAddress(row.address || ""),
+        row.assignee || ""
+      ].filter(Boolean).join("/");
+    }
+
     function updateNateonPreview(){
       $("scheduleNateonPreview").value = buildNateonPreviewText({
         assignee: $("scheduleAssignee").value || currentStaffName(),
@@ -1456,7 +1717,9 @@
         assignee, date, time, company, manager, phone, address, people, gap, bank, memo,
         createdBy: currentStaffName(),
         createdByNo: currentStaffNo(),
-        createdAt: todayStr()
+        createdAt: todayStr(),
+        progressStatus:"",
+        progressEtc:""
       });
 
       renderSchedules();
@@ -1470,6 +1733,35 @@
       $("scheduleDate").value = tomorrowStr();
       $("scheduleAssignee").value = currentStaffName();
       updateNateonPreview();
+    }
+
+    function parseBulkSchedule(){
+      const txt = $("bulkScheduleText").value.trim();
+      if(!txt) return alert("붙여넣을 텍스트가 없어.");
+
+      const map = {};
+      txt.split(/\n+/).forEach(line => {
+        const parts = line.split(":");
+        if(parts.length < 2) return;
+        const key = parts[0].trim();
+        const value = parts.slice(1).join(":").trim();
+        map[key] = value;
+      });
+
+      $("scheduleAssignee").value = currentStaffName();
+      $("scheduleDate").value = map["날짜"] || $("scheduleDate").value;
+      $("scheduleTime").value = normalizeManualTime(map["시간"] || "");
+      $("scheduleCompany").value = map["업체"] || "";
+      $("scheduleManager").value = map["키맨"] || "";
+      $("schedulePhone").value = map["번호"] || "";
+      $("scheduleAddress").value = map["주소"] || "";
+      $("schedulePeople").value = map["인원"] || "";
+      $("scheduleGap").value = map["갑사"] || "";
+      $("scheduleBank").value = map["은행"] || "";
+      $("scheduleMemo").value = map["특이사항"] || "";
+
+      updateNateonPreview();
+      alert("붙여넣기 반영 완료");
     }
 
     function copyNateonPreview(){
@@ -1593,15 +1885,19 @@
       return "금액(원)";
     }
 
-    function formatMoneyInput(val){
-      const n = String(val || "").replace(/[^\d]/g, "");
-      return n ? Number(n).toLocaleString() : "";
-    }
-
     function onPerformanceTypeChange(){
       const type = $("perfSaveType").value;
       $("perfSaveValue").value = "";
       $("perfSaveValue").placeholder = performanceUnit(type);
+
+      if(type === "보험"){
+        $("perfSaveValue").oninput = function(){
+          const cleaned = String(this.value || "").replace(/[^\d]/g, "");
+          this.value = cleaned ? Number(cleaned).toLocaleString() : "";
+        };
+      }else{
+        $("perfSaveValue").oninput = null;
+      }
     }
 
     function addPerformance(){
@@ -1867,6 +2163,30 @@
       alert("갑디비 추가 완료");
     }
 
+    function isHolidayDate(dateStr){
+      return HOLIDAYS_2026.has(dateStr);
+    }
+
+    function getMonthLabel(year, monthIndex){
+      return `${year}년 ${monthIndex + 1}월`;
+    }
+
+    function getPrevMonthLabel(year, monthIndex){
+      const d = new Date(year, monthIndex - 1, 1);
+      return `${d.getMonth() + 1}월`;
+    }
+
+    function getNextMonthLabel(year, monthIndex){
+      const d = new Date(year, monthIndex + 1, 1);
+      return `${d.getMonth() + 1}월`;
+    }
+
+    function getCalendarSchedulesForDate(dateStr){
+      return getVisibleSchedules()
+        .filter(s => s.date === dateStr)
+        .sort((a,b) => `${a.time} ${a.assignee}`.localeCompare(`${b.time} ${b.assignee}`, "ko"));
+    }
+
     function renderCalendar(){
       const grid = $("calendarGrid");
       const detail = $("calendarDetail");
@@ -1874,7 +2194,9 @@
       const month = state.calendarMonth;
       const today = todayStr();
 
-      $("calendarTitle").textContent = `${year}년 ${month + 1}월`;
+      $("calendarTitle").textContent = getMonthLabel(year, month);
+      $("calendarPrevBtn").textContent = `저번달(${getPrevMonthLabel(year, month)})`;
+      $("calendarNextBtn").textContent = `다음달(${getNextMonthLabel(year, month)})`;
 
       const first = new Date(year, month, 1);
       const startDay = first.getDay();
@@ -1882,9 +2204,10 @@
       const prevLast = new Date(year, month, 0).getDate();
 
       let cells = [];
+      const dows = ["일","월","화","수","목","금","토"];
 
-      ["일","월","화","수","목","금","토"].forEach(d => {
-        cells.push(`<div class="calendar-dow">${d}</div>`);
+      dows.forEach((d, idx) => {
+        cells.push(`<div class="calendar-dow ${idx===0 ? "sun" : idx===6 ? "sat" : ""}">${d}</div>`);
       });
 
       for(let i=0;i<startDay;i++){
@@ -1894,15 +2217,23 @@
 
       for(let d=1; d<=lastDate; d++){
         const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-        const events = getVisibleSchedules().filter(s => s.date === dateStr);
+        const events = getCalendarSchedulesForDate(dateStr);
         const isToday = dateStr === today;
         const isSelected = state.selectedCalendarDate === dateStr;
+        const dow = new Date(dateStr + "T00:00:00").getDay();
+        const isSun = dow === 0;
+        const isSat = dow === 6;
+        const holiday = isHolidayDate(dateStr);
 
         cells.push(`
-          <div class="calendar-cell ${isToday ? "today" : ""} ${isSelected ? "selected" : ""}" onclick="selectCalendarDate('${dateStr}')">
-            <div class="calendar-day">${d}</div>
+          <div class="calendar-cell ${isToday ? "today" : ""} ${isSelected ? "selected" : ""} ${events.length ? "has-events" : ""}"
+               onclick="selectCalendarDate('${dateStr}')"
+               ondblclick="openCalendarModal('${dateStr}')">
+            <div class="calendar-day ${holiday || isSun ? "holiday" : ""} ${isSat ? "sat" : ""}">
+              ${d}
+            </div>
             <div class="calendar-dots">
-              ${events.slice(0,3).map(e => `<div class="calendar-dot">${escapeHtml(e.time)} ${escapeHtml(e.company)}</div>`).join("")}
+              ${events.length ? `<div class="calendar-count">${events.length}건</div>` : ""}
             </div>
           </div>
         `);
@@ -1916,19 +2247,13 @@
       grid.innerHTML = cells.join("");
 
       const selected = state.selectedCalendarDate || today;
-      const dayEvents = getVisibleSchedules().filter(s => s.date === selected);
+      const dayEvents = getCalendarSchedulesForDate(selected);
 
       detail.innerHTML = `
         <h6>${selected} 일정</h6>
         ${
           dayEvents.length
-            ? dayEvents.map(e => `
-                <div class="calendar-detail-item">
-                  <b>${escapeHtml(e.time)} / ${escapeHtml(e.company)}</b>
-                  <div>${escapeHtml(e.manager || "-")} · ${escapeHtml(formatPhone(e.phone) || "-")}</div>
-                  <div>${escapeHtml(e.memo || "")}</div>
-                </div>
-              `).join("")
+            ? `<div class="calendar-detail-nateon">${dayEvents.map(buildCalendarNateonLine).join("\n")}</div>`
             : `<div class="empty">선택한 날짜 일정이 없어.</div>`
         }
       `;
@@ -1952,6 +2277,116 @@
     function selectCalendarDate(dateStr){
       state.selectedCalendarDate = dateStr;
       renderCalendar();
+    }
+
+    function getStatusOptions(selected){
+      const list = ["", "진행", "진불", "계약", "보류", "기타"];
+      return list.map(v => `<option value="${v}" ${v===selected ? "selected" : ""}>${v || "선택"}</option>`).join("");
+    }
+
+    function openCalendarModal(dateStr){
+      const rows = getCalendarSchedulesForDate(dateStr);
+      state.selectedCalendarDate = dateStr;
+      renderCalendar();
+
+      $("calendarModalTitle").textContent = `${dateStr} 일정 상세`;
+      $("calendarModalDesc").textContent = isAdminMode()
+        ? "전직원 일정이 섭외자별로 정렬돼 있어."
+        : "내 일정이 시간순/상태별로 보이게 돼 있어.";
+
+      const body = $("calendarModalBody");
+
+      if(!rows.length){
+        body.innerHTML = `<div class="empty">해당 날짜 일정이 없어.</div>`;
+        $("calendarModal").classList.add("show");
+        return;
+      }
+
+      const grouped = groupByAssignee(rows);
+
+      body.innerHTML = Object.keys(grouped).map(name => {
+        const list = grouped[name];
+
+        return `
+          <div class="modal-group">
+            <div class="modal-group-title">
+              <strong>${escapeHtml(name)} (${list.length}건)</strong>
+              <button class="ghost-btn" type="button" onclick='copyCalendarGroupText(${JSON.stringify(name)}, ${JSON.stringify(dateStr)})'>전체 복사</button>
+            </div>
+
+            ${list.map(row => `
+              <div class="modal-entry">
+                <div style="font-weight:800;margin-bottom:8px;">${escapeHtml(row.time)} / ${escapeHtml(row.company)}</div>
+                <div style="white-space:pre-line;line-height:1.7;font-size:13px;color:#334155;">${escapeHtml(buildFullCopyText(row))}</div>
+
+                <div class="modal-entry-grid">
+                  <div>
+                    <select id="status-${row.id}" onchange="toggleEtcInput(${row.id})">
+                      ${getStatusOptions(row.progressStatus || "")}
+                    </select>
+                  </div>
+                  <div>
+                    <input id="etc-${row.id}" placeholder="기타 사유" value="${escapeHtml(row.progressEtc || "")}" ${row.progressStatus === "기타" ? "" : "disabled"}>
+                  </div>
+                  <div>
+                    <textarea id="memo-${row.id}" placeholder="특이사항 수정">${escapeHtml(row.memo || "")}</textarea>
+                  </div>
+                  <div>
+                    <textarea id="address-${row.id}" placeholder="주소 수정">${escapeHtml(row.address || "")}</textarea>
+                  </div>
+                </div>
+
+                <div class="modal-actions">
+                  <button class="small-btn" type="button" onclick="saveCalendarEntry(${row.id})">저장</button>
+                  <button class="ghost-btn" type="button" onclick="copyScheduleFullText(${row.id})">복사</button>
+                  <button class="danger-btn" type="button" onclick="deleteScheduleById(${row.id}); reopenCalendarModalAfterDelete('${dateStr}')">삭제</button>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }).join("");
+
+      $("calendarModal").classList.add("show");
+    }
+
+    function closeCalendarModal(){
+      $("calendarModal").classList.remove("show");
+    }
+
+    function reopenCalendarModalAfterDelete(dateStr){
+      setTimeout(() => {
+        openCalendarModal(dateStr);
+      }, 50);
+    }
+
+    function toggleEtcInput(id){
+      const status = $(`status-${id}`).value;
+      const etc = $(`etc-${id}`);
+      if(!etc) return;
+      etc.disabled = status !== "기타";
+      if(status !== "기타") etc.value = "";
+    }
+
+    function saveCalendarEntry(id){
+      const row = schedules.find(x => x.id === id);
+      if(!row) return;
+
+      row.progressStatus = $(`status-${id}`).value;
+      row.progressEtc = $(`etc-${id}`).value.trim();
+      row.memo = $(`memo-${id}`).value.trim();
+      row.address = $(`address-${id}`).value.trim();
+
+      renderSchedules();
+      renderCalendar();
+      loadAggregate();
+      alert("일정 수정 저장 완료");
+    }
+
+    function copyCalendarGroupText(assignee, dateStr){
+      const rows = getCalendarSchedulesForDate(dateStr).filter(x => x.assignee === assignee);
+      if(!rows.length) return alert("복사할 일정이 없어.");
+      safeCopy(rows.map(buildFullCopyText).join("\n\n"));
     }
 
     function setSettingsTab(tab){
@@ -1991,6 +2426,10 @@
     bindSchedulePreviewEvents();
     updateNateonPreview();
     onPerformanceTypeChange();
+
+    $("calendarModal").addEventListener("click", (e) => {
+      if(e.target.id === "calendarModal") closeCalendarModal();
+    });
   </script>
 </body>
 </html>
