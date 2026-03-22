@@ -1389,9 +1389,20 @@
           <!-- ── 단가 / 수익 탭 ── -->
           <div id="settingsPanePay" class="hidden">
             <div class="panel" style="margin-bottom:16px;">
-              <h5 style="margin:0 0 6px;font-size:15px;">단가 설정</h5>
-              <p style="margin:0 0 16px;font-size:12px;color:var(--muted);">단가를 입력하고 저장하면 수익이 자동 계산돼.</p>
-              <div class="form-grid">
+              <h5 style="margin:0 0 6px;font-size:15px;">직원별 단가 설정</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원을 선택한 뒤 단가를 입력하고 저장해.</p>
+
+              <!-- 직원 선택 -->
+              <div style="margin-bottom:16px;">
+                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">직원 선택</label>
+                <select id="payStaffSelect" onchange="onPayStaffChange()"
+                  style="width:100%;max-width:260px;height:42px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font-size:14px;background:#fff;">
+                  <option value="">-- 직원을 선택해줘 --</option>
+                </select>
+              </div>
+
+              <!-- 단가 입력 -->
+              <div class="form-grid" id="payRateFields" style="opacity:.4;pointer-events:none;">
                 <div>
                   <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">교육 단가 (1건당, 원)</label>
                   <input id="payRateEdu" type="number" min="0" placeholder="0">
@@ -1413,20 +1424,20 @@
                 <button class="small-btn" onclick="savePaySettings()">저장</button>
               </div>
             </div>
+
+            <!-- 수익 현황 -->
             <div class="panel">
               <h5 style="margin:0 0 14px;font-size:15px;">이번달 수익 현황</h5>
-              <div class="kpi-grid" id="payKpiGrid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
-                <div class="kpi-card"><div class="k">교육 건수</div><div class="v" id="payCountEdu">-</div></div>
-                <div class="kpi-card"><div class="k">교육 수익</div><div class="v" id="payTotalEdu">-</div></div>
-                <div class="kpi-card"><div class="k">총 일정 건수</div><div class="v" id="payCountAll">-</div></div>
+              <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
+                <div class="kpi-card"><div class="k">이번달 일정 건수</div><div class="v" id="payCountAll">-</div></div>
                 <div class="kpi-card"><div class="k">총 수익 (추정)</div><div class="v" id="payTotalAll">-</div></div>
               </div>
-              <div style="margin-top:20px;">
+              <div>
                 <h5 style="margin:0 0 10px;font-size:13px;color:var(--muted);">직원별 이번달 수익</h5>
                 <div class="table-wrap">
                   <table>
-                    <thead><tr><th>직원명</th><th>이번달 일정</th><th>수익 (추정)</th></tr></thead>
-                    <tbody id="payStaffTableBody"><tr><td colspan="3"><div class="empty">데이터 없음</div></td></tr></tbody>
+                    <thead><tr><th>직원명</th><th>이번달 일정</th><th>단가/건</th><th>수익 (추정)</th></tr></thead>
+                    <tbody id="payStaffTableBody"><tr><td colspan="4"><div class="empty">데이터 없음</div></td></tr></tbody>
                   </table>
                 </div>
               </div>
@@ -1824,8 +1835,8 @@
     // 일정표 관리 데이터 (일정등록 시 자동 생성)
     let itineraries = [];
 
-    // 단가 / 수익 설정
-    let paySettings = { edu: 0, sanjo: 0, health: 0, insurance: 0 };
+    // 단가 / 수익 설정 - 직원별 { [staffNo]: { edu, sanjo, health, insurance } }
+    let paySettings = {};
 
     function $(id){ return document.getElementById(id); }
 
@@ -3959,6 +3970,7 @@
       renderSettingsStaff();
       renderStaffs();
       refreshLeadStaffDropdown();
+      refreshPayStaffDropdown();
       alert(`✅ 직원 추가 완료!\n${name} / 사번 ${no}\n초기 비밀번호: ${no}`);
     }
 
@@ -3969,61 +3981,109 @@
       if(!confirm(`[${s.name}] 직원을 삭제할까?\n해당 직원으로 로그인할 수 없게 돼.`)) return;
       staffs    = staffs.filter(x => x.no !== no);
       authUsers = authUsers.filter(x => x.staffNo !== no);
+      delete paySettings[no]; // 단가 설정도 제거
       renderSettingsStaff();
       renderStaffs();
       refreshLeadStaffDropdown();
+      refreshPayStaffDropdown();
     }
 
     // ══════════════════════════════════════════════════
     // 관리자 설정 - 단가/수익 탭
     // ══════════════════════════════════════════════════
-    function savePaySettings(){
-      paySettings.edu       = Number($("payRateEdu").value)       || 0;
-      paySettings.sanjo     = Number($("payRateSanjo").value)     || 0;
-      paySettings.health    = Number($("payRateHealth").value)    || 0;
-      paySettings.insurance = Number($("payRateInsurance").value) || 0;
-      renderPaySummary();
-      alert("✅ 단가 설정이 저장됐어.");
+
+    // 직원 선택 드롭다운 갱신
+    function refreshPayStaffDropdown(){
+      const sel = $("payStaffSelect");
+      if(!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">-- 직원을 선택해줘 --</option>` +
+        staffs.map(s => `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
+      if(cur) sel.value = cur;
     }
 
-    function renderPaySummary(){
-      // 입력 필드에 현재 값 표시
-      if($("payRateEdu"))       $("payRateEdu").value       = paySettings.edu       || "";
-      if($("payRateSanjo"))     $("payRateSanjo").value     = paySettings.sanjo     || "";
-      if($("payRateHealth"))    $("payRateHealth").value     = paySettings.health    || "";
-      if($("payRateInsurance")) $("payRateInsurance").value  = paySettings.insurance || "";
-
-      const month = monthPrefix();
-      const monthScheds = schedules.filter(s => String(s.createdAt || "").startsWith(month));
-      const totalCount  = monthScheds.length;
-      const totalRev    = totalCount * (paySettings.edu || 0);
-
-      if($("payCountEdu"))  $("payCountEdu").textContent  = totalCount + "건";
-      if($("payTotalEdu"))  $("payTotalEdu").textContent  = totalRev.toLocaleString() + "원";
-      if($("payCountAll"))  $("payCountAll").textContent  = totalCount + "건";
-      if($("payTotalAll"))  $("payTotalAll").textContent  = totalRev.toLocaleString() + "원";
-
-      // 직원별 수익
-      const staffBody = $("payStaffTableBody");
-      if(!staffBody) return;
-      const grouped = {};
-      monthScheds.forEach(s => {
-        const nm = s.createdBy || s.assignee || "미지정";
-        if(!grouped[nm]) grouped[nm] = 0;
-        grouped[nm]++;
-      });
-      const names = Object.keys(grouped);
-      if(!names.length){
-        staffBody.innerHTML = `<tr><td colspan="3"><div class="empty">이번달 일정 없음</div></td></tr>`;
+    // 직원 선택 시 해당 직원의 단가를 입력 필드에 표시
+    function onPayStaffChange(){
+      const no     = $("payStaffSelect").value;
+      const fields = $("payRateFields");
+      if(!no){
+        fields.style.opacity        = ".4";
+        fields.style.pointerEvents  = "none";
+        $("payRateEdu").value       = "";
+        $("payRateSanjo").value     = "";
+        $("payRateHealth").value    = "";
+        $("payRateInsurance").value = "";
         return;
       }
-      staffBody.innerHTML = names.map(nm => {
-        const cnt = grouped[nm];
-        const rev = cnt * (paySettings.edu || 0);
+      fields.style.opacity       = "1";
+      fields.style.pointerEvents = "auto";
+      const p = paySettings[no] || {};
+      $("payRateEdu").value       = p.edu       !== undefined ? p.edu       : "";
+      $("payRateSanjo").value     = p.sanjo     !== undefined ? p.sanjo     : "";
+      $("payRateHealth").value    = p.health    !== undefined ? p.health    : "";
+      $("payRateInsurance").value = p.insurance !== undefined ? p.insurance : "";
+    }
+
+    // 선택된 직원의 단가 저장
+    function savePaySettings(){
+      const no = $("payStaffSelect").value;
+      if(!no) return alert("직원을 먼저 선택해줘.");
+      const s = staffs.find(x => x.no === no);
+      paySettings[no] = {
+        name:      s ? s.name : no,
+        edu:       Number($("payRateEdu").value)       || 0,
+        sanjo:     Number($("payRateSanjo").value)     || 0,
+        health:    Number($("payRateHealth").value)    || 0,
+        insurance: Number($("payRateInsurance").value) || 0,
+      };
+      renderPaySummary();
+      alert(`✅ [${s ? s.name : no}] 단가가 저장됐어.`);
+    }
+
+    // 수익 현황 렌더링
+    function renderPaySummary(){
+      refreshPayStaffDropdown();
+      onPayStaffChange(); // 현재 선택 직원 단가 유지
+
+      const month      = monthPrefix();
+      const monthScheds = schedules.filter(s => String(s.createdAt || "").startsWith(month));
+
+      // 직원별 집계
+      const grouped = {}; // { [no]: { name, count } }
+      monthScheds.forEach(s => {
+        const no = s.createdByNo || "";
+        const nm = s.createdBy   || s.assignee || "미지정";
+        if(!grouped[no]) grouped[no] = { name: nm, count: 0 };
+        grouped[no].count++;
+      });
+
+      // 전체 수익 합산 (직원별 단가 적용)
+      let totalRev = 0;
+      Object.keys(grouped).forEach(no => {
+        const p = paySettings[no] || {};
+        totalRev += grouped[no].count * (p.edu || 0);
+      });
+
+      if($("payCountAll")) $("payCountAll").textContent = monthScheds.length + "건";
+      if($("payTotalAll")) $("payTotalAll").textContent = totalRev.toLocaleString() + "원";
+
+      // 직원별 수익 테이블
+      const staffBody = $("payStaffTableBody");
+      if(!staffBody) return;
+      const nos = Object.keys(grouped);
+      if(!nos.length){
+        staffBody.innerHTML = `<tr><td colspan="4"><div class="empty">이번달 일정 없음</div></td></tr>`;
+        return;
+      }
+      staffBody.innerHTML = nos.map(no => {
+        const g   = grouped[no];
+        const p   = paySettings[no] || {};
+        const rev = g.count * (p.edu || 0);
         return `<tr>
-          <td>${escapeHtml(nm)}</td>
-          <td>${cnt}건</td>
-          <td>${rev.toLocaleString()}원</td>
+          <td>${escapeHtml(g.name)}</td>
+          <td>${g.count}건</td>
+          <td>${(p.edu || 0).toLocaleString()}원</td>
+          <td style="font-weight:700;color:var(--ok);">${rev.toLocaleString()}원</td>
         </tr>`;
       }).join("");
     }
