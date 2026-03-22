@@ -1151,27 +1151,9 @@
             <span class="edu-org-tag">산업안전교육협회 &nbsp;·&nbsp; 한국나눔안전 &nbsp;·&nbsp; 대한안전교육협회</span>
           </div>
 
-          <div class="form-grid">
-            <input id="leadStaff" placeholder="섭외자" readonly>
-            <input id="leadType" placeholder="섭외" value="교육섭외">
-            <input id="leadCompany" placeholder="업체 / 사업장">
-            <input id="leadAddress" class="full" placeholder="주소">
-            <input id="leadManager" placeholder="키맨 (담당자)">
-            <input id="leadPhone" placeholder="연락처" oninput="onLeadPhoneInput()">
-            <input id="leadPeople" placeholder="인원">
-            <input id="leadAge" placeholder="연령대 예: 40대">
-            <input id="leadSubject" placeholder="교육과목">
-            <input id="leadIndustry" placeholder="업종" oninput="onLeadIndustryInput()">
-            <div class="lead-status-row">
-              <span style="font-size:13px;color:#64748b;font-weight:700;">교육 이수 여부</span>
-              <span id="leadStatusPreview" style="display:none;"></span>
-            </div>
-          </div>
-
           <div id="leadMsgBox" class="msg"></div>
 
           <div class="toolbar">
-            <button class="small-btn" onclick="addLead()">추가</button>
             <div id="excelUploadBox" class="hidden" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <select id="excelTargetStaff" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:700;cursor:pointer;">
                 <option value="">직원 선택</option>
@@ -1621,7 +1603,6 @@
       $("aggScope").querySelector('option[value="all"]').disabled = !admin;
       if(!admin) $("aggScope").value = "mine";
 
-      if($("leadStaff")) $("leadStaff").value = currentStaffName();
       if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !admin);
       // 직원 선택 드롭다운 채우기 (관리자 전용)
       const excelStaffSel = $("excelTargetStaff");
