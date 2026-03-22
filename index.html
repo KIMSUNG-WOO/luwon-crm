@@ -595,6 +595,34 @@
       .split-grid{grid-template-columns:1fr}
       .modal-entry-status{grid-template-columns:1fr}
     }
+    .edu-pass{
+      display:inline-flex;align-items:center;height:28px;padding:0 10px;
+      border-radius:999px;font-size:12px;font-weight:800;
+      background:#dcfce7;color:#059669;border:1px solid #86efac;white-space:nowrap;
+    }
+    .edu-fail{
+      display:inline-flex;align-items:center;height:28px;padding:0 10px;
+      border-radius:999px;font-size:12px;font-weight:800;
+      background:#fff1f2;color:#e11d48;border:1px solid #fecdd3;white-space:nowrap;
+    }
+    .edu-cat-row{
+      display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;
+    }
+    .edu-cat-btn{
+      height:40px;border-radius:12px;border:1px solid var(--line);
+      background:#fff;color:#22314a;padding:0 14px;font-size:13px;font-weight:800;cursor:pointer;
+    }
+    .edu-cat-btn.active{
+      background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-color:transparent;
+    }
+    .edu-org-tag{
+      height:40px;border-radius:12px;border:1px solid #fed7aa;
+      background:#fff7ed;color:#92400e;padding:0 14px;font-size:12px;font-weight:700;
+      display:inline-flex;align-items:center;white-space:nowrap;
+    }
+    .lead-status-row{
+      display:flex;align-items:center;gap:10px;padding:6px 4px;
+    }
   </style>
 </head>
 <body>
@@ -620,7 +648,7 @@
 
           <p>
             직원이 복잡하지 않게 바로 적응할 수 있도록,
-            로그인부터 공지, 일정, 실적, 직원관리, 갑디비, 진행률까지
+            로그인부터 공지, 일정, 실적, 직원관리, 교육섭외 DB, 진행률까지
             한 흐름으로 사용할 수 있게 정리한 루원 CRM 화면입니다.
           </p>
         </div>
@@ -752,7 +780,7 @@
             <div class="summary-card">
               <div class="k" id="homeCardLabel2">내 오늘 콜량</div>
               <div class="v" id="homeValue2">0</div>
-              <div class="s" id="homeCardDesc2">갑디비 메모 기준 콜량</div>
+              <div class="s" id="homeCardDesc2">교육섭외 DB 등록 건수</div>
             </div>
             <div class="summary-card">
               <div class="k" id="homeCardLabel3">내 익일 일정</div>
@@ -1036,7 +1064,7 @@
             <div class="summary-card">
               <div class="k">콜량</div>
               <div class="v" id="progressCalls">0</div>
-              <div class="s">갑디비 메모 기준</div>
+              <div class="s">교육섭외 DB 기준</div>
             </div>
             <div class="summary-card">
               <div class="k">실적 건수</div>
@@ -1091,32 +1119,47 @@
         <div class="view hidden" id="view-lead">
           <div class="section-head">
             <div>
-              <h4 id="leadTitle">갑디비</h4>
-              <p id="leadDesc">메모가 남으면 콜량으로 집계돼.</p>
+              <h4 id="leadTitle">교육섭외 DB</h4>
+              <p id="leadDesc">교육 사업장 데이터베이스를 관리하는 화면이야.</p>
             </div>
           </div>
 
+          <div class="edu-cat-row">
+            <button class="edu-cat-btn active" onclick="setLeadCat('lead',this)">📋 교육섭외 DB</button>
+            <button class="edu-cat-btn" onclick="setLeadCat('online',this)">🖥 온라인교육확인</button>
+            <span class="edu-org-tag">산업안전교육협회 &nbsp;·&nbsp; 한국나눔안전 &nbsp;·&nbsp; 대한안전교육협회</span>
+          </div>
+
           <div class="form-grid">
-            <input id="leadName" placeholder="고객명">
-            <input id="leadPhone" placeholder="연락처">
-            <input id="leadStatus" placeholder="상태 예: 재콜 필요">
-            <input id="leadOwner" placeholder="담당 직원명">
-            <textarea id="leadMemo" class="full" placeholder="메모"></textarea>
+            <input id="leadStaff" placeholder="섭외자" readonly>
+            <input id="leadDate" type="date">
+            <input id="leadCompany" placeholder="업체 / 사업장">
+            <input id="leadAddress" placeholder="주소">
+            <input id="leadManager" placeholder="키맨 (담당자)">
+            <input id="leadPhone" placeholder="연락처" oninput="onLeadPhoneInput()">
+            <input id="leadPeople" placeholder="인원">
+            <input id="leadIndustry" placeholder="업종" oninput="onLeadIndustryInput()">
+            <div class="lead-status-row">
+              <span style="font-size:13px;color:#64748b;font-weight:700;">교육 이수 여부</span>
+              <span id="leadStatusPreview" style="display:none;"></span>
+            </div>
           </div>
 
           <div class="toolbar">
-            <button class="small-btn" onclick="addLead()">갑디비 추가</button>
+            <button class="small-btn" onclick="addLead()">추가</button>
           </div>
 
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>고객명</th>
+                  <th>사업장</th>
+                  <th>주소</th>
+                  <th>키맨(담당자)</th>
                   <th>연락처</th>
-                  <th>상태</th>
-                  <th>메모</th>
-                  <th>담당</th>
+                  <th>인원</th>
+                  <th>업종</th>
+                  <th>교육 이수 확인 여부</th>
                 </tr>
               </thead>
               <tbody id="leadTableBody"></tbody>
@@ -1192,16 +1235,16 @@
           </div>
 
           <textarea id="manualScheduleText" class="manual-editor-text" placeholder="예시
-섭외자 : 
-날짜 : 
-시간 : 
-업체 : 
-주소 : 
-키맨 : 
-번호 : 
-인원 : 
-갑사: 
-은행 : 
+섭외자 :
+날짜 :
+시간 :
+업체 :
+주소 :
+키맨 :
+번호 :
+인원 :
+갑사:
+은행 :
 특이사항 : "></textarea>
 
           <div class="manual-editor-bottom">
@@ -1273,8 +1316,8 @@
     ];
 
     let leads = [
-      { id:301, name:"박서준", phone:"01011112222", status:"재콜 필요", memo:"오후 통화 요청", ownerNo:"1379", ownerName:"김성우", createdAt:"2026-03-10" },
-      { id:302, name:"최예린", phone:"01033334444", status:"상담중", memo:"다음주 재안내", ownerNo:"1218", ownerName:"이상혁", createdAt:"2026-03-10" }
+      { id:301, company:"예시사업장A", address:"인천 서구 청마로 66-7", manager:"홍길동", phone:"01011112222", people:"5명", industry:"음식점", status:"교육 미이수", ownerNo:"1379", ownerName:"김성우", createdAt:"2026-03-10" },
+      { id:302, company:"루원케어", address:"서울 서초구 방배로 123", manager:"김민수", phone:"01033334444", people:"3명", industry:"상조", status:"교육 이수", ownerNo:"1218", ownerName:"이상혁", createdAt:"2026-03-10" }
     ];
 
     function $(id){ return document.getElementById(id); }
@@ -1468,7 +1511,7 @@
         ["performance-report","📊","실적조회"],
         ["progress","📈","진행률"],
         ["staff","👥","직원관리"],
-        ["lead","🗂","갑디비"],
+        ["lead","🗂","교육섭외 DB"],
         ["settings","⚙️","관리자설정"]
       ] : [
         ["home","🏠","홈"],
@@ -1477,7 +1520,7 @@
         ["aggregate","📌","익일취합"],
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
-        ["lead","🗂","갑디비"]
+        ["lead","🗂","교육섭외 DB"]
       ];
 
       box.innerHTML = menus.map(m => `<div class="menu-item ${state.currentView===m[0] ? "active" : ""}" data-view="${m[0]}">${m[1]} ${m[2]}</div>`).join("");
@@ -1509,6 +1552,8 @@
       $("aggScope").querySelector('option[value="all"]').disabled = !admin;
       if(!admin) $("aggScope").value = "mine";
 
+      if($("leadStaff")) $("leadStaff").value = currentStaffName();
+      if($("leadDate")) $("leadDate").value = todayStr();
       onPerformanceTypeChange();
     }
 
@@ -1533,7 +1578,7 @@
         "performance-report":["실적조회","실적 조회 화면이야."],
         progress:["진행률","당월 / 선택일 진행률 화면이야."],
         staff:["직원관리","직원 정보를 관리하는 화면이야."],
-        lead:["갑디비","고객 DB 관리 화면이야."],
+        lead:["교육섭외 DB","교육 사업장 데이터베이스 화면이야."],
         settings:["관리자설정","관리자용 설정 화면이야."]
       };
 
@@ -1555,7 +1600,7 @@
       const month = monthPrefix();
 
       $("homeValue1").textContent = schedules.filter(s => s.createdAt === today).length;
-      $("homeValue2").textContent = leads.filter(l => normalizeText(l.memo)).length;
+      $("homeValue2").textContent = leads.length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month)).length;
     }
@@ -1567,7 +1612,7 @@
       const no = currentStaffNo();
 
       $("homeValue1").textContent = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
-      $("homeValue2").textContent = leads.filter(l => l.ownerNo === no && normalizeText(l.memo)).length;
+      $("homeValue2").textContent = leads.filter(l => l.ownerNo === no).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month) && s.createdByNo === no).length;
     }
@@ -2074,8 +2119,8 @@
       });
 
       const leadRows = getVisibleLeads().filter(l => {
-        if(tab === "month") return String(l.createdAt || "").startsWith(monthPrefix()) && normalizeText(l.memo);
-        return l.createdAt === selectedDate && normalizeText(l.memo);
+        if(tab === "month") return String(l.createdAt || "").startsWith(monthPrefix()) && normalizeText(l.company || "");
+        return l.createdAt === selectedDate && normalizeText(l.company || "");
       });
 
       const scheduleCount = scheduleRows.length;
@@ -2140,18 +2185,21 @@
       body.innerHTML = "";
 
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="5"><div class="empty">등록된 갑디비가 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="7"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
         return;
       }
 
       rows.forEach(l => {
+        const sc = l.status === "교육 이수" ? "edu-pass" : l.status === "교육 미이수" ? "edu-fail" : "";
         body.innerHTML += `
           <tr>
-            <td>${escapeHtml(l.name)}</td>
+            <td>${escapeHtml(l.company || "")}</td>
+            <td>${escapeHtml(l.address || "")}</td>
+            <td>${escapeHtml(l.manager || "")}</td>
             <td>${escapeHtml(formatPhone(l.phone))}</td>
-            <td>${escapeHtml(l.status)}</td>
-            <td>${escapeHtml(l.memo)}</td>
-            <td>${escapeHtml(l.ownerName)}</td>
+            <td>${escapeHtml(l.people || "")}</td>
+            <td>${escapeHtml(l.industry || "")}</td>
+            <td>${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}</td>
           </tr>
         `;
       });
@@ -2160,34 +2208,77 @@
     function addLead(){
       if(!state.currentUser) return;
 
-      const name = $("leadName").value.trim();
-      const phone = $("leadPhone").value.trim();
-      const status = $("leadStatus").value.trim();
-      const memo = $("leadMemo").value.trim();
-      const ownerName = isAdminMode() ? ($("leadOwner").value.trim() || currentStaffName()) : currentStaffName();
+      const company  = $("leadCompany").value.trim();
+      const address  = $("leadAddress").value.trim();
+      const manager  = $("leadManager").value.trim();
+      const phone    = normalizePhone($("leadPhone").value.trim());
+      const people   = $("leadPeople").value.trim();
+      const industry = $("leadIndustry").value.trim();
+      const status   = checkEducationStatus(industry);
 
-      if(!name || !phone) return alert("고객명과 연락처는 꼭 입력해줘.");
+      if(!company) return alert("업체/사업장명은 꼭 입력해줘.");
 
       leads.unshift({
         id: Date.now(),
-        name,
-        phone,
-        status,
-        memo,
+        company, address, manager, phone, people, industry, status,
         ownerNo: currentStaffNo(),
-        ownerName,
+        ownerName: currentStaffName(),
         createdAt: todayStr()
       });
 
-      $("leadName").value = "";
+      $("leadCompany").value = "";
+      $("leadAddress").value = "";
+      $("leadManager").value = "";
       $("leadPhone").value = "";
-      $("leadStatus").value = "";
-      $("leadOwner").value = "";
-      $("leadMemo").value = "";
+      $("leadPeople").value = "";
+      $("leadIndustry").value = "";
+      const prev = $("leadStatusPreview");
+      if(prev) prev.style.display = "none";
+
       renderLeads();
       runHomeSummary();
       loadProgress();
-      alert("갑디비 추가 완료");
+      alert("교육섭외 DB 추가 완료");
+    }
+
+    function checkEducationStatus(industry){
+      const v = normalizeText(industry);
+      if(!v) return "";
+      const FAIL = [
+        "주유소","충전소","음식점","정비소","공업사",
+        "과일","청과","마트","재래시장",
+        "카페","pc방",
+        "에셋","신탁","대부","금융","보험",
+        "농협","수협",
+        "학교","법률","언론사","요양소","폐기물","인력사무소"
+      ];
+      const lower = v.toLowerCase();
+      for(const kw of FAIL){
+        if(lower.includes(kw.toLowerCase())) return "교육 미이수";
+      }
+      return "교육 이수";
+    }
+
+    function onLeadIndustryInput(){
+      const industry = $("leadIndustry").value.trim();
+      const prev = $("leadStatusPreview");
+      if(!prev) return;
+      if(!industry){ prev.style.display = "none"; return; }
+      const s = checkEducationStatus(industry);
+      prev.textContent = s;
+      prev.className = s === "교육 이수" ? "edu-pass" : "edu-fail";
+      prev.style.display = "";
+    }
+
+    function onLeadPhoneInput(){
+      const el = $("leadPhone");
+      const raw = normalizePhone(el.value);
+      if(raw.length === 11) el.value = `${raw.slice(0,3)}-${raw.slice(3,7)}-${raw.slice(7)}`;
+    }
+
+    function setLeadCat(cat, el){
+      document.querySelectorAll(".edu-cat-btn").forEach(b => b.classList.remove("active"));
+      if(el) el.classList.add("active");
     }
 
     function isHolidayDate(dateStr){
