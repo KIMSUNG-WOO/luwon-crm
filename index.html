@@ -686,8 +686,9 @@
     .itin-popup{
       background:#fff;border-radius:20px;
       box-shadow:0 24px 64px rgba(0,0,0,.22);
-      width:100%;max-width:520px;
-      overflow:hidden;flex-shrink:0;
+      width:520px;max-width:calc(100vw - 32px);
+      box-sizing:border-box;flex-shrink:0;
+      overflow:visible;
     }
     .itin-popup-head{
       display:flex;justify-content:space-between;align-items:center;
@@ -701,14 +702,15 @@
     }
     /* 카드 본체 */
     .itinerary-card-wrap{
-      width:100%;
+      width:100%;box-sizing:border-box;
       font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;
-      border-top:2px solid #2e7d32;
-      border-bottom:2px solid #2e7d32;
+      border:2px solid #2e7d32;
+      border-radius:0 0 16px 16px;
+      overflow:hidden;
     }
     .itinerary-card-wrap table{
-      border-collapse:collapse;width:100%;
-      table-layout:fixed;
+      border-collapse:collapse;
+      width:100%;table-layout:fixed;
     }
     .itinerary-card-wrap .ic-title{
       background:#2e7d32;color:#fff;text-align:center;
@@ -1485,14 +1487,11 @@
 
         <div id="itineraryCardBody" class="itinerary-card-wrap">
           <table>
-            <colgroup>
-              <col style="width:34%"><col style="width:33%"><col style="width:33%">
-            </colgroup>
-            <tr><td colspan="3" class="ic-title">〈 강의 일정표 〉</td></tr>
+            <tr><td colspan="3" class="ic-title" style="width:100%">〈 강의 일정표 〉</td></tr>
             <tr>
-              <td class="ic-head">섭외자</td>
-              <td class="ic-head"></td>
-              <td class="ic-head">업종</td>
+              <td class="ic-head" style="width:34%">섭외자</td>
+              <td class="ic-head" style="width:33%"></td>
+              <td class="ic-head" style="width:33%">업종</td>
             </tr>
             <tr>
               <td class="ic-data" id="icAssignee"></td>
