@@ -2262,8 +2262,9 @@
 
         // 주소 → 네이버 지도 링크
         const addrText = escapeHtml(l.address || "");
+        const addrIdx = leads.indexOf(l);
         const addrCell = l.address
-          ? `<a href="https://map.naver.com/p/search/${encodeURIComponent(l.address)}" target="_blank" class="addr-link" title="네이버 지도에서 보기">${addrText} 🗺</a>`
+          ? `<span class="addr-link" onclick="openNaverMap(${addrIdx})" title="클릭하면 네이버 지도">${addrText}</span>`
           : "";
 
         // 교육 이수 여부: 관리자는 클릭 토글, 직원은 텍스트만
@@ -2590,7 +2591,7 @@
 
             // 자동 처리
             item.phone    = item.phone || "";  // 정규화 없이 원본 유지
-            item.status   = checkEducationStatus(item.industry || "");
+            item.status   = "교육 미이수";
             item.repName  = item.repName || "";
             item.ownerNo  = targetStaffNo;
             item.ownerName= targetStaffName;
@@ -2619,6 +2620,12 @@
         }
       };
       reader.readAsArrayBuffer(file);
+    }
+
+    function openNaverMap(idx){
+      const l = leads[idx];
+      if(!l || !l.address) return;
+      window.open("https://map.naver.com/v5/search/" + encodeURIComponent(l.address), "_blank");
     }
 
     function checkEducationStatus(industry){
