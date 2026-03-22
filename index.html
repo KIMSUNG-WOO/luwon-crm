@@ -1313,13 +1313,15 @@
 
   <!-- 교육섭외 DB 수정 모달 -->
   <div class="modal-backdrop hidden" id="leadEditModal" onclick="if(event.target===this)closeLeadEditModal()">
-    <div class="modal-card" style="max-width:560px;">
+    <div class="modal-card" style="max-width:580px;">
       <div class="modal-head">
-        <div><h4>교육섭외 DB 수정</h4><p>데이터를 수정한 뒤 저장을 눌러줘.</p></div>
+        <div><h4>교육섭외 DB 수정</h4><p>모든 항목을 수정한 뒤 저장을 눌러줘.</p></div>
         <button class="icon-btn" onclick="closeLeadEditModal()">✕</button>
       </div>
       <div class="form-grid" style="padding:20px 24px;">
         <input id="editLeadCompany" placeholder="업체 / 사업장">
+        <input id="editLeadOwnerName" placeholder="섭외자">
+        <input id="editLeadAddress" class="full" placeholder="주소">
         <input id="editLeadManager" placeholder="키맨 (담당자)">
         <input id="editLeadRepName" placeholder="대표자명">
         <input id="editLeadPhone" placeholder="연락처">
@@ -1327,7 +1329,24 @@
         <input id="editLeadAge" placeholder="연령대 예: 40대">
         <input id="editLeadSubject" placeholder="교육과목">
         <input id="editLeadIndustry" placeholder="업종">
-        <input id="editLeadAddress" class="full" placeholder="주소">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <span style="font-size:12px;color:#64748b;font-weight:700;">교육 이수 여부</span>
+          <select id="editLeadStatus" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);font-size:14px;font-weight:700;">
+            <option value="교육 미이수">교육 미이수</option>
+            <option value="교육 이수">교육 이수</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <span style="font-size:12px;color:#64748b;font-weight:700;">결과값</span>
+          <select id="editLeadResult" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);font-size:14px;font-weight:700;">
+            <option value="">선택</option>
+            <option value="부재">부재</option>
+            <option value="결번">결번</option>
+            <option value="확인후연락">확인후연락</option>
+            <option value="일정픽스">일정픽스</option>
+          </select>
+        </div>
+        <textarea id="editLeadMemo" class="full" rows="3" placeholder="메모" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 24px 24px;">
         <button class="ghost-btn" onclick="closeLeadEditModal()">취소</button>
@@ -2477,18 +2496,22 @@
 
     function openLeadEditModal(id){
       if(!isAdminMode()) return;
-      const l = leads.find(x => x.id === id);
+      const l = leads.find(x => String(x.id) === String(id));
       if(!l) return;
       _editLeadId = id;
-      $("editLeadCompany").value  = l.company  || "";
-      $("editLeadManager").value  = l.manager  || "";
-      $("editLeadRepName").value  = l.repName  || "";
-      $("editLeadPhone").value    = l.phone    || "";
-      $("editLeadPeople").value   = l.people   || "";
-      $("editLeadAge").value      = l.age      || "";
-      $("editLeadSubject").value  = l.subject  || "";
-      $("editLeadIndustry").value = l.industry || "";
-      $("editLeadAddress").value  = l.address  || "";
+      $("editLeadCompany").value   = l.company   || "";
+      $("editLeadOwnerName").value = l.ownerName || "";
+      $("editLeadAddress").value   = l.address   || "";
+      $("editLeadManager").value   = l.manager   || "";
+      $("editLeadRepName").value   = l.repName   || "";
+      $("editLeadPhone").value     = l.phone     || "";
+      $("editLeadPeople").value    = l.people    || "";
+      $("editLeadAge").value       = l.age       || "";
+      $("editLeadSubject").value   = l.subject   || "";
+      $("editLeadIndustry").value  = l.industry  || "";
+      $("editLeadStatus").value    = l.status    || "교육 미이수";
+      $("editLeadResult").value    = l.result    || "";
+      $("editLeadMemo").value      = l.memo      || "";
       $("leadEditModal").classList.remove("hidden");
     }
 
@@ -2502,16 +2525,19 @@
       const l = leads.find(x => x.id === _editLeadId);
       if(!l) return;
 
-      l.company  = $("editLeadCompany").value.trim();
-      l.manager  = $("editLeadManager").value.trim();
-      l.repName  = $("editLeadRepName").value.trim();
-      l.phone    = $("editLeadPhone").value.trim();
-      l.people   = $("editLeadPeople").value.trim();
-      l.age      = $("editLeadAge").value.trim();
-      l.subject  = $("editLeadSubject").value.trim();
-      l.industry = $("editLeadIndustry").value.trim();
-      l.address  = $("editLeadAddress").value.trim();
-      l.status   = checkEducationStatus(l.industry);
+      l.company   = $("editLeadCompany").value.trim();
+      l.ownerName = $("editLeadOwnerName").value.trim();
+      l.address   = $("editLeadAddress").value.trim();
+      l.manager   = $("editLeadManager").value.trim();
+      l.repName   = $("editLeadRepName").value.trim();
+      l.phone     = $("editLeadPhone").value.trim();
+      l.people    = $("editLeadPeople").value.trim();
+      l.age       = $("editLeadAge").value.trim();
+      l.subject   = $("editLeadSubject").value.trim();
+      l.industry  = $("editLeadIndustry").value.trim();
+      l.status    = $("editLeadStatus").value;
+      l.result    = $("editLeadResult").value;
+      l.memo      = $("editLeadMemo").value.trim();
 
       closeLeadEditModal();
       renderLeads();
@@ -2519,16 +2545,19 @@
       // Supabase 업데이트
       try{
         const { error } = await sbClient.from("education_db").update({
-          company:   l.company,
-          manager:   l.manager,
-          rep_name:  l.repName,
-          phone:     l.phone,
-          people:    l.people,
-          age_group: l.age,
-          subject:   l.subject,
-          industry:  l.industry,
-          address:   l.address,
-          status:    l.status
+          company:    l.company,
+          staff_name: l.ownerName,
+          address:    l.address,
+          manager:    l.manager,
+          rep_name:   l.repName,
+          phone:      l.phone,
+          people:     l.people,
+          age_group:  l.age,
+          subject:    l.subject,
+          industry:   l.industry,
+          status:     l.status,
+          result:     l.result,
+          memo:       l.memo
         }).eq("id", l.id);
         if(error) throw error;
         showLeadMsg("✅ 수정 완료!", "");
@@ -2800,7 +2829,7 @@
     let _memoLeadId = null;
 
     function openLeadMemoModal(id){
-      const l = leads.find(x => x.id === id);
+      const l = leads.find(x => String(x.id) === String(id));
       if(!l) return;
       _memoLeadId = id;
       $("leadMemoCompanyLabel").textContent = l.company || "";
@@ -2816,7 +2845,7 @@
 
     async function saveLeadMemo(){
       if(!_memoLeadId) return;
-      const l = leads.find(x => x.id === _memoLeadId);
+      const l = leads.find(x => String(x.id) === String(_memoLeadId));
       if(!l) return;
       l.memo = $("leadMemoText").value.trim();
       closeLeadMemoModal();
@@ -2833,7 +2862,7 @@
     let _resultFixAmPm = "오전";
 
     function onResultChange(id, value){
-      const l = leads.find(x => x.id === id);
+      const l = leads.find(x => String(x.id) === String(id));
       if(!l) return;
       if(value === "일정픽스"){
         _resultFixLeadId = id;
