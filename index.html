@@ -6,648 +6,749 @@
   <title>LUWON CRM</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    /* ══════════════════════════════════════
+       LUWON CRM — Modern Professional Theme
+    ══════════════════════════════════════ */
     :root{
-      --bg:#eef4fb;
-      --bg2:#f7fbff;
+      --bg:#f0f4f8;
+      --bg2:#f8fafc;
       --panel:#ffffff;
-      --line:#dbe5f0;
-      --text:#142033;
-      --muted:#6b7a90;
-      --primary:#4f46e5;
+      --line:#e2e8f0;
+      --line2:#f1f5f9;
+      --text:#0f172a;
+      --text2:#1e293b;
+      --muted:#64748b;
+      --primary:#3b82f6;
       --primary2:#2563eb;
-      --danger:#e11d48;
+      --primary-dark:#1d4ed8;
+      --danger:#ef4444;
+      --danger2:#dc2626;
       --ok:#059669;
-      --shadow:0 18px 50px rgba(26,44,78,.10);
+      --ok2:#10b981;
+      --warn:#f59e0b;
+      --sidebar-bg:#0f172a;
+      --sidebar-hover:rgba(255,255,255,.06);
+      --sidebar-active-bg:rgba(59,130,246,.18);
+      --sidebar-active-border:rgba(59,130,246,.35);
+      --sidebar-text:#94a3b8;
+      --sidebar-text-active:#f1f5f9;
+      --shadow-xs:0 1px 2px rgba(0,0,0,.06);
+      --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.05);
+      --shadow:0 4px 16px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.05);
+      --shadow-lg:0 8px 32px rgba(0,0,0,.10),0 2px 8px rgba(0,0,0,.06);
+      --shadow-xl:0 20px 60px rgba(0,0,0,.14),0 4px 16px rgba(0,0,0,.08);
+      --r4:4px; --r6:6px; --r8:8px; --r10:10px;
+      --r12:12px; --r14:14px; --r16:16px; --r20:20px; --r24:24px;
     }
 
-    *{box-sizing:border-box}
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{height:100%}
     html,body{
-      margin:0;padding:0;min-height:100vh;
-      font-family:Arial,"Noto Sans KR",sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(79,70,229,.07), transparent 24%),
-        radial-gradient(circle at bottom right, rgba(20,184,166,.06), transparent 22%),
-        linear-gradient(180deg, var(--bg2), var(--bg));
+      min-height:100vh;
+      font-family:"Noto Sans KR",Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+      background:var(--bg);
       color:var(--text);
+      font-size:14px;
+      line-height:1.6;
+      -webkit-font-smoothing:antialiased;
     }
-
-    body{padding:20px}
+    body{padding:0}
     .hidden{display:none !important}
 
+    /* ══════════════════════════════════════
+       LOGIN PAGE
+    ══════════════════════════════════════ */
     .login-page{
-      min-height:calc(100vh - 40px);
+      min-height:100vh;
       display:grid;
-      grid-template-columns:1fr 460px;
-      gap:20px;
+      grid-template-columns:1fr 480px;
     }
 
-    .left-card,.login-card,.sidebar,.topbar,.content-card{
-      background:rgba(255,255,255,.88);
-      backdrop-filter:blur(14px);
-      border:1px solid rgba(255,255,255,.85);
-      box-shadow:var(--shadow);
-      border-radius:32px;
-    }
-
+    /* Left branding panel */
     .left-card{
-      padding:34px;
+      background:linear-gradient(145deg,#0c1628 0%,#122040 45%,#0c1628 100%);
+      padding:52px 60px;
       display:flex;
       flex-direction:column;
       justify-content:space-between;
-      min-height:calc(100vh - 40px);
-      background:linear-gradient(135deg, rgba(255,255,255,.95), rgba(245,249,255,.92));
       position:relative;
       overflow:hidden;
     }
-
     .left-card::before{
-      content:"";
-      position:absolute;
-      right:-80px;
-      top:-80px;
-      width:260px;
-      height:260px;
-      border-radius:50%;
-      background:radial-gradient(circle, rgba(79,70,229,.12), transparent 70%);
+      content:"";position:absolute;
+      width:700px;height:700px;border-radius:50%;
+      background:radial-gradient(circle,rgba(59,130,246,.12) 0%,transparent 65%);
+      top:-250px;right:-250px;pointer-events:none;
     }
-
     .left-card::after{
-      content:"";
-      position:absolute;
-      left:-70px;
-      bottom:-70px;
-      width:220px;
-      height:220px;
-      border-radius:50%;
-      background:radial-gradient(circle, rgba(20,184,166,.10), transparent 70%);
+      content:"";position:absolute;
+      width:480px;height:480px;border-radius:50%;
+      background:radial-gradient(circle,rgba(99,102,241,.10) 0%,transparent 65%);
+      bottom:-180px;left:-120px;pointer-events:none;
     }
+    .left-card > *{position:relative;z-index:1}
 
-    .left-card > *{position:relative; z-index:1}
-
-    .brand{display:flex;align-items:center;gap:16px}
+    .brand{display:flex;align-items:center;gap:20px}
     .logo-wrap{
-      width:68px;height:68px;border-radius:22px;
-      background:linear-gradient(145deg,#fff,#dfe9f7);
-      box-shadow:
-        inset 0 2px 10px rgba(255,255,255,.9),
-        inset 0 -8px 18px rgba(79,70,229,.10),
-        0 14px 28px rgba(37,99,235,.16);
-      display:flex;align-items:center;justify-content:center;position:relative;
+      width:58px;height:58px;border-radius:16px;
+      background:linear-gradient(135deg,#3b82f6 0%,#6366f1 100%);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+      box-shadow:0 8px 24px rgba(59,130,246,.40);
     }
-
-    .logo-wrap::before{
-      content:"";
-      position:absolute;inset:6px;border-radius:18px;
-      background:linear-gradient(145deg,#7dd3fc,#4f46e5);
-      opacity:.16;
-    }
-
     .logo{
-      position:relative;
-      font-size:34px;font-weight:800;letter-spacing:-2px;line-height:1;
-      background:linear-gradient(180deg,#6ee7f9,#2563eb 55%,#312e81);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
+      font-size:26px;font-weight:900;letter-spacing:-1px;
+      color:#fff;background:none;-webkit-text-fill-color:#fff;
     }
+    .brand h1{color:#f1f5f9;font-size:27px;letter-spacing:-0.5px;font-weight:800}
+    .brand p{color:#64748b;font-size:13px;margin-top:4px}
 
-    .brand h1{margin:0;font-size:32px;letter-spacing:-1px}
-    .brand p{margin:6px 0 0;color:var(--muted);font-size:15px}
-
-    .hero{margin-top:10px}
-    .hero .date-time{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+    .hero{margin-top:40px}
+    .hero .date-time{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px}
 
     .chip{
-      display:inline-flex;align-items:center;height:38px;padding:0 14px;
-      border-radius:999px;background:#fff;border:1px solid var(--line);
-      color:#314056;font-size:13px;font-weight:700;
-      box-shadow:0 6px 16px rgba(0,0,0,.04);
+      display:inline-flex;align-items:center;height:34px;padding:0 16px;
+      border-radius:999px;
+      background:rgba(255,255,255,.07);
+      border:1px solid rgba(255,255,255,.11);
+      color:#cbd5e1;font-size:12px;font-weight:600;
     }
 
     .hero h2{
-      margin:0;font-size:54px;line-height:1.15;letter-spacing:-2px;
+      color:#f1f5f9;font-size:46px;line-height:1.15;letter-spacing:-2px;font-weight:900;
     }
-
     .hero p{
-      margin:18px 0 0;max-width:720px;color:#506176;font-size:18px;line-height:1.8;
+      margin-top:20px;color:#64748b;font-size:15px;line-height:1.85;max-width:540px;
     }
 
     .notice-card{
-      margin-top:26px;background:rgba(255,255,255,.82);
-      border:1px solid var(--line);border-radius:28px;padding:24px;
+      margin-top:32px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:20px;padding:24px;
     }
-
-    .notice-card h3{margin:0 0 16px;font-size:22px}
+    .notice-card h3{margin:0 0 16px;font-size:17px;color:#e2e8f0;font-weight:800}
     .notice-item{
       display:flex;justify-content:space-between;gap:14px;
-      padding:14px 0;border-bottom:1px solid #e8eef6;
+      padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06);
     }
     .notice-item:last-child{border-bottom:0}
-    .notice-item b{display:block;font-size:15px;margin-bottom:6px}
-    .notice-item span{color:var(--muted);font-size:13px;line-height:1.6}
+    .notice-item b{display:block;font-size:13px;margin-bottom:3px;color:#cbd5e1;font-weight:700}
+    .notice-item span{color:#475569;font-size:12px;line-height:1.6}
 
     .pill{
-      display:inline-flex;align-items:center;height:30px;padding:0 10px;
-      border-radius:999px;background:#eff6ff;color:#2563eb;
-      border:1px solid #dbeafe;font-size:12px;font-weight:800;white-space:nowrap;
+      display:inline-flex;align-items:center;height:24px;padding:0 10px;
+      border-radius:999px;
+      background:rgba(59,130,246,.18);color:#93c5fd;
+      border:1px solid rgba(59,130,246,.28);font-size:11px;font-weight:700;white-space:nowrap;
     }
 
+    /* Right login form */
     .login-card{
-      padding:30px;display:flex;flex-direction:column;justify-content:center;
-      min-height:calc(100vh - 40px);
+      background:#ffffff;
+      padding:56px 48px;
+      display:flex;flex-direction:column;justify-content:center;
+      min-height:100vh;
+      box-shadow:-6px 0 48px rgba(0,0,0,.08);
     }
-
-    .login-head{
-      display:flex;justify-content:space-between;align-items:flex-start;
-      gap:12px;margin-bottom:22px;
-    }
-
-    .login-head h2{margin:0;font-size:36px;letter-spacing:-1px}
-    .login-head p{margin:10px 0 0;color:var(--muted);font-size:14px;line-height:1.7}
+    .login-head{margin-bottom:36px}
+    .login-head h2{font-size:30px;letter-spacing:-0.5px;font-weight:900;color:var(--text)}
+    .login-head p{margin-top:8px;color:var(--muted);font-size:13px;line-height:1.7}
 
     .secure{
-      padding:10px 12px;border-radius:14px;background:#eef2ff;color:#4338ca;
-      border:1px solid #c7d2fe;font-size:12px;font-weight:800;white-space:nowrap;
+      display:inline-flex;align-items:center;gap:5px;margin-top:12px;
+      padding:5px 12px;border-radius:999px;
+      background:#eff6ff;color:#2563eb;
+      border:1px solid #bfdbfe;font-size:11px;font-weight:700;
     }
 
-    .field{margin-bottom:14px}
+    .field{margin-bottom:16px}
     .field label{
-      display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#334155;
+      display:block;margin-bottom:7px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.4px;
     }
 
     .input-wrap{position:relative}
     .input{
-      width:100%;height:58px;border-radius:18px;border:1px solid var(--line);
-      background:#f8fbff;color:var(--text);padding:0 16px 0 48px;font-size:15px;outline:none;
+      width:100%;height:50px;border-radius:var(--r10);
+      border:1.5px solid #e2e8f0;
+      background:#f9fafb;
+      color:var(--text);padding:0 16px 0 44px;font-size:14px;outline:none;
+      transition:border-color .15s,box-shadow .15s,background .15s;
     }
     .input:focus{
-      border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.10);background:#fff;
+      border-color:#93c5fd;
+      box-shadow:0 0 0 3px rgba(59,130,246,.12);
+      background:#fff;
     }
-
     .icon{
-      position:absolute;left:16px;top:50%;transform:translateY(-50%);
-      color:#94a3b8;font-size:16px;pointer-events:none;
+      position:absolute;left:14px;top:50%;transform:translateY(-50%);
+      color:#9ca3af;font-size:15px;pointer-events:none;
     }
 
     .sub-row{
-      display:flex;justify-content:space-between;align-items:center;gap:12px;
-      margin:8px 0 18px;color:var(--muted);font-size:13px;
+      display:flex;justify-content:space-between;align-items:center;
+      margin:10px 0 20px;color:var(--muted);font-size:13px;
     }
 
     .login-btn{
-      height:58px;border:0;border-radius:18px;
-      background:linear-gradient(135deg,var(--primary),var(--primary2));
-      color:#fff;font-size:16px;font-weight:800;cursor:pointer;
-      box-shadow:0 16px 28px rgba(79,70,229,.18);width:100%;
+      height:50px;border:0;border-radius:var(--r10);
+      background:linear-gradient(135deg,#3b82f6,#2563eb);
+      color:#fff;font-size:14px;font-weight:800;cursor:pointer;
+      box-shadow:0 4px 20px rgba(59,130,246,.32);width:100%;
+      transition:transform .15s,box-shadow .15s;letter-spacing:0.3px;
     }
+    .login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(59,130,246,.38)}
+    .login-btn:active{transform:translateY(0)}
 
     .msg{
-      margin-top:14px;padding:14px 16px;border-radius:16px;font-size:13px;line-height:1.6;display:none;
+      margin-top:12px;padding:12px 16px;border-radius:var(--r10);font-size:13px;line-height:1.6;display:none;
     }
     .msg.show{display:block}
-    .msg.error{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}
+    .msg.error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+    .msg.show:not(.error){background:#f0fdf4;color:#059669;border:1px solid #bbf7d0}
 
     .guide{
-      margin-top:18px;border-radius:20px;border:1px dashed #d6e2ef;background:#f8fbff;
-      padding:16px;color:#5b6b81;font-size:12px;line-height:1.7;
+      margin-top:18px;border-radius:var(--r10);border:1px solid #e2e8f0;background:#f9fafb;
+      padding:14px 16px;color:#6b7280;font-size:12px;line-height:1.7;
     }
-    .guide b{display:block;color:#1e293b;margin-bottom:6px;font-size:13px}
+    .guide b{display:block;color:#374151;margin-bottom:4px;font-size:12px;font-weight:700}
 
+    /* ══════════════════════════════════════
+       DASHBOARD LAYOUT
+    ══════════════════════════════════════ */
     .dashboard{
-      display:none;min-height:calc(100vh - 40px);
-      grid-template-columns:280px 1fr;gap:18px;
+      display:none;min-height:100vh;
+      grid-template-columns:256px 1fr;
     }
 
+    /* SIDEBAR */
     .sidebar{
-      padding:20px;display:flex;flex-direction:column;gap:16px;
-      background:linear-gradient(180deg,#ffffff,#f7fbff);
+      background:var(--sidebar-bg);
+      padding:20px 12px;
+      display:flex;flex-direction:column;gap:4px;
+      position:sticky;top:0;height:100vh;overflow-y:auto;
+      border-right:1px solid rgba(255,255,255,.04);
     }
+    .sidebar::-webkit-scrollbar{width:3px}
+    .sidebar::-webkit-scrollbar-track{background:transparent}
+    .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:2px}
 
-    .side-brand{display:flex;align-items:center;gap:12px;padding:6px}
-    .side-brand .logo-wrap{width:50px;height:50px;border-radius:16px}
-    .side-brand .logo{font-size:25px}
-    .side-brand strong{display:block;font-size:18px}
-    .side-brand span{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+    .side-brand{
+      display:flex;align-items:center;gap:12px;
+      padding:10px 12px 20px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      margin-bottom:10px;
+    }
+    .side-brand .logo-wrap{width:38px;height:38px;border-radius:10px;flex-shrink:0}
+    .side-brand .logo{font-size:18px}
+    .side-brand strong{display:block;font-size:15px;color:#f1f5f9;font-weight:800;letter-spacing:-0.3px}
+    .side-brand span{display:block;font-size:10px;color:#475569;margin-top:2px}
 
     .profile{
-      border-radius:22px;padding:16px;background:#f8fbff;border:1px solid var(--line);
+      border-radius:var(--r10);padding:14px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+      margin-bottom:8px;
     }
-    .profile .name{font-size:20px;font-weight:800;margin-bottom:8px}
-    .profile .desc{color:var(--muted);font-size:13px;line-height:1.7}
-    .profile .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .profile .name{font-size:15px;font-weight:800;margin-bottom:5px;color:#f1f5f9}
+    .profile .desc{color:#475569;font-size:12px;line-height:1.5}
+    .profile .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+    .profile .chip{
+      background:rgba(59,130,246,.14);
+      border:1px solid rgba(59,130,246,.22);
+      color:#93c5fd;font-size:10px;height:22px;padding:0 8px;
+    }
 
     .menu{
-      display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:calc(100vh - 340px);padding-right:2px;
+      display:flex;flex-direction:column;gap:1px;
+      overflow:auto;flex:1;
     }
+    .menu::-webkit-scrollbar{width:0}
 
     .menu-item{
-      display:flex;align-items:center;gap:12px;border-radius:18px;padding:14px 16px;
-      background:#fff;border:1px solid #e7eef7;color:#22314a;font-size:14px;font-weight:800;cursor:pointer;
+      display:flex;align-items:center;gap:10px;border-radius:var(--r8);padding:10px 14px;
+      background:transparent;border:1px solid transparent;
+      color:var(--sidebar-text);font-size:13px;font-weight:600;
+      cursor:pointer;transition:all .15s;
     }
-    .menu-item:hover{transform:translateX(2px);background:#f8fbff}
+    .menu-item:hover{
+      background:var(--sidebar-hover);
+      color:#e2e8f0;
+    }
     .menu-item.active{
-      background:linear-gradient(135deg,var(--primary),var(--primary2));
-      color:#fff;border-color:transparent;box-shadow:0 14px 24px rgba(79,70,229,.18);
+      background:var(--sidebar-active-bg);
+      color:var(--sidebar-text-active);
+      border-color:var(--sidebar-active-border);
+      font-weight:800;
     }
 
     .logout{
-      margin-top:auto;height:52px;border-radius:18px;border:1px solid var(--line);
-      background:#fff;color:#1f2d42;font-size:15px;font-weight:800;cursor:pointer;
+      height:42px;border-radius:var(--r8);
+      border:1px solid rgba(255,255,255,.07);
+      background:transparent;color:#475569;
+      font-size:13px;font-weight:600;cursor:pointer;
+      transition:all .15s;margin-top:8px;width:100%;
     }
+    .logout:hover{background:rgba(239,68,68,.08);color:#f87171;border-color:rgba(239,68,68,.18)}
 
-    .main{display:flex;flex-direction:column;gap:18px}
+    /* MAIN CONTENT AREA */
+    .main{display:flex;flex-direction:column;background:var(--bg);min-height:100vh;padding:20px 24px;gap:16px}
 
+    /* TOPBAR */
     .topbar{
-      padding:22px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
-      background:linear-gradient(135deg,#ffffff,#f7fbff);
+      background:var(--panel);
+      padding:18px 24px;
+      display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+      border-radius:var(--r14);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow-sm);
     }
-    .topbar h3{margin:0;font-size:32px;letter-spacing:-1px}
-    .topbar p{margin:8px 0 0;color:var(--muted);font-size:14px}
-    .top-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .topbar h3{font-size:22px;letter-spacing:-0.3px;font-weight:900;color:var(--text)}
+    .topbar p{margin-top:3px;color:var(--muted);font-size:12px}
+    .top-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
     .mode-toggle{
-      display:flex;gap:8px;padding:6px;background:#eef4fb;border:1px solid var(--line);border-radius:16px;
+      display:flex;gap:3px;padding:3px;
+      background:#f1f5f9;border:1px solid var(--line);border-radius:var(--r8);
     }
     .mode-btn{
-      height:38px !important;border-radius:12px !important;padding:0 12px !important;
-      border:1px solid transparent;background:#fff;color:#22314a;font-size:13px;font-weight:800;cursor:pointer;
+      height:34px !important;border-radius:6px !important;padding:0 12px !important;
+      border:1px solid transparent;background:transparent;
+      color:#64748b;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;
     }
     .mode-btn.active{
-      background:linear-gradient(135deg,var(--primary),var(--primary2)) !important;
-      color:#fff !important;border-color:transparent !important;
+      background:#ffffff !important;
+      color:var(--primary) !important;
+      border-color:var(--line) !important;
+      box-shadow:var(--shadow-xs) !important;
+      font-weight:800 !important;
     }
 
+    /* CONTENT CARD */
     .content-card{
-      padding:22px;min-height:620px;background:linear-gradient(180deg,#ffffff,#fbfdff);
+      background:var(--panel);
+      padding:24px;
+      border-radius:var(--r14);
+      border:1px solid var(--line);
+      box-shadow:var(--shadow-sm);
+      flex:1;min-height:560px;
     }
 
+    /* SECTION HEADER */
     .section-head{
-      display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;
+      display:flex;justify-content:space-between;align-items:center;
+      gap:12px;flex-wrap:wrap;margin-bottom:20px;
+      padding-bottom:16px;border-bottom:1px solid var(--line);
     }
-    .section-head h4{margin:0;font-size:24px}
-    .section-head p{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .section-head h4{font-size:18px;font-weight:800;color:var(--text)}
+    .section-head p{margin-top:3px;color:var(--muted);font-size:12px}
 
+    /* SUMMARY GRID */
     .summary-grid{
-      display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px;
+      display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;
     }
     .summary-card{
-      padding:18px;border-radius:22px;border:1px solid var(--line);background:#f8fbff;
+      padding:18px 20px;border-radius:var(--r12);
+      border:1px solid var(--line);background:#fff;
+      transition:box-shadow .15s,transform .15s;cursor:default;
     }
-    .summary-card .k{font-size:13px;color:#5e7190;font-weight:800;margin-bottom:10px;line-height:1.6}
-    .summary-card .v{font-size:34px;font-weight:800;letter-spacing:-1px}
-    .summary-card .s{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.6}
+    .summary-card:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
+    .summary-card .k{
+      font-size:11px;color:var(--muted);font-weight:700;
+      margin-bottom:10px;text-transform:uppercase;letter-spacing:0.6px;
+    }
+    .summary-card .v{font-size:28px;font-weight:900;letter-spacing:-1px;color:var(--text)}
+    .summary-card .s{margin-top:6px;color:var(--muted);font-size:11px;line-height:1.5}
 
-    .split-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:16px}
+    /* ── PANELS & LAYOUT ── */
+    .split-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}
     .panel{
-      padding:18px;border-radius:22px;border:1px solid var(--line);background:#f8fbff;
+      padding:18px;border-radius:var(--r12);border:1px solid var(--line);background:#fff;
     }
-    .panel h5{margin:0 0 8px;font-size:18px}
-    .panel p{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.7}
+    .panel h5{font-size:15px;font-weight:800;margin-bottom:6px}
+    .panel p{color:var(--muted);font-size:13px;line-height:1.6;margin-bottom:12px}
 
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-    .toolbar input,.toolbar select,.form-grid input,.form-grid textarea,.form-grid select{
-      height:46px;border-radius:14px;border:1px solid var(--line);background:#fff;padding:0 14px;font-size:14px;outline:none;color:#22314a;
+    /* ── TOOLBAR & INPUTS ── */
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+    .toolbar input,.toolbar select,
+    .form-grid input,.form-grid textarea,.form-grid select{
+      height:40px;border-radius:var(--r8);
+      border:1.5px solid var(--line);background:#fff;
+      padding:0 13px;font-size:13px;outline:none;color:var(--text);
+      transition:border-color .15s,box-shadow .15s;
+      font-family:inherit;
     }
-    .form-grid textarea{min-height:120px;padding:14px;resize:vertical}
+    .toolbar input:focus,.toolbar select:focus,
+    .form-grid input:focus,.form-grid textarea:focus,.form-grid select:focus{
+      border-color:#93c5fd;
+      box-shadow:0 0 0 3px rgba(59,130,246,.10);
+    }
+    .form-grid textarea{min-height:96px;padding:11px 13px;resize:vertical;height:auto}
+
     .toolbar button,.small-btn,.ghost-btn,.danger-btn{
-      height:46px;border-radius:14px;padding:0 16px;font-size:14px;font-weight:800;cursor:pointer;
+      height:40px;border-radius:var(--r8);padding:0 16px;
+      font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;white-space:nowrap;
+      font-family:inherit;
     }
-    .small-btn{border:0;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff}
-    .ghost-btn{border:1px solid var(--line);background:#fff;color:#22314a}
-    .danger-btn{border:0;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}
+    .small-btn{
+      border:0;background:var(--primary);color:#fff;
+      box-shadow:0 2px 8px rgba(59,130,246,.28);
+    }
+    .small-btn:hover{background:var(--primary2);box-shadow:0 4px 14px rgba(59,130,246,.34)}
+    .ghost-btn{
+      border:1.5px solid var(--line);background:#fff;color:var(--text2);
+    }
+    .ghost-btn:hover{background:#f8fafc;border-color:#cbd5e1}
+    .danger-btn{
+      border:0;background:var(--danger);color:#fff;
+      box-shadow:0 2px 8px rgba(239,68,68,.22);
+    }
+    .danger-btn:hover{background:var(--danger2)}
 
+    /* ── TABLE ── */
     .table-wrap{
-      border:1px solid var(--line);border-radius:20px;overflow:auto;background:#fff;
+      border:1px solid var(--line);border-radius:var(--r12);overflow:auto;background:#fff;
     }
     table{width:100%;border-collapse:collapse;min-width:760px}
-    th,td{padding:14px 16px;border-bottom:1px solid #edf2f7;text-align:left;font-size:14px;vertical-align:top}
-    th{background:#f8fbff;color:#42546d;font-size:13px;font-weight:800;white-space:nowrap}
+    th{
+      background:#f8fafc;color:#6b7280;
+      font-size:11px;font-weight:700;
+      text-transform:uppercase;letter-spacing:0.5px;
+      padding:11px 14px;
+      border-bottom:1px solid var(--line);white-space:nowrap;
+    }
+    td{
+      padding:10px 14px;
+      border-bottom:1px solid #f1f5f9;
+      text-align:left;font-size:13px;vertical-align:middle;
+    }
     tr:last-child td{border-bottom:0}
+    tr:hover td{background:#fafcff}
 
-    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+    /* ── FORM GRID ── */
+    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
     .form-grid .full{grid-column:1 / -1}
 
+    /* ── EMPTY STATE ── */
     .empty{
-      padding:26px;border-radius:20px;border:1px dashed #d6e2ef;background:#f8fbff;color:var(--muted);text-align:center;font-size:14px;
+      padding:36px;border-radius:var(--r12);
+      border:1.5px dashed #e2e8f0;background:#f9fafb;
+      color:var(--muted);text-align:center;font-size:13px;
     }
 
-    .home-notice-list,.stack-list{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+    /* ── NOTICE / STACK ── */
+    .home-notice-list,.stack-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
     .home-notice,.stack-item{
-      padding:16px;border-radius:18px;border:1px solid var(--line);background:#f8fbff;
+      padding:14px 16px;border-radius:var(--r10);border:1px solid var(--line);background:#f9fafb;
     }
-    .home-notice b,.stack-item b{display:block;margin-bottom:6px}
-    .home-notice span,.stack-item span{color:var(--muted);font-size:13px;line-height:1.7}
+    .home-notice b,.stack-item b{display:block;margin-bottom:4px;font-size:13px;font-weight:700}
+    .home-notice span,.stack-item span{color:var(--muted);font-size:12px;line-height:1.6}
 
-    .tab-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    /* ── TABS ── */
+    .tab-row{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
     .tab-btn{
-      height:42px;border-radius:12px;border:1px solid var(--line);background:#fff;color:#22314a;
-      padding:0 14px;font-size:13px;font-weight:800;cursor:pointer;
+      height:36px;border-radius:var(--r8);border:1.5px solid var(--line);
+      background:#fff;color:#64748b;
+      padding:0 16px;font-size:13px;font-weight:700;cursor:pointer;
+      transition:all .15s;font-family:inherit;
     }
-    .tab-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-color:transparent}
+    .tab-btn:hover{border-color:#93c5fd;color:var(--primary)}
+    .tab-btn.active{
+      background:var(--primary);color:#fff;border-color:var(--primary);
+      box-shadow:0 2px 8px rgba(59,130,246,.22);
+    }
 
+    /* ── BADGES ── */
     .status-badge{
-      display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:999px;
-      font-size:12px;font-weight:800;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;white-space:nowrap;
+      display:inline-flex;align-items:center;height:22px;padding:0 9px;
+      border-radius:999px;font-size:11px;font-weight:700;
+      background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;white-space:nowrap;
     }
-    .notice-inline{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .notice-inline{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 
+    /* ── CALENDAR ── */
     .calendar-head{
       display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;
     }
-    .calendar-title{font-size:18px;font-weight:800}
-    .calendar-nav{display:flex;gap:8px}
+    .calendar-title{font-size:15px;font-weight:800}
+    .calendar-nav{display:flex;gap:5px}
     .calendar-nav button{
-      height:38px;border-radius:12px;border:1px solid var(--line);background:#fff;padding:0 12px;cursor:pointer;font-weight:800;
+      height:32px;border-radius:var(--r6);border:1.5px solid var(--line);
+      background:#fff;padding:0 11px;cursor:pointer;font-weight:700;font-size:12px;
+      transition:background .15s;
     }
-    .calendar-grid{
-      display:grid;grid-template-columns:repeat(7,1fr);gap:8px;
-    }
+    .calendar-nav button:hover{background:#f1f5f9}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
     .calendar-dow{
-      text-align:center;font-size:12px;font-weight:800;color:#64748b;padding:6px 0;
+      text-align:center;font-size:10px;font-weight:700;color:#9ca3af;
+      padding:5px 0;text-transform:uppercase;
     }
     .calendar-cell{
-      min-height:92px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:8px;cursor:pointer;
-      display:flex;flex-direction:column;gap:6px;
+      min-height:76px;border:1.5px solid #f1f5f9;border-radius:var(--r8);
+      background:#fff;padding:6px;cursor:pointer;
+      display:flex;flex-direction:column;gap:3px;transition:all .15s;
     }
-    .calendar-cell.other{opacity:.38}
-    .calendar-cell.today{outline:2px solid rgba(79,70,229,.18)}
-    .calendar-cell.selected{border-color:#7c87ff;box-shadow:0 0 0 3px rgba(79,70,229,.08)}
-    .calendar-day{font-size:13px;font-weight:800}
-    .calendar-dots{display:flex;flex-direction:column;gap:4px}
+    .calendar-cell:hover{border-color:#93c5fd;background:#f0f9ff}
+    .calendar-cell.other{opacity:.32}
+    .calendar-cell.today{border-color:var(--primary);background:#eff6ff}
+    .calendar-cell.selected{border-color:var(--primary);box-shadow:0 0 0 3px rgba(59,130,246,.10)}
+    .calendar-day{font-size:11px;font-weight:700}
+    .calendar-dots{display:flex;flex-direction:column;gap:3px}
     .calendar-detail{
-      margin-top:14px;padding:14px;border-radius:16px;background:#fff;border:1px solid var(--line);
+      margin-top:14px;padding:14px;border-radius:var(--r10);background:#fff;border:1px solid var(--line);
     }
-    .calendar-detail h6{margin:0 0 10px;font-size:14px}
+    .calendar-detail h6{font-size:13px;font-weight:700;margin-bottom:8px}
 
-    .calendar-dow.sun,
-    .calendar-day.sun{
-      color:#dc2626;
-    }
-    .calendar-dow.sat,
-    .calendar-day.sat{
-      color:#2563eb;
-    }
-    .calendar-day.holiday{
-      color:#dc2626;
-    }
+    .calendar-dow.sun,.calendar-day.sun{color:#ef4444}
+    .calendar-dow.sat,.calendar-day.sat{color:#3b82f6}
+    .calendar-day.holiday{color:#ef4444}
     .calendar-count{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-width:40px;
-      height:22px;
-      padding:0 8px;
-      border-radius:999px;
-      background:#eef2ff;
-      color:#4338ca;
-      font-size:11px;
-      font-weight:800;
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:32px;height:18px;padding:0 5px;
+      border-radius:999px;background:#eff6ff;color:#2563eb;font-size:10px;font-weight:700;
     }
-    .calendar-cell.has-events{
-      background:linear-gradient(180deg,#ffffff,#f7faff);
-    }
-    .calendar-cell.has-events:hover{
-      border-color:#a5b4fc;
-    }
-    .calendar-detail-nateon{
-      font-size:13px;
-      line-height:1.7;
-      white-space:pre-line;
-      color:#334155;
-    }
+    .calendar-cell.has-events{background:#fafcff}
+    .calendar-cell.has-events:hover{border-color:#93c5fd}
+    .calendar-detail-nateon{font-size:13px;line-height:1.7;white-space:pre-line;color:#374151}
 
+    /* ── MODALS ── */
     .modal-backdrop{
-      position:fixed;
-      inset:0;
-      background:rgba(15,23,42,.45);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:9999;
-      padding:24px;
+      position:fixed;inset:0;background:rgba(0,0,0,.40);
+      display:none;align-items:center;justify-content:center;
+      z-index:9999;padding:20px;
     }
-    .modal-backdrop.show{
-      display:flex;
-    }
+    .modal-backdrop.show{display:flex}
     .modal-card{
-      width:min(1180px, 100%);
-      max-height:88vh;
-      overflow:auto;
-      background:#fff;
-      border-radius:28px;
-      border:1px solid var(--line);
-      box-shadow:0 30px 70px rgba(15,23,42,.22);
-      padding:22px;
+      width:min(1180px,100%);max-height:90vh;overflow:auto;
+      background:#fff;border-radius:var(--r20);
+      border:1px solid var(--line);box-shadow:var(--shadow-xl);padding:24px;
     }
     .modal-head{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      margin-bottom:16px;
+      display:flex;justify-content:space-between;align-items:flex-start;
+      gap:12px;margin-bottom:18px;
+      padding-bottom:14px;border-bottom:1px solid var(--line);
     }
-    .modal-head h4{
-      margin:0;
-      font-size:24px;
-    }
-    .modal-head p{
-      margin:8px 0 0;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.7;
-    }
+    .modal-head h4{font-size:18px;font-weight:800}
+    .modal-head p{margin-top:5px;color:var(--muted);font-size:12px;line-height:1.6}
     .modal-close{
-      height:42px;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:#fff;
-      padding:0 14px;
-      font-weight:800;
-      cursor:pointer;
+      height:36px;border-radius:var(--r8);border:1.5px solid var(--line);
+      background:#fff;padding:0 14px;font-weight:700;cursor:pointer;font-size:13px;
+      transition:all .15s;white-space:nowrap;flex-shrink:0;font-family:inherit;
     }
+    .modal-close:hover{background:#f1f5f9}
+    .modal-layout{display:grid;grid-template-columns:1.05fr .9fr;gap:14px;align-items:start}
 
-    .modal-layout{
-      display:grid;
-      grid-template-columns:1.05fr .9fr;
-      gap:14px;
-      align-items:start;
+    .modal-left-panel,.modal-right-panel{
+      border:1px solid var(--line);border-radius:var(--r12);background:#f9fafb;padding:14px;
     }
-
-    .modal-left-panel,
-    .modal-right-panel{
-      border:1px solid var(--line);
-      border-radius:22px;
-      background:#f8fbff;
-      padding:14px;
-    }
-
     .modal-group{
-      border:1px solid var(--line);
-      border-radius:18px;
-      background:#f8fbff;
-      padding:14px;
-      margin-bottom:14px;
+      border:1px solid var(--line);border-radius:var(--r10);
+      background:#f9fafb;padding:14px;margin-bottom:10px;
     }
-    .modal-group:last-child{
-      margin-bottom:0;
-    }
+    .modal-group:last-child{margin-bottom:0}
     .modal-group-title{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom:12px;
+      display:flex;justify-content:space-between;align-items:center;
+      gap:10px;margin-bottom:10px;
     }
-    .modal-group-title strong{
-      font-size:16px;
-    }
+    .modal-group-title strong{font-size:14px;font-weight:800}
     .modal-entry{
-      border:1px solid #e5edf7;
-      border-radius:16px;
-      background:#fff;
-      padding:12px;
-      margin-bottom:10px;
+      border:1px solid #e2e8f0;border-radius:var(--r8);
+      background:#fff;padding:12px;margin-bottom:8px;
     }
-    .modal-entry:last-child{
-      margin-bottom:0;
+    .modal-entry:last-child{margin-bottom:0}
+    .modal-entry-status{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    .modal-entry-status select,.modal-entry-status input{
+      width:100%;min-height:38px;border:1.5px solid var(--line);border-radius:var(--r8);
+      padding:8px 12px;font-size:13px;outline:none;background:#fff;font-family:inherit;
     }
-    .modal-entry-status{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-      margin-top:10px;
-    }
-    .modal-entry-status select,
-    .modal-entry-status input{
-      width:100%;
-      min-height:42px;
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 12px;
-      font-size:13px;
-      outline:none;
-      background:#fff;
-    }
-    .modal-actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
+    .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
-    .manual-editor-title{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .manual-editor-title h5{
-      margin:0;
-      font-size:17px;
-    }
-    .manual-editor-title span{
-      color:var(--muted);
-      font-size:12px;
-    }
-    .manual-editor-help{
-      font-size:12px;
-      color:var(--muted);
-      line-height:1.7;
-      margin-bottom:10px;
-    }
+    .manual-editor-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+    .manual-editor-title h5{font-size:15px;font-weight:800}
+    .manual-editor-title span{color:var(--muted);font-size:12px}
+    .manual-editor-help{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px}
     .manual-editor-text{
-      width:100%;
-      min-height:405px;
-      border:1px solid var(--line);
-      border-radius:16px;
-      background:#fff;
-      padding:14px;
-      font-size:13px;
-      resize:vertical;
-      line-height:1.7;
-      white-space:pre-line;
+      width:100%;min-height:400px;
+      border:1.5px solid var(--line);border-radius:var(--r12);
+      background:#fff;padding:14px;font-size:13px;resize:vertical;line-height:1.7;
+      outline:none;font-family:inherit;
     }
-    .manual-editor-bottom{
-      display:flex;
-      justify-content:flex-end;
-      gap:8px;
-      margin-top:12px;
-      flex-wrap:wrap;
-    }
+    .manual-editor-text:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(59,130,246,.10)}
+    .manual-editor-bottom{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
 
-    @media (max-width:1320px){
+    /* ── RESPONSIVE ── */
+    @media(max-width:1320px){
       .summary-grid{grid-template-columns:repeat(2,1fr)}
       .split-grid{grid-template-columns:1fr}
     }
-    @media (max-width:1180px){
+    @media(max-width:1180px){
       .login-page{grid-template-columns:1fr}
+      .left-card{display:none}
+      .login-card{min-height:100vh;padding:40px 32px}
       .dashboard{grid-template-columns:1fr}
-      .menu{max-height:none}
+      .sidebar{position:relative;height:auto}
+      .menu{max-height:none;flex-direction:row;flex-wrap:wrap}
+      .menu-item{flex:0 0 auto}
       .modal-layout{grid-template-columns:1fr}
     }
-    @media (max-width:760px){
-      body{padding:12px}
-      .left-card,.login-card,.sidebar,.topbar,.content-card{border-radius:24px}
-      .left-card,.login-card{min-height:auto}
-      .hero h2{font-size:36px}
-      .brand h1{font-size:25px}
+    @media(max-width:760px){
+      .login-card{padding:32px 20px}
+      .main{padding:12px;gap:12px}
+      .content-card{padding:16px}
+      .hero h2{font-size:34px}
       .form-grid,.summary-grid{grid-template-columns:1fr}
-      .topbar h3{font-size:25px}
+      .topbar h3{font-size:20px}
       .split-grid{grid-template-columns:1fr}
       .modal-entry-status{grid-template-columns:1fr}
     }
+
+    /* ── EDU BADGES ── */
     .edu-pass{
-      display:inline-flex;align-items:center;height:28px;padding:0 10px;
-      border-radius:999px;font-size:12px;font-weight:800;
+      display:inline-flex;align-items:center;height:22px;padding:0 9px;
+      border-radius:999px;font-size:11px;font-weight:700;
       background:#dcfce7;color:#059669;border:1px solid #86efac;white-space:nowrap;
     }
     .edu-fail{
-      display:inline-flex;align-items:center;height:28px;padding:0 10px;
-      border-radius:999px;font-size:12px;font-weight:800;
-      background:#fff1f2;color:#e11d48;border:1px solid #fecdd3;white-space:nowrap;
+      display:inline-flex;align-items:center;height:22px;padding:0 9px;
+      border-radius:999px;font-size:11px;font-weight:700;
+      background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;white-space:nowrap;
     }
     .edu-toggle-btn{
-      display:inline-flex;align-items:center;height:28px;padding:0 10px;
-      border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;
+      display:inline-flex;align-items:center;height:22px;padding:0 9px;
+      border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;
       cursor:pointer;border:none;transition:opacity .15s;
     }
-    .edu-toggle-btn:hover{ opacity:.75; }
-    .edu-toggle-btn.edu-pass{ background:#dcfce7;color:#059669;border:1px solid #86efac; }
-    .edu-toggle-btn.edu-fail{ background:#fff1f2;color:#e11d48;border:1px solid #fecdd3; }
+    .edu-toggle-btn:hover{opacity:.75}
+    .edu-toggle-btn.edu-pass{background:#dcfce7;color:#059669;border:1px solid #86efac}
+    .edu-toggle-btn.edu-fail{background:#fef2f2;color:#dc2626;border:1px solid #fca5a5}
+
+    /* ── TABLE ACTION BUTTONS ── */
     .tbl-edit-btn{
-      height:28px;padding:0 10px;border-radius:8px;font-size:12px;font-weight:800;
-      background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;cursor:pointer;margin-right:4px;
+      height:24px;padding:0 9px;border-radius:5px;font-size:11px;font-weight:700;
+      background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;cursor:pointer;margin-right:3px;
+      transition:background .12s;font-family:inherit;
     }
-    .tbl-edit-btn:hover{ background:#dbeafe; }
+    .tbl-edit-btn:hover{background:#dbeafe}
     .tbl-del-btn{
-      height:28px;padding:0 10px;border-radius:8px;font-size:12px;font-weight:800;
-      background:#fff1f2;color:#e11d48;border:1px solid #fecdd3;cursor:pointer;
+      height:24px;padding:0 9px;border-radius:5px;font-size:11px;font-weight:700;
+      background:#fef2f2;color:#dc2626;border:1px solid #fca5a5;cursor:pointer;
+      transition:background .12s;font-family:inherit;
     }
-    .tbl-del-btn:hover{ background:#ffe4e6; }
-    .addr-link{
-      color:#2563eb;text-decoration:none;font-size:inherit;
+    .tbl-del-btn:hover{background:#fee2e2}
+
+    .addr-link{color:var(--primary);text-decoration:none;font-size:inherit;cursor:pointer}
+    .addr-link:hover{text-decoration:underline}
+
+    .ampm-btn{
+      height:38px;padding:0 12px;border-radius:var(--r8);
+      border:1.5px solid var(--line);background:#fff;color:#6b7280;
+      font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;
     }
-    .addr-link:hover{ text-decoration:underline; }
-    .edu-cat-row{
-      display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;
+    .ampm-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+    .result-select{
+      height:27px;padding:0 6px;border-radius:5px;
+      border:1px solid var(--line);background:#fff;
+      font-size:11px;font-weight:600;cursor:pointer;min-width:90px;
     }
+    .memo-btn{
+      height:23px;padding:0 7px;border-radius:5px;font-size:11px;font-weight:700;
+      background:#f1f5f9;color:#475569;border:1px solid var(--line);
+      cursor:pointer;white-space:nowrap;transition:all .12s;font-family:inherit;
+    }
+    .memo-btn.has-memo{background:#fef9c3;color:#854d0e;border-color:#fde047}
+
+    #leadTableBody td{padding:7px 10px;font-size:12px;vertical-align:middle}
+    #leadTableBody .edu-toggle-btn{font-size:11px;height:22px;padding:0 8px}
+    #leadTableBody .edu-pass{font-size:11px;height:22px;padding:0 8px}
+    #leadTableBody .edu-fail{font-size:11px;height:22px;padding:0 8px}
+    #leadTableBody .tbl-edit-btn,#leadTableBody .tbl-del-btn{height:23px;padding:0 7px;font-size:11px}
+
+    .lead-chk{width:14px;height:14px;cursor:pointer}
+    .edu-cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
     .edu-cat-btn{
-      height:40px;border-radius:12px;border:1px solid var(--line);
-      background:#fff;color:#22314a;padding:0 14px;font-size:13px;font-weight:800;cursor:pointer;
+      height:36px;border-radius:var(--r8);border:1.5px solid var(--line);
+      background:#fff;color:#374151;padding:0 14px;font-size:13px;font-weight:700;
+      cursor:pointer;transition:all .15s;font-family:inherit;
     }
-    .edu-cat-btn.active{
-      background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-color:transparent;
-    }
+    .edu-cat-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
     .edu-org-tag{
-      height:40px;border-radius:12px;border:1px solid #fed7aa;
+      height:36px;border-radius:var(--r8);border:1px solid #fed7aa;
       background:#fff7ed;color:#92400e;padding:0 14px;font-size:12px;font-weight:700;
       display:inline-flex;align-items:center;white-space:nowrap;
     }
-    .msg.show:not(.error){ background:#f0fdf4;color:#059669;border:1px solid #86efac; }
-    .lead-status-row{
-      display:flex;align-items:center;gap:10px;padding:6px 4px;
+    .lead-status-row{display:flex;align-items:center;gap:8px;padding:4px 0}
+
+    /* ── 강의 일정표 오버레이 ── */
+    #itineraryCardModal{
+      position:fixed;inset:0;z-index:10000;
+      background:rgba(0,0,0,.55);
+      display:none;overflow-y:auto;
+      padding:24px 16px 48px;box-sizing:border-box;
     }
+    #itineraryCardModal.show{display:block}
+    .itin-popup{
+      margin:0 auto;width:520px;max-width:100%;
+      background:#fff;border-radius:16px;
+      box-shadow:var(--shadow-xl);box-sizing:border-box;overflow:hidden;
+    }
+    .itin-popup-head{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:13px 16px 11px;border-bottom:1px solid var(--line);
+      background:#f9fafb;
+    }
+    .itin-popup-head h4{font-size:14px;font-weight:800}
+    .itin-popup-head p{margin:2px 0 0;font-size:11px;color:var(--muted)}
+    .itin-popup-foot{
+      display:flex;gap:10px;justify-content:center;
+      padding:12px 14px 16px;background:#f9fafb;border-top:1px solid var(--line);
+    }
+    /* 카드 본체 (CSS Grid — 절대 안 잘림) */
+    .itinerary-card-wrap{
+      font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;
+      width:100%;box-sizing:border-box;border:2px solid #2e7d32;
+    }
+    .ic-row3{display:grid;grid-template-columns:1fr 1fr 1fr;width:100%}
+    .ic-row21{display:grid;grid-template-columns:2fr 1fr;width:100%}
+    .ic-full{display:block;width:100%;box-sizing:border-box}
+    .ic-title{
+      background:#2e7d32;color:#fff;text-align:center;
+      font-weight:900;font-size:14px;letter-spacing:2px;
+      padding:10px 0;border-bottom:1px solid #1b5e20;
+    }
+    .ic-head{
+      background:#2e7d32;color:#fff;text-align:center;
+      font-weight:700;font-size:12px;padding:6px 4px;
+      border:1px solid #1b5e20;box-sizing:border-box;
+    }
+    .ic-data{
+      background:#fff;text-align:center;font-size:12px;font-weight:500;
+      padding:7px 4px;border:1px solid #c8e6c9;
+      word-break:break-word;box-sizing:border-box;
+    }
+    .ic-note{
+      background:#fff;font-size:12px;font-weight:500;
+      padding:10px 12px;border:1px solid #c8e6c9;
+      white-space:pre-wrap;text-align:left;line-height:1.9;
+      min-height:60px;box-sizing:border-box;
+    }
+    .itinerary-download-btn{
+      height:38px;padding:0 18px;border-radius:var(--r8);
+      background:linear-gradient(135deg,#2e7d32,#388e3c);
+      color:#fff;border:none;font-size:13px;font-weight:700;
+      cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+      transition:opacity .15s;font-family:inherit;
+    }
+    .itinerary-download-btn:hover{opacity:.88}
+    .itin-note-cell{
+      max-width:160px;overflow:hidden;text-overflow:ellipsis;
+      white-space:nowrap;cursor:pointer;color:var(--primary);font-size:11px;
+    }
+    .itin-note-cell:hover{text-decoration:underline}
   </style>
 </head>
 <body>
@@ -1161,23 +1262,25 @@
 
           <div id="leadMsgBox" class="msg"></div>
 
-          <div class="toolbar">
+          <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
             <div id="excelUploadBox" class="hidden" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <select id="excelTargetStaff" onchange="onLeadStaffFilter()" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:700;cursor:pointer;">
+              <select id="excelTargetStaff" onchange="onLeadStaffFilter()" style="height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:700;cursor:pointer;">
                 <option value="">전체 보기</option>
               </select>
-              <label for="excelUpload" class="ghost-btn" style="cursor:pointer;display:inline-flex;align-items:center;height:46px;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:800;">
+              <label for="excelUpload" class="ghost-btn" style="cursor:pointer;display:inline-flex;align-items:center;height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:800;">
                 📂 엑셀 업로드
               </label>
               <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" class="hidden" onchange="parseExcelFile(this)">
-              <span style="font-size:12px;color:#64748b;">관리자 전용 · 직원 선택 후 업로드</span>
+              <button id="btnDeleteAll" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteAllLeads()">🗑 전체삭제</button>
+              <button id="btnDeleteSel" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteSelectedLeads()">☑ 선택삭제</button>
             </div>
           </div>
 
           <div class="table-wrap">
-            <table>
+            <table style="font-size:12px;">
               <thead>
                 <tr>
+                  <th id="leadChkTh" class="hidden" style="width:32px;"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
                   <th>사업장</th>
                   <th>주소</th>
                   <th>키맨</th>
@@ -1186,11 +1289,54 @@
                   <th>인원</th>
                   <th>업종</th>
                   <th>섭외자</th>
-                  <th>교육 이수 확인 여부</th>
+                  <th>교육이수여부</th>
+                  <th>결과값</th>
+                  <th>메모</th>
                   <th id="leadActionTh" class="hidden"></th>
                 </tr>
               </thead>
               <tbody id="leadTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ── 일정표 관리 ── -->
+        <div class="view hidden" id="view-itinerary">
+          <div class="section-head">
+            <div>
+              <h4>일정표 관리</h4>
+              <p>등록된 교육섭외 일정표를 관리하는 화면이야.</p>
+            </div>
+          </div>
+
+          <div id="itineraryMsgBox" class="msg"></div>
+
+          <!-- 관리자 직원 필터 -->
+          <div class="toolbar" style="flex-wrap:wrap;gap:8px;" id="itineraryFilterBox">
+            <select id="itineraryStaffFilter" style="height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:700;cursor:pointer;" onchange="renderItineraries()">
+              <option value="">전체 보기</option>
+            </select>
+          </div>
+
+          <div class="table-wrap">
+            <table style="font-size:12px;">
+              <thead>
+                <tr>
+                  <th>업체명</th>
+                  <th>주소</th>
+                  <th>업체연락처</th>
+                  <th>키맨</th>
+                  <th>키맨연락처</th>
+                  <th>날짜</th>
+                  <th>시간</th>
+                  <th>참석인원</th>
+                  <th>연령대</th>
+                  <th>섭외자</th>
+                  <th>특이사항</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="itineraryTableBody"></tbody>
             </table>
           </div>
         </div>
@@ -1209,24 +1355,160 @@
             <button class="tab-btn" id="settingsTabSystem" onclick="setSettingsTab('system')">시스템</button>
           </div>
 
+          <!-- ── 직원 / 사번 탭 ── -->
           <div id="settingsPaneStaff">
+            <!-- 직원 추가 -->
+            <div class="panel" style="margin-bottom:16px;">
+              <h5 style="margin:0 0 14px;font-size:15px;">직원 추가</h5>
+              <div class="form-grid">
+                <input id="setStaffName" placeholder="직원명 (예: 홍길동)">
+                <input id="setStaffNo" placeholder="사번 (예: 2024001)">
+                <select id="setStaffRole" style="height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;">
+                  <option value="staff">직원</option>
+                  <option value="admin">관리자</option>
+                </select>
+                <input id="setStaffBranch" placeholder="지점 (예: 루원지점)">
+              </div>
+              <div style="text-align:right;margin-top:12px;">
+                <button class="small-btn" onclick="addSettingsStaff()">+ 직원 추가</button>
+              </div>
+            </div>
+
+            <!-- 직원 목록 (수정·삭제) -->
+            <div class="panel" style="margin-bottom:16px;">
+              <h5 style="margin:0 0 14px;font-size:15px;">직원 목록</h5>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>이름</th><th>사번</th><th>비밀번호</th><th>권한</th><th>지점</th><th>관리</th></tr></thead>
+                  <tbody id="setStaffTableBody"><tr><td colspan="6"><div class="empty">직원 목록이 없어.</div></td></tr></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 관리자 계정 관리 -->
             <div class="panel">
-              <h5>직원 / 사번 관리</h5>
-              <p>실제 연동 시 _settings 시트와 연결하면 돼.</p>
+              <h5 style="margin:0 0 6px;font-size:15px;">관리자 계정 변경</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">관리자 아이디(사번)와 비밀번호를 변경할 수 있어.</p>
+              <div class="form-grid">
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">변경할 관리자 선택</label>
+                  <select id="adminAcctSelect" onchange="onAdminAcctSelect()"
+                    style="width:100%;height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;background:#fff;">
+                    <option value="">-- 관리자 선택 --</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">현재 비밀번호 확인</label>
+                  <input id="adminAcctCurPw" type="password" placeholder="현재 비밀번호 입력">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">새 아이디 (사번)</label>
+                  <input id="adminAcctNewId" placeholder="새 사번 입력">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">새 비밀번호</label>
+                  <input id="adminAcctNewPw" type="password" placeholder="새 비밀번호 입력">
+                </div>
+              </div>
+              <div style="text-align:right;margin-top:14px;">
+                <button class="small-btn" onclick="saveAdminAccount()">저장</button>
+              </div>
             </div>
           </div>
 
+          <!-- ── 단가 / 수익 탭 ── -->
           <div id="settingsPanePay" class="hidden">
+            <div class="panel" style="margin-bottom:16px;">
+              <h5 style="margin:0 0 6px;font-size:15px;">직원별 단가 설정</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원을 선택한 뒤 단가를 입력하고 저장해.</p>
+
+              <!-- 직원 선택 -->
+              <div style="margin-bottom:16px;">
+                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">직원 선택</label>
+                <select id="payStaffSelect" onchange="onPayStaffChange()"
+                  style="width:100%;max-width:260px;height:42px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font-size:14px;background:#fff;">
+                  <option value="">-- 직원을 선택해줘 --</option>
+                </select>
+              </div>
+
+              <!-- 단가 입력 (교육 단가 없음) -->
+              <div class="form-grid" id="payRateFields" style="opacity:.4;pointer-events:none;">
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">상조 단가 (1건당, 원)</label>
+                  <input id="payRateSanjo" type="number" min="0" placeholder="0">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">건식 단가 (1건당, 원)</label>
+                  <input id="payRateHealth" type="number" min="0" placeholder="0">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">보험 단가 (1건당, 원)</label>
+                  <input id="payRateInsurance" type="number" min="0" placeholder="0">
+                </div>
+              </div>
+              <div style="text-align:right;margin-top:14px;">
+                <button class="small-btn" onclick="savePaySettings()">저장</button>
+              </div>
+            </div>
+
+            <!-- 수익 현황 -->
             <div class="panel">
-              <h5>단가 / 수익 설정</h5>
-              <p>상조, 건식, 보험 기준값을 나중에 연결하면 돼.</p>
+              <h5 style="margin:0 0 14px;font-size:15px;">이번달 수익 현황</h5>
+              <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
+                <div class="kpi-card"><div class="k">이번달 일정 건수</div><div class="v" id="payCountAll">-</div></div>
+                <div class="kpi-card"><div class="k">총 수익 (추정)</div><div class="v" id="payTotalAll">-</div></div>
+              </div>
+              <div>
+                <h5 style="margin:0 0 10px;font-size:13px;color:var(--muted);">직원별 이번달 수익</h5>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>직원명</th><th>이번달 일정</th><th>단가/건</th><th>수익 (추정)</th></tr></thead>
+                    <tbody id="payStaffTableBody"><tr><td colspan="4"><div class="empty">데이터 없음</div></td></tr></tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
 
+          <!-- ── 시스템 탭 ── -->
           <div id="settingsPaneSystem" class="hidden">
-            <div class="panel">
-              <h5>시스템 관리</h5>
-              <p>초기화, 로그 확인 등을 나중에 연결하면 돼.</p>
+            <div class="panel" style="margin-bottom:16px;">
+              <h5 style="margin:0 0 14px;font-size:15px;">데이터 현황</h5>
+              <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;">
+                <div class="kpi-card"><div class="k">직원 수</div><div class="v" id="sysStaffCount">-</div></div>
+                <div class="kpi-card"><div class="k">등록 일정</div><div class="v" id="sysSchedCount">-</div></div>
+                <div class="kpi-card"><div class="k">교육섭외 DB</div><div class="v" id="sysLeadCount">-</div></div>
+                <div class="kpi-card"><div class="k">일정표 수</div><div class="v" id="sysItinCount">-</div></div>
+              </div>
+            </div>
+            <div class="panel" style="display:flex;flex-direction:column;gap:14px;">
+              <div style="padding:16px;background:var(--bg);border-radius:14px;border:1px solid var(--line);">
+                <b style="font-size:14px;">일정 전체 삭제</b>
+                <p style="margin:6px 0 10px;font-size:12px;color:var(--muted);">등록된 모든 일정 데이터를 삭제해. 복구 불가!</p>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                  <input id="sysPassSchedules" type="password" placeholder="관리자 번호 입력"
+                    style="flex:1;min-width:140px;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font-size:13px;">
+                  <button class="danger-btn" onclick="systemResetSchedules()">일정 전체 삭제</button>
+                </div>
+              </div>
+              <div style="padding:16px;background:var(--bg);border-radius:14px;border:1px solid var(--line);">
+                <b style="font-size:14px;">일정표 전체 삭제</b>
+                <p style="margin:6px 0 10px;font-size:12px;color:var(--muted);">등록된 모든 일정표 데이터를 삭제해. 복구 불가!</p>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                  <input id="sysPassItineraries" type="password" placeholder="관리자 번호 입력"
+                    style="flex:1;min-width:140px;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font-size:13px;">
+                  <button class="danger-btn" onclick="systemResetItineraries()">일정표 전체 삭제</button>
+                </div>
+              </div>
+              <div style="padding:16px;background:var(--bg);border-radius:14px;border:1px solid var(--line);">
+                <b style="font-size:14px;">교육섭외 DB 전체 삭제</b>
+                <p style="margin:6px 0 10px;font-size:12px;color:var(--muted);">교육섭외 DB의 모든 데이터를 삭제해. 복구 불가!</p>
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                  <input id="sysPassLeads" type="password" placeholder="관리자 번호 입력"
+                    style="flex:1;min-width:140px;height:36px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font-size:13px;">
+                  <button class="danger-btn" onclick="systemResetLeads()">교육섭외 DB 삭제</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1235,15 +1517,69 @@
     </main>
   </section>
 
-  <!-- 교육섭외 DB 수정 모달 -->
-  <div class="modal-backdrop hidden" id="leadEditModal" onclick="if(event.target===this)closeLeadEditModal()">
-    <div class="modal-card" style="max-width:560px;">
+  <!-- 메모 모달 -->
+  <div class="modal-backdrop" id="leadMemoModal" onclick="if(event.target===this)closeLeadMemoModal()">
+    <div class="modal-card" style="max-width:420px;">
       <div class="modal-head">
-        <div><h4>교육섭외 DB 수정</h4><p>데이터를 수정한 뒤 저장을 눌러줘.</p></div>
+        <div><h4>메모</h4><p id="leadMemoCompanyLabel" style="font-weight:700;color:var(--primary);"></p></div>
+        <button class="icon-btn" onclick="closeLeadMemoModal()">✕</button>
+      </div>
+      <div style="padding:0 24px 16px;">
+        <textarea id="leadMemoText" rows="5" style="width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;resize:vertical;font-family:inherit;" placeholder="이 사업장에 대한 메모를 입력해줘..."></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 24px 24px;">
+        <button class="ghost-btn" onclick="closeLeadMemoModal()">닫기</button>
+        <button class="small-btn" onclick="saveLeadMemo()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 일정픽스 날짜/시간 선택 모달 -->
+  <div class="modal-backdrop" id="resultFixModal" onclick="if(event.target===this)closeResultFixModal()">
+    <div class="modal-card" style="max-width:340px;">
+      <div class="modal-head">
+        <div><h4>일정픽스</h4><p id="resultFixCompanyLabel" style="font-weight:700;color:var(--primary);"></p></div>
+        <button class="icon-btn" onclick="closeResultFixModal()">✕</button>
+      </div>
+      <div style="padding:0 24px 16px;display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">날짜</div>
+          <input type="date" id="resultFixDate" style="width:100%;height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);font-size:14px;">
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">시간</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button id="rfAmBtn" class="ampm-btn active" onclick="setResultAmPm('오전')">오전</button>
+            <button id="rfPmBtn" class="ampm-btn" onclick="setResultAmPm('오후')">오후</button>
+            <select id="resultFixHour" style="height:40px;padding:0 8px;border-radius:12px;border:1px solid var(--line);font-size:14px;font-weight:700;">
+              <option>1시</option><option>2시</option><option>3시</option><option>4시</option>
+              <option>5시</option><option>6시</option><option>7시</option><option>8시</option>
+              <option>9시</option><option selected>10시</option><option>11시</option><option>12시</option>
+            </select>
+            <select id="resultFixMin" style="height:40px;padding:0 8px;border-radius:12px;border:1px solid var(--line);font-size:14px;font-weight:700;">
+              <option value="00">00분</option><option value="30">30분</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 24px 24px;">
+        <button class="ghost-btn" onclick="closeResultFixModal()">취소</button>
+        <button class="small-btn" onclick="saveResultFix()">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 교육섭외 DB 수정 모달 -->
+  <div class="modal-backdrop" id="leadEditModal" onclick="if(event.target===this)closeLeadEditModal()">
+    <div class="modal-card" style="max-width:580px;">
+      <div class="modal-head">
+        <div><h4>교육섭외 DB 수정</h4><p>모든 항목을 수정한 뒤 저장을 눌러줘.</p></div>
         <button class="icon-btn" onclick="closeLeadEditModal()">✕</button>
       </div>
       <div class="form-grid" style="padding:20px 24px;">
         <input id="editLeadCompany" placeholder="업체 / 사업장">
+        <input id="editLeadOwnerName" placeholder="섭외자">
+        <input id="editLeadAddress" class="full" placeholder="주소">
         <input id="editLeadManager" placeholder="키맨 (담당자)">
         <input id="editLeadRepName" placeholder="대표자명">
         <input id="editLeadPhone" placeholder="연락처">
@@ -1251,11 +1587,165 @@
         <input id="editLeadAge" placeholder="연령대 예: 40대">
         <input id="editLeadSubject" placeholder="교육과목">
         <input id="editLeadIndustry" placeholder="업종">
-        <input id="editLeadAddress" class="full" placeholder="주소">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <span style="font-size:12px;color:#64748b;font-weight:700;">교육 이수 여부</span>
+          <select id="editLeadStatus" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);font-size:14px;font-weight:700;">
+            <option value="교육 미이수">교육 미이수</option>
+            <option value="교육 이수">교육 이수</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <span style="font-size:12px;color:#64748b;font-weight:700;">결과값</span>
+          <select id="editLeadResult" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);font-size:14px;font-weight:700;">
+            <option value="">선택</option>
+            <option value="부재">부재</option>
+            <option value="결번">결번</option>
+            <option value="확인후연락">확인후연락</option>
+            <option value="일정픽스">일정픽스</option>
+          </select>
+        </div>
+        <textarea id="editLeadMemo" class="full" rows="3" placeholder="메모" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 24px 24px;">
         <button class="ghost-btn" onclick="closeLeadEditModal()">취소</button>
         <button class="small-btn" onclick="saveLeadEdit()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 강의 일정표 카드 오버레이 ── -->
+  <div id="itineraryCardModal" onclick="if(event.target===this)closeItineraryCard()">
+    <div class="itin-popup" onclick="event.stopPropagation()">
+      <div class="itin-popup-head">
+        <div>
+          <h4>강의 일정표</h4>
+          <p>이미지로 다운로드하거나 드래그로 복사할 수 있어.</p>
+        </div>
+        <button class="icon-btn" onclick="closeItineraryCard()">✕</button>
+      </div>
+
+      <div id="itineraryCardBody" class="itinerary-card-wrap">
+
+        <!-- 제목 -->
+        <div class="ic-title ic-full">〈 강의 일정표 〉</div>
+
+        <!-- 섭외자 | (공백) | 업종 -->
+        <div class="ic-row3">
+          <div class="ic-head">섭외자</div>
+          <div class="ic-head"></div>
+          <div class="ic-head">업종</div>
+        </div>
+        <div class="ic-row3">
+          <div class="ic-data" id="icAssignee"></div>
+          <div class="ic-data" id="icSubCode"></div>
+          <div class="ic-data" id="icIndustry"></div>
+        </div>
+
+        <!-- 업체명 -->
+        <div class="ic-head ic-full">업체명</div>
+        <div class="ic-data ic-full" id="icCompany"></div>
+
+        <!-- 방문일자 | 강의시간 -->
+        <div class="ic-row21">
+          <div class="ic-head">방문일자</div>
+          <div class="ic-head">강의시간</div>
+        </div>
+        <div class="ic-row21">
+          <div class="ic-data" id="icDate"></div>
+          <div class="ic-data" id="icTime"></div>
+        </div>
+
+        <!-- 방문주소 -->
+        <div class="ic-head ic-full">방문주소</div>
+        <div class="ic-data ic-full" id="icAddress"></div>
+
+        <!-- 참석인원 | 연령대 -->
+        <div class="ic-row21">
+          <div class="ic-head">참석인원</div>
+          <div class="ic-head">연령대</div>
+        </div>
+        <div class="ic-row21">
+          <div class="ic-data" id="icPeople"></div>
+          <div class="ic-data" id="icAge"></div>
+        </div>
+
+        <!-- 교육장소 | 강의내용 | 외국인 -->
+        <div class="ic-row3">
+          <div class="ic-head">교육장소</div>
+          <div class="ic-head">강의내용</div>
+          <div class="ic-head">외국인</div>
+        </div>
+        <div class="ic-row3">
+          <div class="ic-data" id="icPlace"></div>
+          <div class="ic-data" id="icSubject"></div>
+          <div class="ic-data" id="icForeigner"></div>
+        </div>
+
+        <!-- 담당자 | 사무실 번호 | 핸드폰 번호 -->
+        <div class="ic-row3">
+          <div class="ic-head">담당자</div>
+          <div class="ic-head">사무실 번호</div>
+          <div class="ic-head">핸드폰 번호</div>
+        </div>
+        <div class="ic-row3">
+          <div class="ic-data" id="icManager"></div>
+          <div class="ic-data" id="icBizPhone"></div>
+          <div class="ic-data" id="icManagerPhone"></div>
+        </div>
+
+        <!-- 후원내용 | 기타사항 -->
+        <div class="ic-row21">
+          <div class="ic-head">후원내용</div>
+          <div class="ic-head">기타사항</div>
+        </div>
+        <div class="ic-row21">
+          <div class="ic-data" id="icSupport"></div>
+          <div class="ic-data" id="icEtc"></div>
+        </div>
+
+        <!-- 참고사항 -->
+        <div class="ic-head ic-full">참고사항</div>
+        <div class="ic-note ic-full" id="icNote"></div>
+
+      </div>
+
+        <div class="itin-popup-foot">
+          <button class="itinerary-download-btn" onclick="downloadItineraryCard()">⬇ 이미지 다운로드</button>
+          <button class="ghost-btn" onclick="closeItineraryCard()">닫기</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- ── 일정표 수정 모달 ── -->
+  <div class="modal-backdrop" id="itineraryEditModal" onclick="if(event.target===this)closeItineraryEditModal()">
+    <div class="modal-card" style="max-width:600px;">
+      <div class="modal-head">
+        <div><h4>일정표 수정</h4><p>일정표 내용을 수정한 뒤 저장해줘.</p></div>
+        <button class="icon-btn" onclick="closeItineraryEditModal()">✕</button>
+      </div>
+      <div class="form-grid" style="padding:20px 24px;">
+        <input id="editItinCompany" placeholder="업체명">
+        <input id="editItinAssignee" placeholder="섭외자">
+        <input id="editItinSubCode" placeholder="섭외자 코드 (예: S)">
+        <input id="editItinIndustry" placeholder="업종">
+        <input id="editItinAddress" class="full" placeholder="방문주소">
+        <input id="editItinDate" type="date">
+        <input id="editItinTime" placeholder="강의시간 예: 10:00">
+        <input id="editItinPeople" placeholder="참석인원">
+        <input id="editItinAge" placeholder="연령대">
+        <input id="editItinPlace" placeholder="교육장소 (예: 사무실)">
+        <input id="editItinSubject" placeholder="강의내용 (교육과목)">
+        <input id="editItinForeigner" placeholder="외국인">
+        <input id="editItinManager" placeholder="담당자 (키맨)">
+        <input id="editItinBizPhone" placeholder="사무실 번호">
+        <input id="editItinManagerPhone" placeholder="핸드폰 번호">
+        <input id="editItinSupport" class="full" placeholder="후원내용">
+        <input id="editItinEtc" class="full" placeholder="기타사항">
+        <textarea id="editItinNote" class="full" rows="6" placeholder="참고사항 (특이사항)" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 24px 24px;">
+        <button class="ghost-btn" onclick="closeItineraryEditModal()">취소</button>
+        <button class="small-btn" onclick="saveItineraryEdit()">저장</button>
       </div>
     </div>
   </div>
@@ -1349,7 +1839,7 @@
       manualEditId: null
     };
 
-    const authUsers = [
+    let authUsers = [
       { staffNo:"0408", password:"0408", name:"김성우", role:"admin", branch:"루원지점" },
       { staffNo:"1218", password:"1218", name:"이상혁", role:"staff", branch:"루원지점" }
     ];
@@ -1379,6 +1869,12 @@
       { id:301, type:"교육섭외", date:"2026-03-10", time:"10:00", company:"예시사업장A", address:"인천 서구 청마로 66-7", manager:"홍길동", phone:"01011112222", people:"5명", age:"40대", subject:"산업안전교육", industry:"음식점", status:"교육 미이수", ownerNo:"1379", ownerName:"김성우", createdAt:"2026-03-10" },
       { id:302, type:"교육섭외", date:"2026-03-10", time:"14:00", company:"루원케어", address:"서울 서초구 방배로 123", manager:"김민수", phone:"01033334444", people:"3명", age:"30대", subject:"직무교육", industry:"상조", status:"교육 이수", ownerNo:"1218", ownerName:"이상혁", createdAt:"2026-03-10" }
     ];
+
+    // 일정표 관리 데이터 (일정등록 시 자동 생성)
+    let itineraries = [];
+
+    // 단가 / 수익 설정 - 직원별 { [staffNo]: { edu, sanjo, health, insurance } }
+    let paySettings = {};
 
     function $(id){ return document.getElementById(id); }
 
@@ -1573,6 +2069,7 @@
         ["progress","📈","진행률"],
         ["staff","👥","직원관리"],
         ["lead","🗂","교육섭외 DB"],
+        ["itinerary","📋","일정표 관리"],
         ["settings","⚙️","관리자설정"]
       ] : [
         ["home","🏠","홈"],
@@ -1581,7 +2078,8 @@
         ["aggregate","📌","익일취합"],
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
-        ["lead","🗂","교육섭외 DB"]
+        ["lead","🗂","교육섭외 DB"],
+        ["itinerary","📋","일정표 관리"]
       ];
 
       box.innerHTML = menus.map(m => `<div class="menu-item ${state.currentView===m[0] ? "active" : ""}" data-view="${m[0]}">${m[1]} ${m[2]}</div>`).join("");
@@ -1615,6 +2113,9 @@
 
       if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !admin);
       if(admin) refreshLeadStaffDropdown();
+      // 일정표 관리 직원 필터 - 관리자만 표시
+      if($("itineraryFilterBox")) $("itineraryFilterBox").classList.toggle("hidden", !admin);
+      if(admin) refreshItineraryStaffDropdown();
       onPerformanceTypeChange();
     }
 
@@ -1640,6 +2141,7 @@
         progress:["진행률","당월 / 선택일 진행률 화면이야."],
         staff:["직원관리","직원 정보를 관리하는 화면이야."],
         lead:["교육섭외 DB","교육 사업장 데이터베이스 화면이야."],
+        itinerary:["일정표 관리","등록된 교육섭외 일정표를 관리하는 화면이야."],
         settings:["관리자설정","관리자용 설정 화면이야."]
       };
 
@@ -1889,7 +2391,7 @@
       if(!time) return alert("시간은 꼭 입력해줘.");
       if(!company) return alert("업체는 꼭 입력해줘.");
 
-      schedules.unshift({
+      const newSched = {
         id: Date.now(),
         assignee, type, date, time, company, address, manager, phone, people, age, subject, memo,
         createdBy: currentStaffName(),
@@ -1897,7 +2399,12 @@
         createdAt: todayStr(),
         progressStatus:"",
         progressEtc:""
-      });
+      };
+      schedules.unshift(newSched);
+
+      // 일정표 관리에도 자동 추가 (특이사항 기본값 포함)
+      itineraries.unshift(buildItineraryFromSchedule(newSched));
+      renderItineraries();
 
       renderSchedules();
       loadAggregate();
@@ -1961,10 +2468,13 @@
     }
 
     function deleteScheduleById(id){
-      const ok = confirm("이 일정을 삭제할까?");
+      const ok = confirm("이 일정을 삭제할까?\n(연결된 일정표도 함께 삭제돼.)");
       if(!ok) return;
-      schedules = schedules.filter(x => x.id !== id);
+      schedules   = schedules.filter(x => x.id !== id);
+      // 일정표 관리에서도 연동 삭제 (scheduleId로 연결)
+      itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
       renderSchedules();
+      renderItineraries();
       loadAggregate();
       renderCalendar();
       runHomeSummary();
@@ -2266,6 +2776,7 @@
       $("staffNo").value = "";
       $("staffBranch").value = "";
       renderStaffs();
+      renderSettingsStaff();     // 관리자 설정 탭도 갱신
       refreshLeadStaffDropdown(); // 직원 선택 드롭다운 즉시 갱신
       applyRoleUI();
       alert(`✅ 직원 추가 완료!\n${name} / 사번 ${no}\n초기 비밀번호: ${no}`);
@@ -2281,27 +2792,48 @@
       const th = $("leadActionTh");
       if(th) th.classList.toggle("hidden", !admin);
 
+      // 관리자: 체크박스 열 / 전체삭제·선택삭제 버튼 토글
+      const chkTh = $("leadChkTh");
+      if(chkTh) chkTh.classList.toggle("hidden", !admin);
+      if($("btnDeleteAll")) $("btnDeleteAll").classList.toggle("hidden", !admin);
+      if($("btnDeleteSel")) $("btnDeleteSel").classList.toggle("hidden", !admin);
+
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="${admin ? 10 : 9}"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
         return;
       }
+
+      const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "일정픽스"];
 
       rows.forEach(l => {
         const sc = l.status === "교육 이수" ? "edu-pass" : l.status === "교육 미이수" ? "edu-fail" : "";
         const phone = l.phone || "";
-
-        // 주소 → 네이버 지도 링크
-        const addrText = escapeHtml(l.address || "");
         const addrIdx = leads.indexOf(l);
         const addrCell = l.address
-          ? `<span class="addr-link" onclick="openNaverMap(${addrIdx})" title="클릭하면 네이버 지도">${addrText}</span>`
+          ? `<span class="addr-link" onclick="openNaverMap(${addrIdx})">${escapeHtml(l.address)}</span>`
           : "";
 
-        // 교육 이수 여부: 관리자는 클릭 토글, 직원은 텍스트만
+        // 교육 이수 여부
         const statusCell = admin
-          ? `<button class="edu-toggle-btn ${sc}" onclick="toggleLeadStatus(${l.id})" title="클릭하면 상태 변경">${escapeHtml(l.status || "미지정")}</button>`
+          ? `<button class="edu-toggle-btn ${sc}" onclick="toggleLeadStatus(${l.id})">${escapeHtml(l.status || "미지정")}</button>`
           : `${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}`;
 
+        // 결과값 드롭다운
+        const resultOpts = RESULT_OPTIONS.map(o =>
+          `<option value="${o}" ${l.result===o?"selected":""}>${o||"선택"}</option>`).join("");
+        const resultLabel = l.result === "일정픽스" && l.resultDate
+          ? `<div style="font-size:10px;color:#2563eb;margin-top:2px;">${escapeHtml(l.resultDate)} ${escapeHtml(l.resultTime||"")}</div>` : "";
+        const resultCell = `<td>
+          <select class="result-select" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>
+          ${resultLabel}
+        </td>`;
+
+        // 메모 버튼
+        const hasMemo = !!(l.memo && l.memo.trim());
+        const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})" title="${hasMemo?escapeHtml(l.memo):'메모 없음'}">${hasMemo?"📝 메모":"메모"}</button></td>`;
+
+        // 관리자 수정/삭제
+        const chkCell = admin ? `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>` : "";
         const actionCell = admin
           ? `<td style="white-space:nowrap;">
                <button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button>
@@ -2311,6 +2843,7 @@
 
         body.innerHTML += `
           <tr>
+            ${chkCell}
             <td>${escapeHtml(l.company || "")}</td>
             <td>${addrCell}</td>
             <td>${escapeHtml(l.manager || "")}</td>
@@ -2320,6 +2853,8 @@
             <td>${escapeHtml(l.industry || "")}</td>
             <td>${escapeHtml(l.ownerName || "")}</td>
             <td>${statusCell}</td>
+            ${resultCell}
+            ${memoCell}
             ${actionCell}
           </tr>
         `;
@@ -2377,23 +2912,27 @@
 
     function openLeadEditModal(id){
       if(!isAdminMode()) return;
-      const l = leads.find(x => x.id === id);
+      const l = leads.find(x => String(x.id) === String(id));
       if(!l) return;
       _editLeadId = id;
-      $("editLeadCompany").value  = l.company  || "";
-      $("editLeadManager").value  = l.manager  || "";
-      $("editLeadRepName").value  = l.repName  || "";
-      $("editLeadPhone").value    = l.phone    || "";
-      $("editLeadPeople").value   = l.people   || "";
-      $("editLeadAge").value      = l.age      || "";
-      $("editLeadSubject").value  = l.subject  || "";
-      $("editLeadIndustry").value = l.industry || "";
-      $("editLeadAddress").value  = l.address  || "";
-      $("leadEditModal").classList.remove("hidden");
+      $("editLeadCompany").value   = l.company   || "";
+      $("editLeadOwnerName").value = l.ownerName || "";
+      $("editLeadAddress").value   = l.address   || "";
+      $("editLeadManager").value   = l.manager   || "";
+      $("editLeadRepName").value   = l.repName   || "";
+      $("editLeadPhone").value     = l.phone     || "";
+      $("editLeadPeople").value    = l.people    || "";
+      $("editLeadAge").value       = l.age       || "";
+      $("editLeadSubject").value   = l.subject   || "";
+      $("editLeadIndustry").value  = l.industry  || "";
+      $("editLeadStatus").value    = l.status    || "교육 미이수";
+      $("editLeadResult").value    = l.result    || "";
+      $("editLeadMemo").value      = l.memo      || "";
+      $("leadEditModal").classList.add("show");
     }
 
     function closeLeadEditModal(){
-      $("leadEditModal").classList.add("hidden");
+      $("leadEditModal").classList.remove("show");
       _editLeadId = null;
     }
 
@@ -2402,16 +2941,19 @@
       const l = leads.find(x => x.id === _editLeadId);
       if(!l) return;
 
-      l.company  = $("editLeadCompany").value.trim();
-      l.manager  = $("editLeadManager").value.trim();
-      l.repName  = $("editLeadRepName").value.trim();
-      l.phone    = $("editLeadPhone").value.trim();
-      l.people   = $("editLeadPeople").value.trim();
-      l.age      = $("editLeadAge").value.trim();
-      l.subject  = $("editLeadSubject").value.trim();
-      l.industry = $("editLeadIndustry").value.trim();
-      l.address  = $("editLeadAddress").value.trim();
-      l.status   = checkEducationStatus(l.industry);
+      l.company   = $("editLeadCompany").value.trim();
+      l.ownerName = $("editLeadOwnerName").value.trim();
+      l.address   = $("editLeadAddress").value.trim();
+      l.manager   = $("editLeadManager").value.trim();
+      l.repName   = $("editLeadRepName").value.trim();
+      l.phone     = $("editLeadPhone").value.trim();
+      l.people    = $("editLeadPeople").value.trim();
+      l.age       = $("editLeadAge").value.trim();
+      l.subject   = $("editLeadSubject").value.trim();
+      l.industry  = $("editLeadIndustry").value.trim();
+      l.status    = $("editLeadStatus").value;
+      l.result    = $("editLeadResult").value;
+      l.memo      = $("editLeadMemo").value.trim();
 
       closeLeadEditModal();
       renderLeads();
@@ -2419,16 +2961,19 @@
       // Supabase 업데이트
       try{
         const { error } = await sbClient.from("education_db").update({
-          company:   l.company,
-          manager:   l.manager,
-          rep_name:  l.repName,
-          phone:     l.phone,
-          people:    l.people,
-          age_group: l.age,
-          subject:   l.subject,
-          industry:  l.industry,
-          address:   l.address,
-          status:    l.status
+          company:    l.company,
+          staff_name: l.ownerName,
+          address:    l.address,
+          manager:    l.manager,
+          rep_name:   l.repName,
+          phone:      l.phone,
+          people:     l.people,
+          age_group:  l.age,
+          subject:    l.subject,
+          industry:   l.industry,
+          status:     l.status,
+          result:     l.result,
+          memo:       l.memo
         }).eq("id", l.id);
         if(error) throw error;
         showLeadMsg("✅ 수정 완료!", "");
@@ -2502,9 +3047,13 @@
             subject:   row.subject || "",
             industry:  row.industry || "",
             status:    row.status || "",
-            ownerNo:   row.staff_no || "",
-            ownerName: row.staff_name || "",
-            createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr()
+            ownerNo:    row.staff_no || "",
+            ownerName:  row.staff_name || "",
+            memo:       row.memo || "",
+            result:     row.result || "",
+            resultDate: row.result_date || "",
+            resultTime: row.result_time || "",
+            createdAt:  row.created_at ? row.created_at.slice(0,10) : todayStr()
           });
         });
 
@@ -2655,6 +3204,131 @@
       reader.readAsArrayBuffer(file);
     }
 
+    // ── 전체삭제 / 선택삭제 ──────────────────────────────────────
+
+    async function deleteAllLeads(){
+      if(!isAdminMode()) return;
+      const cnt = getVisibleLeads().length;
+      if(!confirm(`현재 표시된 데이터 ${cnt}건을 모두 삭제할까요?\n이 작업은 되돌릴 수 없어요.`)) return;
+      const ids = getVisibleLeads().map(l => l.id);
+      ids.forEach(id => { leads = leads.filter(x => x.id !== id); });
+      renderLeads(); runHomeSummary();
+      try{
+        for(const id of ids){
+          await sbClient.from("education_db").delete().eq("id", id);
+        }
+        showLeadMsg(`🗑 ${ids.length}건 삭제 완료!`, "");
+      } catch(e){ console.warn(e); }
+    }
+
+    async function deleteSelectedLeads(){
+      if(!isAdminMode()) return;
+      const checked = Array.from(document.querySelectorAll('.lead-chk:checked')).map(c => Number(c.dataset.id));
+      if(!checked.length) return alert("삭제할 항목을 먼저 선택해줘.");
+      if(!confirm(`선택한 ${checked.length}건을 삭제할까요?`)) return;
+      checked.forEach(id => { leads = leads.filter(x => x.id !== id); });
+      renderLeads(); runHomeSummary();
+      try{
+        for(const id of checked){
+          await sbClient.from("education_db").delete().eq("id", id);
+        }
+        showLeadMsg(`🗑 ${checked.length}건 삭제 완료!`, "");
+      } catch(e){ console.warn(e); }
+    }
+
+    function toggleLeadCheckAll(chk){
+      document.querySelectorAll('.lead-chk').forEach(c => c.checked = chk.checked);
+    }
+
+    // ── 메모 ─────────────────────────────────────────────────────
+
+    let _memoLeadId = null;
+
+    function openLeadMemoModal(id){
+      const l = leads.find(x => String(x.id) === String(id));
+      if(!l) return;
+      _memoLeadId = id;
+      $("leadMemoCompanyLabel").textContent = l.company || "";
+      $("leadMemoText").value = l.memo || "";
+      $("leadMemoModal").classList.add("show");
+      setTimeout(() => $("leadMemoText").focus(), 100);
+    }
+
+    function closeLeadMemoModal(){
+      $("leadMemoModal").classList.remove("show");
+      _memoLeadId = null;
+    }
+
+    async function saveLeadMemo(){
+      if(!_memoLeadId) return;
+      const l = leads.find(x => String(x.id) === String(_memoLeadId));
+      if(!l) return;
+      l.memo = $("leadMemoText").value.trim();
+      closeLeadMemoModal();
+      renderLeads();
+      try{
+        await sbClient.from("education_db").update({ memo: l.memo }).eq("id", l.id);
+        showLeadMsg("📝 메모 저장 완료!", "");
+      } catch(e){ console.warn(e); }
+    }
+
+    // ── 결과값 + 일정픽스 ─────────────────────────────────────────
+
+    let _resultFixLeadId = null;
+    let _resultFixAmPm = "오전";
+
+    function onResultChange(id, value){
+      const l = leads.find(x => String(x.id) === String(id));
+      if(!l) return;
+      if(value === "일정픽스"){
+        _resultFixLeadId = id;
+        _resultFixAmPm = "오전";
+        $("rfAmBtn").classList.add("active");
+        $("rfPmBtn").classList.remove("active");
+        $("resultFixDate").value = "";
+        $("resultFixCompanyLabel").textContent = l.company || "";
+        $("resultFixModal").classList.add("show");
+      } else {
+        l.result = value;
+        l.resultDate = "";
+        l.resultTime = "";
+        renderLeads();
+        sbClient.from("education_db").update({ result: value, result_date: "", result_time: "" }).eq("id", l.id).then(({error}) => { if(error) console.warn(error); });
+      }
+    }
+
+    function setResultAmPm(v){
+      _resultFixAmPm = v;
+      $("rfAmBtn").classList.toggle("active", v === "오전");
+      $("rfPmBtn").classList.toggle("active", v === "오후");
+    }
+
+    function closeResultFixModal(){
+      $("resultFixModal").classList.remove("show");
+      _resultFixLeadId = null;
+      renderLeads(); // 선택값 되돌리기
+    }
+
+    async function saveResultFix(){
+      const l = leads.find(x => String(x.id) === String(_resultFixLeadId));
+      if(!l) return;
+      const date = $("resultFixDate").value;
+      const hour = $("resultFixHour").value;
+      const min  = $("resultFixMin").value;
+      if(!date) return alert("날짜를 선택해줘.");
+      const timeStr = `${_resultFixAmPm} ${hour} ${min}분`;
+      l.result = "일정픽스";
+      l.resultDate = date;
+      l.resultTime = timeStr;
+      $("resultFixModal").classList.remove("show");
+      _resultFixLeadId = null;
+      renderLeads();
+      try{
+        await sbClient.from("education_db").update({ result:"일정픽스", result_date: date, result_time: timeStr }).eq("id", l.id);
+        showLeadMsg("📅 일정픽스 저장 완료!", "");
+      } catch(e){ console.warn(e); }
+    }
+
     function openNaverMap(idx){
       const l = leads[idx];
       if(!l || !l.address) return;
@@ -2704,6 +3378,243 @@
 
     function showLeadMsg(text, type){
       let box = $("leadMsgBox");
+      if(!box) return;
+      box.textContent = text;
+      box.className = "msg show " + (type || "error");
+      setTimeout(() => { box.className = "msg"; box.textContent = ""; }, 3000);
+    }
+
+    // ── 일정표 관리 ─────────────────────────────────────────────
+
+    function buildDefaultSpecialNote(){
+      return "▶ooo에서 진행해주시면 됩니다.\n▶총 o명 중, o명 참석하신다고 합니다.\n▶키맨 참석하십니다.\n▶교육시간은 1시간으로 안내했습니다.\n▶특별교육으로 교육명 안내 드렸습니다.";
+    }
+
+    function buildItineraryFromSchedule(sched){
+      return {
+        id:             Date.now() + Math.random(),
+        scheduleId:     sched.id,
+        company:        sched.company  || "",
+        address:        sched.address  || "",
+        bizPhone:       sched.phone    || "",   // 사무실 번호
+        manager:        sched.manager  || "",   // 담당자
+        managerPhone:   sched.phone    || "",   // 핸드폰 번호
+        date:           sched.date     || "",
+        time:           sched.time     || "",
+        people:         sched.people   || "",
+        age:            sched.age      || "",
+        assignee:       sched.assignee || "",
+        subCode:        "",                     // 섭외자 코드 (ex: S)
+        subject:        sched.subject  || "",
+        industry:       "",
+        educationPlace: "사무실",
+        foreignerCount: "",
+        supportContent: "지역 후원사 안내",
+        etcNote:        "",
+        specialNote:    buildDefaultSpecialNote(),
+        createdByNo:    sched.createdByNo || "",
+        createdAt:      sched.createdAt   || todayStr()
+      };
+    }
+
+    function formatDateKorean(dateStr){
+      if(!dateStr) return "";
+      try{
+        const d = new Date(dateStr + "T00:00:00");
+        const days = ["일","월","화","수","목","금","토"];
+        return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
+      } catch(e){ return dateStr; }
+    }
+
+    function getVisibleItineraries(){
+      const filter = $("itineraryStaffFilter") ? $("itineraryStaffFilter").value : "";
+      if(isAdminMode()){
+        if(filter) return itineraries.filter(i => i.assignee === filter);
+        return itineraries.slice();
+      }
+      return itineraries.filter(i => i.createdByNo === currentStaffNo() || i.assignee === currentStaffName());
+    }
+
+    function refreshItineraryStaffDropdown(){
+      const sel = $("itineraryStaffFilter");
+      if(!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">전체 보기</option>` +
+        staffs.map(s => `<option value="${escapeHtml(s.name)}" ${cur===s.name?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
+    }
+
+    function renderItineraries(){
+      const body = $("itineraryTableBody");
+      if(!body) return;
+      const rows  = getVisibleItineraries().sort((a,b) => b.date.localeCompare(a.date));
+      const admin = isAdminMode();
+
+      if(!rows.length){
+        body.innerHTML = `<tr><td colspan="12"><div class="empty">등록된 일정표가 없어. 일정등록에서 일정을 추가하면 자동으로 생성돼.</div></td></tr>`;
+        return;
+      }
+
+      body.innerHTML = rows.map(itin => `
+        <tr>
+          <td>${escapeHtml(itin.company)}</td>
+          <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(itin.address)}</td>
+          <td>${escapeHtml(formatPhone(itin.bizPhone))}</td>
+          <td>${escapeHtml(itin.manager)}</td>
+          <td>${escapeHtml(formatPhone(itin.managerPhone))}</td>
+          <td>${escapeHtml(itin.date)}</td>
+          <td>${escapeHtml(itin.time)}</td>
+          <td>${escapeHtml(itin.people)}</td>
+          <td>${escapeHtml(itin.age)}</td>
+          <td>${escapeHtml(itin.assignee)}</td>
+          <td class="itin-note-cell" onclick="openItineraryEditModal('${itin.id}')" title="${escapeHtml(itin.specialNote)}">${escapeHtml((itin.specialNote||'').split('\n')[0] || '')}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="small-btn" type="button" onclick="openItineraryCard('${itin.id}')">섭외지</button>
+              <button class="ghost-btn" type="button" onclick="openItineraryEditModal('${itin.id}')">수정</button>
+              ${admin ? `<button class="danger-btn" type="button" onclick="deleteItinerary('${itin.id}')">삭제</button>` : ""}
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function deleteItinerary(id){
+      if(!isAdminMode()) return;
+      if(!confirm("이 일정표를 삭제할까? 복구 불가!")) return;
+      itineraries = itineraries.filter(x => String(x.id) !== String(id));
+      renderItineraries();
+    }
+
+    // ── 강의 일정표 카드 모달 ──
+    let _itineraryCardId = null;
+
+    function openItineraryCard(id){
+      const itin = itineraries.find(x => String(x.id) === String(id));
+      if(!itin) return;
+      _itineraryCardId = id;
+
+      $("icAssignee").textContent     = itin.assignee       || "";
+      $("icSubCode").textContent      = itin.subCode        || "";
+      $("icIndustry").textContent     = itin.industry       || "";
+      $("icCompany").textContent      = itin.company        || "";
+      $("icDate").textContent         = formatDateKorean(itin.date);
+      $("icTime").textContent         = itin.time           || "";
+      $("icAddress").textContent      = itin.address        || "";
+      $("icPeople").textContent       = itin.people         || "";
+      $("icAge").textContent          = itin.age            || "";
+      $("icPlace").textContent        = itin.educationPlace || "사무실";
+      $("icSubject").textContent      = itin.subject        || "";
+      $("icForeigner").textContent    = itin.foreignerCount || "";
+      $("icManager").textContent      = itin.manager        || "";
+      $("icBizPhone").textContent     = formatPhone(itin.bizPhone)     || "";
+      $("icManagerPhone").textContent = formatPhone(itin.managerPhone) || "";
+      $("icSupport").textContent      = itin.supportContent || "";
+      $("icEtc").textContent          = itin.etcNote        || "";
+      $("icNote").textContent         = itin.specialNote    || "";
+
+      $("itineraryCardModal").classList.add("show");
+    }
+
+    function closeItineraryCard(){
+      $("itineraryCardModal").classList.remove("show");
+      _itineraryCardId = null;
+    }
+
+    function downloadItineraryCard(){
+      const card = $("itineraryCardBody");
+      if(!card) return;
+      if(typeof html2canvas === "undefined") return alert("html2canvas 라이브러리가 로드되지 않았어.");
+
+      // 다운로드용: 카드를 520px 고정 너비로 캡처 후 복원
+      const origWidth = card.style.width;
+      const origMinWidth = card.style.minWidth;
+      card.style.width = "520px";
+      card.style.minWidth = "520px";
+
+      const itin = itineraries.find(x => String(x.id) === String(_itineraryCardId));
+      const fname = (itin ? itin.company : "강의일정표") + "_일정표.png";
+
+      html2canvas(card, { scale:2, backgroundColor:"#fff", useCORS:true })
+        .then(canvas => {
+          card.style.width = origWidth;
+          card.style.minWidth = origMinWidth;
+          const link = document.createElement("a");
+          link.download = fname;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        })
+        .catch(err => {
+          card.style.width = origWidth;
+          card.style.minWidth = origMinWidth;
+          alert("이미지 생성 중 오류가 발생했어.\n" + err.message);
+        });
+    }
+
+    // ── 일정표 수정 모달 ──
+    let _itineraryEditId = null;
+
+    function openItineraryEditModal(id){
+      const itin = itineraries.find(x => String(x.id) === String(id));
+      if(!itin) return;
+      _itineraryEditId = id;
+
+      $("editItinCompany").value      = itin.company        || "";
+      $("editItinAssignee").value     = itin.assignee       || "";
+      $("editItinSubCode").value      = itin.subCode        || "";
+      $("editItinIndustry").value     = itin.industry       || "";
+      $("editItinAddress").value      = itin.address        || "";
+      $("editItinDate").value         = itin.date           || "";
+      $("editItinTime").value         = itin.time           || "";
+      $("editItinPeople").value       = itin.people         || "";
+      $("editItinAge").value          = itin.age            || "";
+      $("editItinPlace").value        = itin.educationPlace || "사무실";
+      $("editItinSubject").value      = itin.subject        || "";
+      $("editItinForeigner").value    = itin.foreignerCount || "";
+      $("editItinManager").value      = itin.manager        || "";
+      $("editItinBizPhone").value     = itin.bizPhone       || "";
+      $("editItinManagerPhone").value = itin.managerPhone   || "";
+      $("editItinSupport").value      = itin.supportContent || "";
+      $("editItinEtc").value          = itin.etcNote        || "";
+      $("editItinNote").value         = itin.specialNote    || "";
+
+      $("itineraryEditModal").classList.add("show");
+    }
+
+    function closeItineraryEditModal(){
+      $("itineraryEditModal").classList.remove("show");
+      _itineraryEditId = null;
+    }
+
+    function saveItineraryEdit(){
+      const itin = itineraries.find(x => String(x.id) === String(_itineraryEditId));
+      if(!itin) return;
+
+      itin.company        = $("editItinCompany").value.trim();
+      itin.assignee       = $("editItinAssignee").value.trim();
+      itin.subCode        = $("editItinSubCode").value.trim();
+      itin.industry       = $("editItinIndustry").value.trim();
+      itin.address        = $("editItinAddress").value.trim();
+      itin.date           = $("editItinDate").value;
+      itin.time           = $("editItinTime").value.trim();
+      itin.people         = $("editItinPeople").value.trim();
+      itin.age            = $("editItinAge").value.trim();
+      itin.educationPlace = $("editItinPlace").value.trim() || "사무실";
+      itin.subject        = $("editItinSubject").value.trim();
+      itin.foreignerCount = $("editItinForeigner").value.trim();
+      itin.manager        = $("editItinManager").value.trim();
+      itin.bizPhone       = $("editItinBizPhone").value.trim();
+      itin.managerPhone   = $("editItinManagerPhone").value.trim();
+      itin.supportContent = $("editItinSupport").value.trim();
+      itin.etcNote        = $("editItinEtc").value.trim();
+      itin.specialNote    = $("editItinNote").value.trim();
+
+      closeItineraryEditModal();
+      renderItineraries();
+      showItineraryMsg("✅ 일정표 수정 완료!", "");
+    }
+
+    function showItineraryMsg(text, type){
+      let box = $("itineraryMsgBox");
       if(!box) return;
       box.textContent = text;
       box.className = "msg show " + (type || "error");
@@ -3020,6 +3931,10 @@
       $("settingsPaneStaff").classList.toggle("hidden", tab !== "staff");
       $("settingsPanePay").classList.toggle("hidden", tab !== "pay");
       $("settingsPaneSystem").classList.toggle("hidden", tab !== "system");
+
+      if(tab === "staff")  renderSettingsStaff();
+      if(tab === "pay")    renderPaySummary();
+      if(tab === "system") renderSystemInfo();
     }
 
     function renderAll(){
@@ -3028,6 +3943,7 @@
       renderPerformances();
       renderStaffs();
       renderLeads();
+      renderItineraries();
       loadAggregate();
       loadProgress();
       renderCalendar();
@@ -3052,6 +3968,376 @@
     $("calendarModal").addEventListener("click", (e) => {
       if(e.target.id === "calendarModal") closeCalendarModal();
     });
+
+    // ══════════════════════════════════════════════════
+    // 관리자 설정 - 직원/사번 탭
+    // ══════════════════════════════════════════════════
+    function renderSettingsStaff(){
+      const body = $("setStaffTableBody");
+      if(!body) return;
+      if(!staffs.length){
+        body.innerHTML = `<tr><td colspan="5"><div class="empty">등록된 직원이 없어.</div></td></tr>`;
+        return;
+      }
+      body.innerHTML = staffs.map(s => {
+        const au = authUsers.find(x => x.staffNo === s.no);
+        const pw = au ? au.password : "-";
+        // 비밀번호는 * 마스킹으로 표시
+        const pwMask = pw !== "-" ? "●".repeat(Math.min(pw.length, 6)) : "-";
+        return `
+        <tr id="staffRow_${escapeHtml(s.no)}">
+          <td>${escapeHtml(s.name)}</td>
+          <td>${escapeHtml(s.no)}</td>
+          <td style="letter-spacing:2px;color:var(--muted);">${pwMask}</td>
+          <td>${escapeHtml(s.role === "admin" ? "관리자" : "직원")}</td>
+          <td>${escapeHtml(s.branch || "")}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <button class="ghost-btn" style="font-size:11px;height:28px;padding:0 10px;" onclick="editStaffRow('${escapeHtml(s.no)}')">수정</button>
+              <button class="danger-btn" style="font-size:11px;height:28px;padding:0 10px;" onclick="deleteStaff('${escapeHtml(s.no)}')">삭제</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join("");
+      // 관리자 계정 드롭다운 갱신
+      refreshAdminAcctDropdown();
+    }
+
+    // 직원 행 인라인 수정 모드로 전환
+    function editStaffRow(no){
+      const s  = staffs.find(x => x.no === no);
+      if(!s) return;
+      const au = authUsers.find(x => x.staffNo === no);
+      const row = $(`staffRow_${no}`);
+      if(!row) return;
+      const inp = "width:76px;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;";
+      row.innerHTML = `
+        <td><input id="edt_name_${no}"   value="${escapeHtml(s.name)}"       style="${inp}"></td>
+        <td><input id="edt_no_${no}"     value="${escapeHtml(s.no)}"         style="${inp}" placeholder="사번"></td>
+        <td><input id="edt_pw_${no}"     value="${escapeHtml(au?.password||"")}" style="${inp}" placeholder="비밀번호"></td>
+        <td>
+          <select id="edt_role_${no}" style="height:32px;border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;">
+            <option value="staff" ${s.role==="staff"?"selected":""}>직원</option>
+            <option value="admin" ${s.role==="admin"?"selected":""}>관리자</option>
+          </select>
+        </td>
+        <td><input id="edt_branch_${no}" value="${escapeHtml(s.branch||"")}" style="${inp}"></td>
+        <td>
+          <div style="display:flex;gap:6px;">
+            <button class="small-btn" style="font-size:11px;height:28px;padding:0 10px;" onclick="saveStaffRow('${no}')">저장</button>
+            <button class="ghost-btn" style="font-size:11px;height:28px;padding:0 10px;" onclick="renderSettingsStaff()">취소</button>
+          </div>
+        </td>
+      `;
+    }
+
+    // 직원 행 수정 저장
+    function saveStaffRow(oldNo){
+      const newName   = $(`edt_name_${oldNo}`)?.value.trim();
+      const newNo     = $(`edt_no_${oldNo}`)?.value.trim();
+      const newPw     = $(`edt_pw_${oldNo}`)?.value.trim();
+      const newRole   = $(`edt_role_${oldNo}`)?.value;
+      const newBranch = $(`edt_branch_${oldNo}`)?.value.trim() || "루원지점";
+
+      if(!newName || !newNo) return alert("이름과 사번은 필수야.");
+      if(!newPw) return alert("비밀번호는 필수야.");
+      if(newNo !== oldNo && staffs.find(x => x.no === newNo)) return alert("이미 사용 중인 사번이야.");
+
+      // staffs 업데이트
+      const s = staffs.find(x => x.no === oldNo);
+      if(!s) return;
+      s.name = newName; s.no = newNo; s.role = newRole; s.branch = newBranch;
+
+      // authUsers 업데이트 (사번 + 비밀번호 모두)
+      const au = authUsers.find(x => x.staffNo === oldNo);
+      if(au){
+        au.staffNo  = newNo;
+        au.password = newPw;
+        au.name     = newName;
+        au.role     = newRole;
+        au.branch   = newBranch;
+      }
+
+      // paySettings 키 이동 (사번 변경 시)
+      if(newNo !== oldNo && paySettings[oldNo]){
+        paySettings[newNo] = paySettings[oldNo];
+        delete paySettings[oldNo];
+      }
+
+      renderSettingsStaff();
+      renderStaffs();
+      refreshLeadStaffDropdown();
+      refreshPayStaffDropdown();
+      alert(`✅ [${newName}] 정보가 수정됐어.\n사번: ${newNo}`);
+    }
+
+    function addSettingsStaff(){
+      if(!isAdminMode()) return alert("관리자 모드에서만 가능해.");
+      const name   = $("setStaffName").value.trim();
+      const no     = $("setStaffNo").value.trim();
+      const role   = $("setStaffRole").value;
+      const branch = $("setStaffBranch").value.trim() || "루원지점";
+      if(!name || !no) return alert("직원명과 사번을 입력해줘.");
+      if(staffs.find(s => s.no === no)) return alert("이미 등록된 사번이야.");
+      staffs.unshift({ name, no, role, branch });
+      authUsers.unshift({ staffNo: no, password: no, name, role, branch });
+      $("setStaffName").value = "";
+      $("setStaffNo").value   = "";
+      $("setStaffBranch").value = "";
+      renderSettingsStaff();
+      renderStaffs();
+      refreshLeadStaffDropdown();
+      refreshPayStaffDropdown();
+      alert(`✅ 직원 추가 완료!\n${name} / 사번 ${no}\n초기 비밀번호: ${no}`);
+    }
+
+    function deleteStaff(no){
+      if(!isAdminMode()) return;
+      const s = staffs.find(x => x.no === no);
+      if(!s) return;
+      if(!confirm(`[${s.name}] 직원을 삭제할까?\n해당 직원으로 로그인할 수 없게 돼.`)) return;
+      staffs    = staffs.filter(x => x.no !== no);
+      authUsers = authUsers.filter(x => x.staffNo !== no);
+      delete paySettings[no]; // 단가 설정도 제거
+      renderSettingsStaff();
+      renderStaffs();
+      refreshLeadStaffDropdown();
+      refreshPayStaffDropdown();
+    }
+
+    // ── 관리자 계정 드롭다운 갱신 ──
+    function refreshAdminAcctDropdown(){
+      const sel = $("adminAcctSelect");
+      if(!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">-- 관리자 선택 --</option>` +
+        authUsers.filter(u => u.role === "admin").map(u =>
+          `<option value="${escapeHtml(u.staffNo)}" ${cur===u.staffNo?"selected":""}>${escapeHtml(u.name)} (${escapeHtml(u.staffNo)})</option>`
+        ).join("");
+      if(cur) sel.value = cur;
+    }
+
+    function onAdminAcctSelect(){
+      // 선택 시 필드 초기화
+      $("adminAcctCurPw").value = "";
+      $("adminAcctNewId").value = "";
+      $("adminAcctNewPw").value = "";
+    }
+
+    function saveAdminAccount(){
+      const no    = $("adminAcctSelect").value;
+      const curPw = $("adminAcctCurPw").value.trim();
+      const newId = $("adminAcctNewId").value.trim();
+      const newPw = $("adminAcctNewPw").value.trim();
+
+      if(!no) return alert("변경할 관리자를 선택해줘.");
+      if(!curPw) return alert("현재 비밀번호를 입력해줘.");
+
+      const au = authUsers.find(u => u.staffNo === no);
+      if(!au) return alert("관리자 계정을 찾을 수 없어.");
+      if(au.password !== curPw) return alert("현재 비밀번호가 틀렸어.");
+      if(!newId && !newPw) return alert("새 아이디 또는 새 비밀번호를 입력해줘.");
+
+      const finalId = newId || au.staffNo;
+      const finalPw = newPw || au.password;
+      const targetName = au.name; // 이름으로 연결
+
+      if(newId && newId !== au.staffNo && authUsers.find(u => u.staffNo === newId))
+        return alert("이미 사용 중인 아이디야.");
+
+      // ① 같은 이름의 authUsers 전부 업데이트 (관리자+직원 동일 이름이면 둘 다)
+      authUsers.forEach(u => {
+        if(u.name === targetName){
+          const oldNo = u.staffNo;
+          u.staffNo  = finalId;
+          u.password = finalPw;
+          // paySettings 키 이동
+          if(oldNo !== finalId && paySettings[oldNo]){
+            paySettings[finalId] = paySettings[oldNo];
+            delete paySettings[oldNo];
+          }
+        }
+      });
+
+      // ② staffs에서 같은 이름 찾아 사번 동기화 (이름 기준 - 사번이 달라도 매칭)
+      staffs.forEach(s => {
+        if(s.name === targetName){
+          s.no = finalId;
+        }
+      });
+
+      $("adminAcctCurPw").value = "";
+      $("adminAcctNewId").value = "";
+      $("adminAcctNewPw").value = "";
+      renderSettingsStaff();
+      renderStaffs();
+      refreshLeadStaffDropdown();
+      refreshPayStaffDropdown();
+      alert(`✅ [${targetName}] 계정이 변경됐어.\n사번(아이디): ${finalId}`);
+    }
+
+    // ══════════════════════════════════════════════════
+    // 관리자 설정 - 단가/수익 탭
+    // ══════════════════════════════════════════════════
+
+    // 직원 선택 드롭다운 갱신
+    function refreshPayStaffDropdown(){
+      const sel = $("payStaffSelect");
+      if(!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">-- 직원을 선택해줘 --</option>` +
+        staffs.map(s => `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
+      if(cur) sel.value = cur;
+    }
+
+    // 직원 선택 시 해당 직원의 단가를 입력 필드에 표시
+    function onPayStaffChange(){
+      const no     = $("payStaffSelect").value;
+      const fields = $("payRateFields");
+      if(!no){
+        fields.style.opacity        = ".4";
+        fields.style.pointerEvents  = "none";
+        $("payRateSanjo").value     = "";
+        $("payRateHealth").value    = "";
+        $("payRateInsurance").value = "";
+        return;
+      }
+      fields.style.opacity       = "1";
+      fields.style.pointerEvents = "auto";
+      const p = paySettings[no] || {};
+      $("payRateSanjo").value     = p.sanjo     !== undefined ? p.sanjo     : "";
+      $("payRateHealth").value    = p.health    !== undefined ? p.health    : "";
+      $("payRateInsurance").value = p.insurance !== undefined ? p.insurance : "";
+    }
+
+    // 선택된 직원의 단가 저장
+    function savePaySettings(){
+      const no = $("payStaffSelect").value;
+      if(!no) return alert("직원을 먼저 선택해줘.");
+      const s = staffs.find(x => x.no === no);
+      paySettings[no] = {
+        name:      s ? s.name : no,
+        sanjo:     Number($("payRateSanjo").value)     || 0,
+        health:    Number($("payRateHealth").value)    || 0,
+        insurance: Number($("payRateInsurance").value) || 0,
+      };
+      renderPaySummary();
+      alert(`✅ [${s ? s.name : no}] 단가가 저장됐어.`);
+    }
+
+    // 수익 현황 렌더링 (performances 기반 - 타입별 단가 적용)
+    function renderPaySummary(){
+      refreshPayStaffDropdown();
+      onPayStaffChange();
+
+      const month   = monthPrefix();
+      // performances 에서 이번달 데이터 집계
+      const monthPerfs = performances.filter(p => String(p.date || "").startsWith(month));
+
+      // 직원별 타입별 건수 집계
+      const grouped = {}; // { [staffNo]: { name, sanjo, health, insurance } }
+      monthPerfs.forEach(pf => {
+        const s  = staffs.find(x => x.name === pf.staff);
+        const no = s ? s.no : pf.staff;
+        const nm = pf.staff || "미지정";
+        if(!grouped[no]) grouped[no] = { name: nm, sanjo:0, health:0, insurance:0 };
+        const t = (pf.type || "").trim();
+        if(t === "상조")      grouped[no].sanjo++;
+        else if(t === "건식") grouped[no].health++;
+        else if(t === "보험") grouped[no].insurance++;
+      });
+
+      // 전체 수익 합산
+      let totalRev = 0;
+      Object.keys(grouped).forEach(no => {
+        const g = grouped[no];
+        const p = paySettings[no] || {};
+        totalRev += g.sanjo*(p.sanjo||0) + g.health*(p.health||0) + g.insurance*(p.insurance||0);
+      });
+
+      if($("payCountAll")) $("payCountAll").textContent = monthPerfs.length + "건";
+      if($("payTotalAll")) $("payTotalAll").textContent = totalRev.toLocaleString() + "원";
+
+      const staffBody = $("payStaffTableBody");
+      if(!staffBody) return;
+      const nos = Object.keys(grouped);
+      if(!nos.length){
+        staffBody.innerHTML = `<tr><td colspan="4"><div class="empty">이번달 실적 없음</div></td></tr>`;
+        return;
+      }
+      staffBody.innerHTML = nos.map(no => {
+        const g   = grouped[no];
+        const p   = paySettings[no] || {};
+        const rev = g.sanjo*(p.sanjo||0) + g.health*(p.health||0) + g.insurance*(p.insurance||0);
+        const detail = [
+          g.sanjo    ? `상조 ${g.sanjo}건` : "",
+          g.health   ? `건식 ${g.health}건` : "",
+          g.insurance? `보험 ${g.insurance}건` : ""
+        ].filter(Boolean).join(" / ") || "0건";
+        return `<tr>
+          <td>${escapeHtml(g.name)}</td>
+          <td>${detail}</td>
+          <td style="font-size:11px;color:var(--muted);">상조 ${(p.sanjo||0).toLocaleString()} / 건식 ${(p.health||0).toLocaleString()} / 보험 ${(p.insurance||0).toLocaleString()}</td>
+          <td style="font-weight:700;color:var(--ok);">${rev.toLocaleString()}원</td>
+        </tr>`;
+      }).join("");
+    }
+
+    // ══════════════════════════════════════════════════
+    // 관리자 설정 - 시스템 탭
+    // ══════════════════════════════════════════════════
+    function renderSystemInfo(){
+      if($("sysStaffCount"))  $("sysStaffCount").textContent  = staffs.length + "명";
+      if($("sysSchedCount"))  $("sysSchedCount").textContent  = schedules.length + "건";
+      if($("sysLeadCount"))   $("sysLeadCount").textContent   = leads.length + "건";
+      if($("sysItinCount"))   $("sysItinCount").textContent   = itineraries.length + "건";
+    }
+
+    function _checkAdminPass(inputId){
+      if(!isAdminMode()) return false;
+      const input = $(inputId);
+      const val   = input ? input.value.trim() : "";
+      if(!val){ alert("관리자 번호를 입력해줘."); return false; }
+      const adminNo = state.currentUser?.staffNo || "";
+      const adminPw = state.currentUser?.password || "";
+      if(val !== adminNo && val !== adminPw){
+        alert("관리자 번호가 틀렸어."); return false;
+      }
+      if(input) input.value = "";
+      return true;
+    }
+
+    function systemResetSchedules(){
+      if(!_checkAdminPass("sysPassSchedules")) return;
+      if(!confirm("모든 일정 데이터를 삭제할까? 복구 불가!")) return;
+      schedules   = [];
+      itineraries = [];
+      renderSchedules();
+      renderItineraries();
+      renderCalendar();
+      loadAggregate();
+      runHomeSummary();
+      renderSystemInfo();
+      alert("✅ 일정 데이터가 삭제됐어.");
+    }
+
+    function systemResetItineraries(){
+      if(!_checkAdminPass("sysPassItineraries")) return;
+      if(!confirm("모든 일정표 데이터를 삭제할까? 복구 불가!")) return;
+      itineraries = [];
+      renderItineraries();
+      renderSystemInfo();
+      alert("✅ 일정표 데이터가 삭제됐어.");
+    }
+
+    function systemResetLeads(){
+      if(!_checkAdminPass("sysPassLeads")) return;
+      if(!confirm("교육섭외 DB 전체를 삭제할까? 복구 불가!")) return;
+      leads = [];
+      renderLeads();
+      renderSystemInfo();
+      alert("✅ 교육섭외 DB가 삭제됐어.");
+    }
   </script>
 </body>
 </html>
