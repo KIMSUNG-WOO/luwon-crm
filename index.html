@@ -1382,8 +1382,8 @@
               <h5 style="margin:0 0 14px;font-size:15px;">직원 목록</h5>
               <div class="table-wrap">
                 <table>
-                  <thead><tr><th>이름</th><th>사번</th><th>권한</th><th>지점</th><th>관리</th></tr></thead>
-                  <tbody id="setStaffTableBody"><tr><td colspan="5"><div class="empty">직원 목록이 없어.</div></td></tr></tbody>
+                  <thead><tr><th>이름</th><th>사번</th><th>비밀번호</th><th>권한</th><th>지점</th><th>관리</th></tr></thead>
+                  <tbody id="setStaffTableBody"><tr><td colspan="6"><div class="empty">직원 목록이 없어.</div></td></tr></tbody>
                 </table>
               </div>
             </div>
@@ -3982,10 +3982,16 @@
         body.innerHTML = `<tr><td colspan="5"><div class="empty">등록된 직원이 없어.</div></td></tr>`;
         return;
       }
-      body.innerHTML = staffs.map(s => `
+      body.innerHTML = staffs.map(s => {
+        const au = authUsers.find(x => x.staffNo === s.no);
+        const pw = au ? au.password : "-";
+        // 비밀번호는 * 마스킹으로 표시
+        const pwMask = pw !== "-" ? "●".repeat(Math.min(pw.length, 6)) : "-";
+        return `
         <tr id="staffRow_${escapeHtml(s.no)}">
           <td>${escapeHtml(s.name)}</td>
           <td>${escapeHtml(s.no)}</td>
+          <td style="letter-spacing:2px;color:var(--muted);">${pwMask}</td>
           <td>${escapeHtml(s.role === "admin" ? "관리자" : "직원")}</td>
           <td>${escapeHtml(s.branch || "")}</td>
           <td>
@@ -3994,28 +4000,31 @@
               <button class="danger-btn" style="font-size:11px;height:28px;padding:0 10px;" onclick="deleteStaff('${escapeHtml(s.no)}')">삭제</button>
             </div>
           </td>
-        </tr>
-      `).join("");
+        </tr>`;
+      }).join("");
       // 관리자 계정 드롭다운 갱신
       refreshAdminAcctDropdown();
     }
 
     // 직원 행 인라인 수정 모드로 전환
     function editStaffRow(no){
-      const s = staffs.find(x => x.no === no);
+      const s  = staffs.find(x => x.no === no);
       if(!s) return;
+      const au = authUsers.find(x => x.staffNo === no);
       const row = $(`staffRow_${no}`);
       if(!row) return;
+      const inp = "width:76px;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;";
       row.innerHTML = `
-        <td><input id="edt_name_${no}" value="${escapeHtml(s.name)}" style="width:80px;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:13px;"></td>
-        <td><input id="edt_no_${no}" value="${escapeHtml(s.no)}" style="width:80px;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:13px;"></td>
+        <td><input id="edt_name_${no}"   value="${escapeHtml(s.name)}"       style="${inp}"></td>
+        <td><input id="edt_no_${no}"     value="${escapeHtml(s.no)}"         style="${inp}" placeholder="사번"></td>
+        <td><input id="edt_pw_${no}"     value="${escapeHtml(au?.password||"")}" style="${inp}" placeholder="비밀번호"></td>
         <td>
           <select id="edt_role_${no}" style="height:32px;border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;">
             <option value="staff" ${s.role==="staff"?"selected":""}>직원</option>
             <option value="admin" ${s.role==="admin"?"selected":""}>관리자</option>
           </select>
         </td>
-        <td><input id="edt_branch_${no}" value="${escapeHtml(s.branch||"")}" style="width:80px;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:13px;"></td>
+        <td><input id="edt_branch_${no}" value="${escapeHtml(s.branch||"")}" style="${inp}"></td>
         <td>
           <div style="display:flex;gap:6px;">
             <button class="small-btn" style="font-size:11px;height:28px;padding:0 10px;" onclick="saveStaffRow('${no}')">저장</button>
@@ -4029,10 +4038,12 @@
     function saveStaffRow(oldNo){
       const newName   = $(`edt_name_${oldNo}`)?.value.trim();
       const newNo     = $(`edt_no_${oldNo}`)?.value.trim();
+      const newPw     = $(`edt_pw_${oldNo}`)?.value.trim();
       const newRole   = $(`edt_role_${oldNo}`)?.value;
       const newBranch = $(`edt_branch_${oldNo}`)?.value.trim() || "루원지점";
 
       if(!newName || !newNo) return alert("이름과 사번은 필수야.");
+      if(!newPw) return alert("비밀번호는 필수야.");
       if(newNo !== oldNo && staffs.find(x => x.no === newNo)) return alert("이미 사용 중인 사번이야.");
 
       // staffs 업데이트
@@ -4040,11 +4051,17 @@
       if(!s) return;
       s.name = newName; s.no = newNo; s.role = newRole; s.branch = newBranch;
 
-      // authUsers 업데이트
+      // authUsers 업데이트 (사번 + 비밀번호 모두)
       const au = authUsers.find(x => x.staffNo === oldNo);
-      if(au){ au.staffNo = newNo; au.name = newName; au.role = newRole; au.branch = newBranch; }
+      if(au){
+        au.staffNo  = newNo;
+        au.password = newPw;
+        au.name     = newName;
+        au.role     = newRole;
+        au.branch   = newBranch;
+      }
 
-      // paySettings 키 이동
+      // paySettings 키 이동 (사번 변경 시)
       if(newNo !== oldNo && paySettings[oldNo]){
         paySettings[newNo] = paySettings[oldNo];
         delete paySettings[oldNo];
@@ -4054,7 +4071,7 @@
       renderStaffs();
       refreshLeadStaffDropdown();
       refreshPayStaffDropdown();
-      alert(`✅ [${newName}] 정보가 수정됐어.`);
+      alert(`✅ [${newName}] 정보가 수정됐어.\n사번: ${newNo}`);
     }
 
     function addSettingsStaff(){
