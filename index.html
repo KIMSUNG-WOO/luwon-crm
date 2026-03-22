@@ -607,6 +607,28 @@
       border-radius:999px;font-size:12px;font-weight:800;
       background:#fff1f2;color:#e11d48;border:1px solid #fecdd3;white-space:nowrap;
     }
+    .edu-toggle-btn{
+      display:inline-flex;align-items:center;height:28px;padding:0 10px;
+      border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;
+      cursor:pointer;border:none;transition:opacity .15s;
+    }
+    .edu-toggle-btn:hover{ opacity:.75; }
+    .edu-toggle-btn.edu-pass{ background:#dcfce7;color:#059669;border:1px solid #86efac; }
+    .edu-toggle-btn.edu-fail{ background:#fff1f2;color:#e11d48;border:1px solid #fecdd3; }
+    .tbl-edit-btn{
+      height:28px;padding:0 10px;border-radius:8px;font-size:12px;font-weight:800;
+      background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;cursor:pointer;margin-right:4px;
+    }
+    .tbl-edit-btn:hover{ background:#dbeafe; }
+    .tbl-del-btn{
+      height:28px;padding:0 10px;border-radius:8px;font-size:12px;font-weight:800;
+      background:#fff1f2;color:#e11d48;border:1px solid #fecdd3;cursor:pointer;
+    }
+    .tbl-del-btn:hover{ background:#ffe4e6; }
+    .addr-link{
+      color:#2563eb;text-decoration:none;font-size:inherit;
+    }
+    .addr-link:hover{ text-decoration:underline; }
     .edu-cat-row{
       display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;
     }
@@ -864,25 +886,27 @@
           <div class="section-head">
             <div>
               <h4 id="scheduleTitle">일정등록</h4>
-              <p id="scheduleDesc">갑섭외 일정 입력, 풀 양식 복사, 네이트온 간단 양식 복사를 할 수 있어.</p>
+              <p id="scheduleDesc">교육섭외 일정 입력, 풀 양식 복사, 네이트온 간단 양식 복사를 할 수 있어.</p>
             </div>
           </div>
 
           <div class="form-grid">
             <input id="scheduleAssignee" placeholder="섭외자" readonly>
-            <input id="scheduleDate" type="date">
+            <input id="scheduleType" placeholder="섭외" value="교육섭외">
 
+            <input id="scheduleDate" type="date">
             <input id="scheduleTime" placeholder="시간 예: 1000 / 1700 / 09:30">
+
             <input id="scheduleCompany" placeholder="업체">
+            <input id="scheduleAddress" class="full" placeholder="주소">
 
             <input id="scheduleManager" placeholder="키맨">
             <input id="schedulePhone" placeholder="번호">
 
-            <input id="scheduleAddress" class="full" placeholder="주소">
             <input id="schedulePeople" placeholder="인원">
+            <input id="scheduleAge" placeholder="연령대 예: 20~40대">
 
-            <input id="scheduleGap" placeholder="갑사">
-            <input id="scheduleBank" placeholder="은행">
+            <input id="scheduleSubject" class="full" placeholder="교육과목">
 
             <textarea id="scheduleMemo" class="full" placeholder="특이사항"></textarea>
             <textarea id="scheduleNateonPreview" class="full" readonly placeholder="네이트온 양식"></textarea>
@@ -898,13 +922,15 @@
               <thead>
                 <tr>
                   <th>섭외자</th>
+                  <th>섭외</th>
                   <th>날짜</th>
                   <th>시간</th>
                   <th>업체</th>
                   <th>키맨</th>
                   <th>번호</th>
                   <th>인원</th>
-                  <th>갑사</th>
+                  <th>연령대</th>
+                  <th>교육과목</th>
                   <th>특이사항</th>
                   <th>관리</th>
                 </tr>
@@ -1133,35 +1159,18 @@
             <span class="edu-org-tag">산업안전교육협회 &nbsp;·&nbsp; 한국나눔안전 &nbsp;·&nbsp; 대한안전교육협회</span>
           </div>
 
-          <div class="form-grid">
-            <input id="leadStaff" placeholder="섭외자" readonly>
-            <input id="leadType" placeholder="섭외" value="교육섭외">
-            <input id="leadDate" type="date">
-            <input id="leadTime" placeholder="시간 예: 10:00" onblur="onLeadTimeBlur()">
-            <input id="leadCompany" placeholder="업체 / 사업장">
-            <input id="leadAddress" class="full" placeholder="주소">
-            <input id="leadManager" placeholder="키맨 (담당자)">
-            <input id="leadPhone" placeholder="연락처" oninput="onLeadPhoneInput()">
-            <input id="leadPeople" placeholder="인원">
-            <input id="leadAge" placeholder="연령대 예: 40대">
-            <input id="leadSubject" placeholder="교육과목">
-            <input id="leadIndustry" placeholder="업종" oninput="onLeadIndustryInput()">
-            <div class="lead-status-row">
-              <span style="font-size:13px;color:#64748b;font-weight:700;">교육 이수 여부</span>
-              <span id="leadStatusPreview" style="display:none;"></span>
-            </div>
-          </div>
-
           <div id="leadMsgBox" class="msg"></div>
 
           <div class="toolbar">
-            <button class="small-btn" onclick="addLead()">추가</button>
             <div id="excelUploadBox" class="hidden" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <select id="excelTargetStaff" onchange="onLeadStaffFilter()" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:700;cursor:pointer;">
+                <option value="">전체 보기</option>
+              </select>
               <label for="excelUpload" class="ghost-btn" style="cursor:pointer;display:inline-flex;align-items:center;height:46px;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:800;">
                 📂 엑셀 업로드
               </label>
               <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" class="hidden" onchange="parseExcelFile(this)">
-              <span style="font-size:12px;color:#64748b;">관리자 전용 · 기존 데이터 유지 + 누적 저장</span>
+              <span style="font-size:12px;color:#64748b;">관리자 전용 · 직원 선택 후 업로드</span>
             </div>
           </div>
 
@@ -1171,11 +1180,14 @@
                 <tr>
                   <th>사업장</th>
                   <th>주소</th>
-                  <th>키맨(담당자)</th>
+                  <th>키맨</th>
+                  <th>대표자명</th>
                   <th>연락처</th>
                   <th>인원</th>
                   <th>업종</th>
+                  <th>섭외자</th>
                   <th>교육 이수 확인 여부</th>
+                  <th id="leadActionTh" class="hidden"></th>
                 </tr>
               </thead>
               <tbody id="leadTableBody"></tbody>
@@ -1222,6 +1234,31 @@
       </div>
     </main>
   </section>
+
+  <!-- 교육섭외 DB 수정 모달 -->
+  <div class="modal-backdrop hidden" id="leadEditModal" onclick="if(event.target===this)closeLeadEditModal()">
+    <div class="modal-card" style="max-width:560px;">
+      <div class="modal-head">
+        <div><h4>교육섭외 DB 수정</h4><p>데이터를 수정한 뒤 저장을 눌러줘.</p></div>
+        <button class="icon-btn" onclick="closeLeadEditModal()">✕</button>
+      </div>
+      <div class="form-grid" style="padding:20px 24px;">
+        <input id="editLeadCompany" placeholder="업체 / 사업장">
+        <input id="editLeadManager" placeholder="키맨 (담당자)">
+        <input id="editLeadRepName" placeholder="대표자명">
+        <input id="editLeadPhone" placeholder="연락처">
+        <input id="editLeadPeople" placeholder="인원">
+        <input id="editLeadAge" placeholder="연령대 예: 40대">
+        <input id="editLeadSubject" placeholder="교육과목">
+        <input id="editLeadIndustry" placeholder="업종">
+        <input id="editLeadAddress" class="full" placeholder="주소">
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 24px 24px;">
+        <button class="ghost-btn" onclick="closeLeadEditModal()">취소</button>
+        <button class="small-btn" onclick="saveLeadEdit()">저장</button>
+      </div>
+    </div>
+  </div>
 
   <div class="modal-backdrop" id="calendarModal">
     <div class="modal-card">
@@ -1576,9 +1613,8 @@
       $("aggScope").querySelector('option[value="all"]').disabled = !admin;
       if(!admin) $("aggScope").value = "mine";
 
-      if($("leadStaff")) $("leadStaff").value = currentStaffName();
-      if($("leadDate")) $("leadDate").value = todayStr();
       if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !admin);
+      if(admin) refreshLeadStaffDropdown();
       onPerformanceTypeChange();
     }
 
@@ -1650,8 +1686,20 @@
       return isAdminMode() ? performances.slice() : performances.filter(p => p.createdByNo === currentStaffNo() || p.staff === currentStaffName());
     }
 
+    let _leadStaffFilter = "";
+
+    function onLeadStaffFilter(){
+      _leadStaffFilter = ($("excelTargetStaff") || {}).value || "";
+      renderLeads();
+    }
+
     function getVisibleLeads(){
-      return isAdminMode() ? leads : leads.filter(l => l.ownerNo === currentStaffNo());
+      if(isAdminMode()){
+        if(_leadStaffFilter) return leads.filter(l => l.ownerName === _leadStaffFilter);
+        return leads.slice();
+      }
+      // 직원 모드: 본인 이름 or 사번으로 매칭
+      return leads.filter(l => l.ownerNo === currentStaffNo() || l.ownerName === currentStaffName());
     }
 
     function renderNotices(){
@@ -1742,8 +1790,9 @@
     }
 
     function buildFullCopyText(row){
-      return [
+      const lines = [
         `섭외자 : ${row.assignee || ""}`,
+        `섭외 : ${row.type || "교육섭외"}`,
         `날짜 : ${row.date || ""}`,
         `시간 : ${row.time || ""}`,
         `업체 : ${row.company || ""}`,
@@ -1751,10 +1800,11 @@
         `키맨 : ${row.manager || ""}`,
         `번호 : ${formatPhone(row.phone || "")}`,
         `인원 : ${row.people || ""}`,
-        `갑사: ${row.gap || ""}`,
-        `은행 : ${row.bank || ""}`,
-        `특이사항 : ${row.memo || ""}`
-      ].join("\n");
+        `연령대 : ${row.age || ""}`,
+        `교육과목 : ${row.subject || ""}`,
+      ];
+      if(row.memo) lines.push(`특이사항 : ${row.memo}`);
+      return lines.join("\n");
     }
 
     function buildNateonPreviewText(payload){
@@ -1823,16 +1873,17 @@
       if(!state.currentUser) return;
 
       const assignee = currentStaffName();
-      const date = normalizeText($("scheduleDate").value);
-      const time = normalizeManualTime($("scheduleTime").value);
+      const type    = normalizeText($("scheduleType").value) || "교육섭외";
+      const date    = normalizeText($("scheduleDate").value);
+      const time    = normalizeManualTime($("scheduleTime").value);
       const company = normalizeText($("scheduleCompany").value);
-      const manager = normalizeText($("scheduleManager").value);
-      const phone = normalizePhone($("schedulePhone").value);
       const address = normalizeText($("scheduleAddress").value);
-      const people = normalizeText($("schedulePeople").value);
-      const gap = normalizeText($("scheduleGap").value);
-      const bank = normalizeText($("scheduleBank").value);
-      const memo = normalizeText($("scheduleMemo").value);
+      const manager = normalizeText($("scheduleManager").value);
+      const phone   = normalizePhone($("schedulePhone").value);
+      const people  = normalizeText($("schedulePeople").value);
+      const age     = normalizeText($("scheduleAge").value);
+      const subject = normalizeText($("scheduleSubject").value);
+      const memo    = normalizeText($("scheduleMemo").value);
 
       if(!date) return alert("날짜는 꼭 입력해줘.");
       if(!time) return alert("시간은 꼭 입력해줘.");
@@ -1840,7 +1891,7 @@
 
       schedules.unshift({
         id: Date.now(),
-        assignee, date, time, company, manager, phone, address, people, gap, bank, memo,
+        assignee, type, date, time, company, address, manager, phone, people, age, subject, memo,
         createdBy: currentStaffName(),
         createdByNo: currentStaffNo(),
         createdAt: todayStr(),
@@ -1855,8 +1906,9 @@
 
       safeCopy(buildFullCopyText(schedules[0]));
 
-      ["scheduleDate","scheduleTime","scheduleCompany","scheduleManager","schedulePhone","scheduleAddress","schedulePeople","scheduleGap","scheduleBank","scheduleMemo"].forEach(id => { $(id).value = ""; });
+      ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { $(id).value = ""; });
       $("scheduleDate").value = tomorrowStr();
+      $("scheduleType").value = "교육섭외";
       $("scheduleAssignee").value = currentStaffName();
       updateNateonPreview();
     }
@@ -1873,7 +1925,7 @@
       body.innerHTML = "";
 
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="10"><div class="empty">등록된 일정이 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="12"><div class="empty">등록된 일정이 없어.</div></td></tr>`;
         return;
       }
 
@@ -1881,13 +1933,15 @@
         body.innerHTML += `
           <tr>
             <td>${escapeHtml(row.assignee)}</td>
+            <td>${escapeHtml(row.type || "교육섭외")}</td>
             <td>${escapeHtml(row.date)}</td>
             <td>${escapeHtml(row.time)}</td>
             <td>${escapeHtml(row.company)}</td>
             <td>${escapeHtml(row.manager)}</td>
             <td>${escapeHtml(formatPhone(row.phone))}</td>
             <td>${escapeHtml(row.people)}</td>
-            <td>${escapeHtml(row.gap)}</td>
+            <td>${escapeHtml(row.age || "")}</td>
+            <td>${escapeHtml(row.subject || "")}</td>
             <td>${escapeHtml(row.memo)}</td>
             <td>
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -2185,6 +2239,15 @@
       });
     }
 
+    function refreshLeadStaffDropdown(){
+      const sel = $("excelTargetStaff");
+      if(!sel) return;
+      const prev = sel.value; // 현재 선택값 유지
+      sel.innerHTML = `<option value="">전체 보기</option>` +
+        staffs.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join("");
+      if(prev) sel.value = prev;
+    }
+
     function addStaff(){
       if(!isAdminMode()) return alert("직원관리는 관리자 모드에서만 가능해.");
 
@@ -2196,35 +2259,68 @@
       if(!name || !no) return alert("직원명과 사번은 꼭 입력해줘.");
 
       staffs.unshift({ name, no, role, branch });
+      // authUsers에도 추가 (직원 로그인 가능하도록)
+      authUsers.unshift({ staffNo: no, password: no, name, role, branch });
+
       $("staffName").value = "";
       $("staffNo").value = "";
       $("staffBranch").value = "";
       renderStaffs();
+      refreshLeadStaffDropdown(); // 직원 선택 드롭다운 즉시 갱신
       applyRoleUI();
-      alert("직원 추가 완료");
+      alert(`✅ 직원 추가 완료!\n${name} / 사번 ${no}\n초기 비밀번호: ${no}`);
     }
 
     function renderLeads(){
       const body = $("leadTableBody");
       const rows = getVisibleLeads();
+      const admin = isAdminMode();
       body.innerHTML = "";
 
+      // 관리자면 수정/삭제 열 표시
+      const th = $("leadActionTh");
+      if(th) th.classList.toggle("hidden", !admin);
+
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="7"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="${admin ? 10 : 9}"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
         return;
       }
 
       rows.forEach(l => {
         const sc = l.status === "교육 이수" ? "edu-pass" : l.status === "교육 미이수" ? "edu-fail" : "";
+        const phone = l.phone || "";
+
+        // 주소 → 네이버 지도 링크
+        const addrText = escapeHtml(l.address || "");
+        const addrIdx = leads.indexOf(l);
+        const addrCell = l.address
+          ? `<span class="addr-link" onclick="openNaverMap(${addrIdx})" title="클릭하면 네이버 지도">${addrText}</span>`
+          : "";
+
+        // 교육 이수 여부: 관리자는 클릭 토글, 직원은 텍스트만
+        const statusCell = admin
+          ? `<button class="edu-toggle-btn ${sc}" onclick="toggleLeadStatus(${l.id})" title="클릭하면 상태 변경">${escapeHtml(l.status || "미지정")}</button>`
+          : `${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}`;
+
+        const actionCell = admin
+          ? `<td style="white-space:nowrap;">
+               <button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button>
+               <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button>
+             </td>`
+          : "";
+
         body.innerHTML += `
           <tr>
             <td>${escapeHtml(l.company || "")}</td>
-            <td>${escapeHtml(l.address || "")}</td>
+            <td>${addrCell}</td>
             <td>${escapeHtml(l.manager || "")}</td>
-            <td>${escapeHtml(formatPhone(l.phone))}</td>
+            <td>${escapeHtml(l.repName || "")}</td>
+            <td>${escapeHtml(phone)}</td>
             <td>${escapeHtml(l.people || "")}</td>
             <td>${escapeHtml(l.industry || "")}</td>
-            <td>${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}</td>
+            <td>${escapeHtml(l.ownerName || "")}</td>
+            <td>${statusCell}</td>
+            ${actionCell}
           </tr>
         `;
       });
@@ -2234,8 +2330,6 @@
       if(!state.currentUser) return;
 
       const type     = $("leadType").value.trim() || "교육섭외";
-      const date     = $("leadDate").value;
-      const time     = normalizeManualTime($("leadTime").value);
       const company  = $("leadCompany").value.trim();
       const address  = $("leadAddress").value.trim();
       const manager  = $("leadManager").value.trim();
@@ -2250,7 +2344,7 @@
 
       leads.unshift({
         id: Date.now(),
-        type, date, time,
+        type,
         company, address, manager, phone, people,
         age, subject, industry, status,
         ownerNo: currentStaffNo(),
@@ -2259,8 +2353,6 @@
       });
 
       $("leadType").value = "교육섭외";
-      $("leadDate").value = todayStr();
-      $("leadTime").value = "";
       $("leadCompany").value = "";
       $("leadAddress").value = "";
       $("leadManager").value = "";
@@ -2277,6 +2369,106 @@
       loadProgress();
       insertData(leads[0]);
       showLeadMsg("✅ 추가 완료!", "");
+    }
+
+    // ── 교육섭외 수정 / 삭제 / 상태토글 ──────────────────────────
+
+    let _editLeadId = null;
+
+    function openLeadEditModal(id){
+      if(!isAdminMode()) return;
+      const l = leads.find(x => x.id === id);
+      if(!l) return;
+      _editLeadId = id;
+      $("editLeadCompany").value  = l.company  || "";
+      $("editLeadManager").value  = l.manager  || "";
+      $("editLeadRepName").value  = l.repName  || "";
+      $("editLeadPhone").value    = l.phone    || "";
+      $("editLeadPeople").value   = l.people   || "";
+      $("editLeadAge").value      = l.age      || "";
+      $("editLeadSubject").value  = l.subject  || "";
+      $("editLeadIndustry").value = l.industry || "";
+      $("editLeadAddress").value  = l.address  || "";
+      $("leadEditModal").classList.remove("hidden");
+    }
+
+    function closeLeadEditModal(){
+      $("leadEditModal").classList.add("hidden");
+      _editLeadId = null;
+    }
+
+    async function saveLeadEdit(){
+      if(!_editLeadId) return;
+      const l = leads.find(x => x.id === _editLeadId);
+      if(!l) return;
+
+      l.company  = $("editLeadCompany").value.trim();
+      l.manager  = $("editLeadManager").value.trim();
+      l.repName  = $("editLeadRepName").value.trim();
+      l.phone    = $("editLeadPhone").value.trim();
+      l.people   = $("editLeadPeople").value.trim();
+      l.age      = $("editLeadAge").value.trim();
+      l.subject  = $("editLeadSubject").value.trim();
+      l.industry = $("editLeadIndustry").value.trim();
+      l.address  = $("editLeadAddress").value.trim();
+      l.status   = checkEducationStatus(l.industry);
+
+      closeLeadEditModal();
+      renderLeads();
+
+      // Supabase 업데이트
+      try{
+        const { error } = await sbClient.from("education_db").update({
+          company:   l.company,
+          manager:   l.manager,
+          rep_name:  l.repName,
+          phone:     l.phone,
+          people:    l.people,
+          age_group: l.age,
+          subject:   l.subject,
+          industry:  l.industry,
+          address:   l.address,
+          status:    l.status
+        }).eq("id", l.id);
+        if(error) throw error;
+        showLeadMsg("✅ 수정 완료!", "");
+      } catch(err){
+        console.warn("수정 오류:", err.message);
+        showLeadMsg("수정 저장 중 오류가 발생했어.", "error");
+      }
+    }
+
+    async function deleteLead(id){
+      if(!isAdminMode()) return;
+      if(!confirm("이 데이터를 삭제할까요?")) return;
+      leads = leads.filter(x => x.id !== id);
+      renderLeads();
+      runHomeSummary();
+
+      // Supabase 삭제
+      try{
+        const { error } = await sbClient.from("education_db").delete().eq("id", id);
+        if(error) throw error;
+        showLeadMsg("🗑 삭제 완료!", "");
+      } catch(err){
+        console.warn("삭제 오류:", err.message);
+      }
+    }
+
+    async function toggleLeadStatus(id){
+      if(!isAdminMode()) return;
+      const l = leads.find(x => x.id === id);
+      if(!l) return;
+      l.status = l.status === "교육 이수" ? "교육 미이수" : "교육 이수";
+      renderLeads();
+
+      // Supabase 업데이트
+      try{
+        const { error } = await sbClient.from("education_db").update({ status: l.status }).eq("id", l.id);
+        if(error) throw error;
+      } catch(err){
+        console.warn("상태 변경 오류:", err.message);
+      }
     }
 
     // ── Supabase 함수 ─────────────────────────────────────────
@@ -2303,6 +2495,7 @@
             company:   row.company || "",
             address:   row.address || "",
             manager:   row.manager || "",
+            repName:   row.rep_name || "",
             phone:     row.phone || "",
             people:    row.people || "",
             age:       row.age_group || "",
@@ -2329,11 +2522,10 @@
           .from("education_db")
           .insert([{
             type:       row.type || "교육섭외",
-            date:       row.date || null,
-            time:       row.time || null,
             company:    row.company || "",
             address:    row.address || "",
             manager:    row.manager || "",
+            rep_name:   row.repName || "",
             phone:      row.phone || "",
             people:     row.people || "",
             age_group:  row.age || "",
@@ -2353,11 +2545,10 @@
       try{
         const inserts = rows.map(row => ({
           type:       row.type || "교육섭외",
-          date:       row.date || null,
-          time:       row.time || null,
           company:    row.company || "",
           address:    row.address || "",
           manager:    row.manager || "",
+          rep_name:   row.repName || "",
           phone:      row.phone || "",
           people:     row.people || "",
           age_group:  row.age || "",
@@ -2381,7 +2572,9 @@
       "사업장":"company","업체":"company","회사":"company","업체명":"company","사업장명":"company",
       "주소":"address","소재지":"address",
       "키맨":"manager","담당자":"manager","키맨(담당자)":"manager",
-      "연락처":"phone","번호":"phone","전화":"phone","전화번호":"phone",
+      "대표자명":"repName","대표자":"repName","대표":"repName",
+      "연락처":"phone","연락처1":"phone","연락처 1":"phone","번호":"phone","전화":"phone","전화번호":"phone",
+      "연락처2":"phone","연락처 2":"phone",   // 연락처2가 뒤에 있어서 덮어씀 (우선순위 높음)
       "인원":"people","인원수":"people",
       "연령대":"age","나이":"age",
       "교육과목":"subject","과목":"subject","교육명":"subject",
@@ -2397,6 +2590,16 @@
       const file = input.files[0];
       if(!file) return;
 
+      // 선택된 직원 이름 가져오기 (미선택 시 업로드 차단)
+      const targetStaffName = ($("excelTargetStaff") && $("excelTargetStaff").value) || "";
+      if(!targetStaffName){
+        alert("직원을 먼저 선택해줘!\n업로드할 직원을 드롭다운에서 선택해.");
+        return;
+      }
+      // authUsers 기준 staffNo 사용 (직원 모드 필터와 동일하게 맞춤)
+      const targetAuthUser = authUsers.find(u => u.name === targetStaffName);
+      const targetStaffNo = targetAuthUser ? targetAuthUser.staffNo : targetStaffName;
+
       const reader = new FileReader();
       reader.onload = function(e){
         try{
@@ -2407,10 +2610,11 @@
 
           if(!rows.length) return alert("엑셀에 데이터가 없어.");
 
-          let added = 0;
-          rows.forEach(row => {
+          // 엑셀 행을 순서대로 수집 (2행이 테이블 첫줄)
+          const newItems = [];
+          rows.forEach((row, idx) => {
             const item = {};
-            // 컬럼명 자동 매칭
+            // 컬럼명 자동 매칭 (연락처2가 연락처1을 덮어씀)
             Object.keys(row).forEach(col => {
               const key = EXCEL_COL_MAP[col.trim()] || null;
               if(key) item[key] = String(row[col] || "").trim();
@@ -2419,30 +2623,42 @@
             if(!item.company) return; // 사업장명 없으면 스킵
 
             // 자동 처리
-            item.phone    = normalizePhone(item.phone || "");
-            item.status   = checkEducationStatus(item.industry || "");
-            item.ownerNo  = item.ownerName ? "" : currentStaffNo();
-            item.ownerName= item.ownerName || currentStaffName();
+            item.phone    = item.phone || "";  // 정규화 없이 원본 유지
+            item.status   = "교육 미이수";
+            item.repName  = item.repName || "";
+            item.ownerNo  = targetStaffNo;
+            item.ownerName= targetStaffName;
             item.createdAt= todayStr();
-            item.id       = Date.now() + added;
+            item.id       = Date.now() + idx;
             item.type     = item.type || "교육섭외";
 
-            leads.unshift(item);
-            added++;
+            newItems.push(item);
           });
+
+          const added = newItems.length;
+          if(!added) return alert("유효한 데이터가 없어 (사업장명 필수).");
+
+          // 엑셀 2행이 테이블 맨 위 → 기존 데이터 위에 정방향으로 삽입
+          leads.unshift(...newItems);
 
           // 파일 입력 초기화
           input.value = "";
           renderLeads();
           runHomeSummary();
           loadProgress();
-          syncAfterUpload(leads.slice(0, added));
+          syncAfterUpload(newItems);
           alert(`✅ 엑셀 업로드 완료!\n${added}건 누적 추가됐어.`);
         } catch(err){
           alert("엑셀 파일을 읽는 중 오류가 발생했어.\n" + err.message);
         }
       };
       reader.readAsArrayBuffer(file);
+    }
+
+    function openNaverMap(idx){
+      const l = leads[idx];
+      if(!l || !l.address) return;
+      window.open("https://map.naver.com/v5/search/" + encodeURIComponent(l.address), "_blank");
     }
 
     function checkEducationStatus(industry){
@@ -2763,16 +2979,17 @@
         const row = schedules.find(x => x.id === state.manualEditId);
         if(row){
           row.assignee = rowData.assignee;
-          row.date = rowData.date;
-          row.time = rowData.time;
+          row.type    = rowData.type;
+          row.date    = rowData.date;
+          row.time    = rowData.time;
           row.company = rowData.company;
           row.address = rowData.address;
           row.manager = rowData.manager;
-          row.phone = rowData.phone;
-          row.people = rowData.people;
-          row.gap = rowData.gap;
-          row.bank = rowData.bank;
-          row.memo = rowData.memo;
+          row.phone   = rowData.phone;
+          row.people  = rowData.people;
+          row.age     = rowData.age;
+          row.subject = rowData.subject;
+          row.memo    = rowData.memo;
         }
       }else{
         schedules.unshift({
