@@ -671,38 +671,45 @@
     }
 
     /* ── 일정표 관리 (강의 일정표 카드) ── */
+    .itin-modal-card{
+      max-width:640px;width:100%;
+    }
     .itinerary-card-wrap{
-      background:#fff;border-radius:8px;overflow:hidden;
-      box-shadow:0 4px 24px rgba(0,0,0,.13);
-      min-width:320px;max-width:480px;width:100%;
-      font-family:"Noto Sans KR",Arial,sans-serif;
+      background:#fff;
+      width:520px;min-width:520px;
+      font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;
+      border:2px solid #2e7d32;
     }
     .itinerary-card-wrap table{
-      border-collapse:collapse;width:100%;font-size:13px;
+      border-collapse:collapse;width:100%;
+      table-layout:fixed;font-size:13px;
     }
+    .itinerary-card-wrap colgroup col:nth-child(1){ width:34%; }
+    .itinerary-card-wrap colgroup col:nth-child(2){ width:33%; }
+    .itinerary-card-wrap colgroup col:nth-child(3){ width:33%; }
     .itinerary-card-wrap .ic-title{
       background:#2e7d32;color:#fff;text-align:center;
-      font-weight:900;font-size:15px;letter-spacing:2px;
-      padding:10px 0;
+      font-weight:900;font-size:15px;letter-spacing:3px;
+      padding:11px 0;
     }
     .itinerary-card-wrap .ic-head{
       background:#2e7d32;color:#fff;text-align:center;
-      font-weight:700;font-size:12px;padding:5px 8px;
+      font-weight:700;font-size:12px;padding:6px 4px;
       border:1px solid #1b5e20;
     }
     .itinerary-card-wrap .ic-data{
       background:#fff;text-align:center;
-      font-size:13px;font-weight:500;padding:6px 8px;
-      border:1px solid #c8e6c9;
+      font-size:13px;font-weight:500;padding:7px 4px;
+      border:1px solid #c8e6c9;word-break:keep-all;
     }
     .itinerary-card-wrap .ic-note{
       background:#fff;font-size:12px;font-weight:500;
-      padding:8px 10px;border:1px solid #c8e6c9;
-      white-space:pre-wrap;text-align:left;line-height:1.8;
-      min-height:60px;
+      padding:10px 12px;border:1px solid #c8e6c9;
+      white-space:pre-wrap;text-align:left;line-height:1.9;
+      min-height:70px;
     }
     .itinerary-download-btn{
-      height:40px;padding:0 18px;border-radius:12px;
+      height:42px;padding:0 20px;border-radius:12px;
       background:linear-gradient(135deg,#2e7d32,#388e3c);
       color:#fff;border:none;font-size:13px;font-weight:800;
       cursor:pointer;display:inline-flex;align-items:center;gap:6px;
@@ -1443,26 +1450,35 @@
 
   <!-- ── 강의 일정표 카드 모달 ── -->
   <div class="modal-backdrop" id="itineraryCardModal" onclick="if(event.target===this)closeItineraryCard()">
-    <div class="modal-card" style="max-width:520px;">
+    <div class="modal-card itin-modal-card">
       <div class="modal-head">
         <div><h4>강의 일정표</h4><p>이미지로 다운로드하거나 드래그로 복사할 수 있어.</p></div>
         <button class="icon-btn" onclick="closeItineraryCard()">✕</button>
       </div>
-      <div style="padding:20px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <div style="padding:16px 24px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;overflow-x:auto;">
         <!-- 카드 본체 (html2canvas 캡처 대상) -->
         <div id="itineraryCardBody" class="itinerary-card-wrap">
           <table>
+            <colgroup>
+              <col style="width:34%"><col style="width:33%"><col style="width:33%">
+            </colgroup>
+            <!-- 제목 -->
             <tr><td colspan="3" class="ic-title">〈 강의 일정표 〉</td></tr>
+            <!-- 섭외자 / 업종 -->
             <tr>
               <td class="ic-head">섭외자</td>
-              <td class="ic-head" colspan="2">업종</td>
+              <td class="ic-head"></td>
+              <td class="ic-head">업종</td>
             </tr>
             <tr>
               <td class="ic-data" id="icAssignee"></td>
-              <td class="ic-data" colspan="2" id="icIndustry"></td>
+              <td class="ic-data" id="icSubCode"></td>
+              <td class="ic-data" id="icIndustry"></td>
             </tr>
+            <!-- 업체명 -->
             <tr><td colspan="3" class="ic-head">업체명</td></tr>
             <tr><td colspan="3" class="ic-data" id="icCompany"></td></tr>
+            <!-- 방문일자 / 강의시간 -->
             <tr>
               <td class="ic-head" colspan="2">방문일자</td>
               <td class="ic-head">강의시간</td>
@@ -1471,8 +1487,10 @@
               <td class="ic-data" colspan="2" id="icDate"></td>
               <td class="ic-data" id="icTime"></td>
             </tr>
+            <!-- 방문주소 -->
             <tr><td colspan="3" class="ic-head">방문주소</td></tr>
             <tr><td colspan="3" class="ic-data" id="icAddress"></td></tr>
+            <!-- 참석인원 / 연령대 -->
             <tr>
               <td class="ic-head" colspan="2">참석인원</td>
               <td class="ic-head">연령대</td>
@@ -1481,6 +1499,7 @@
               <td class="ic-data" colspan="2" id="icPeople"></td>
               <td class="ic-data" id="icAge"></td>
             </tr>
+            <!-- 교육장소 / 강의내용 / 외국인 -->
             <tr>
               <td class="ic-head">교육장소</td>
               <td class="ic-head">강의내용</td>
@@ -1491,6 +1510,7 @@
               <td class="ic-data" id="icSubject"></td>
               <td class="ic-data" id="icForeigner"></td>
             </tr>
+            <!-- 담당자 / 사무실 번호 / 핸드폰 번호 -->
             <tr>
               <td class="ic-head">담당자</td>
               <td class="ic-head">사무실 번호</td>
@@ -1501,6 +1521,7 @@
               <td class="ic-data" id="icBizPhone"></td>
               <td class="ic-data" id="icManagerPhone"></td>
             </tr>
+            <!-- 후원내용 / 기타사항 -->
             <tr>
               <td class="ic-head" colspan="2">후원내용</td>
               <td class="ic-head">기타사항</td>
@@ -1509,11 +1530,12 @@
               <td class="ic-data" colspan="2" id="icSupport"></td>
               <td class="ic-data" id="icEtc"></td>
             </tr>
+            <!-- 참고사항 -->
             <tr><td colspan="3" class="ic-head">참고사항</td></tr>
             <tr><td colspan="3" class="ic-note" id="icNote"></td></tr>
           </table>
         </div>
-        <div style="display:flex;gap:10px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
           <button class="itinerary-download-btn" onclick="downloadItineraryCard()">⬇ 이미지 다운로드</button>
           <button class="ghost-btn" onclick="closeItineraryCard()">닫기</button>
         </div>
@@ -1531,21 +1553,22 @@
       <div class="form-grid" style="padding:20px 24px;">
         <input id="editItinCompany" placeholder="업체명">
         <input id="editItinAssignee" placeholder="섭외자">
-        <input id="editItinAddress" class="full" placeholder="주소">
-        <input id="editItinManager" placeholder="키맨 (담당자)">
-        <input id="editItinBizPhone" placeholder="업체연락처">
-        <input id="editItinManagerPhone" placeholder="키맨연락처">
+        <input id="editItinSubCode" placeholder="섭외자 코드 (예: S)">
+        <input id="editItinIndustry" placeholder="업종">
+        <input id="editItinAddress" class="full" placeholder="방문주소">
         <input id="editItinDate" type="date">
-        <input id="editItinTime" placeholder="시간 예: 10:00">
+        <input id="editItinTime" placeholder="강의시간 예: 10:00">
         <input id="editItinPeople" placeholder="참석인원">
         <input id="editItinAge" placeholder="연령대">
-        <input id="editItinSubject" placeholder="강의내용 (교육과목)">
-        <input id="editItinIndustry" placeholder="업종">
         <input id="editItinPlace" placeholder="교육장소 (예: 사무실)">
+        <input id="editItinSubject" placeholder="강의내용 (교육과목)">
         <input id="editItinForeigner" placeholder="외국인">
+        <input id="editItinManager" placeholder="담당자 (키맨)">
+        <input id="editItinBizPhone" placeholder="사무실 번호">
+        <input id="editItinManagerPhone" placeholder="핸드폰 번호">
         <input id="editItinSupport" class="full" placeholder="후원내용">
         <input id="editItinEtc" class="full" placeholder="기타사항">
-        <textarea id="editItinNote" class="full" rows="5" placeholder="특이사항 (참고사항)" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+        <textarea id="editItinNote" class="full" rows="6" placeholder="참고사항 (특이사항)" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 24px 24px;">
         <button class="ghost-btn" onclick="closeItineraryEditModal()">취소</button>
@@ -3189,20 +3212,21 @@
 
     function buildItineraryFromSchedule(sched){
       return {
-        id:           Date.now() + Math.random(),
-        scheduleId:   sched.id,
-        company:      sched.company || "",
-        address:      sched.address || "",
-        bizPhone:     sched.phone   || "",    // 업체연락처
-        manager:      sched.manager || "",    // 키맨
-        managerPhone: sched.phone   || "",    // 키맨연락처
-        date:         sched.date    || "",
-        time:         sched.time    || "",
-        people:       sched.people  || "",
-        age:          sched.age     || "",
-        assignee:     sched.assignee|| "",
-        subject:      sched.subject || "",
-        industry:     "",
+        id:             Date.now() + Math.random(),
+        scheduleId:     sched.id,
+        company:        sched.company  || "",
+        address:        sched.address  || "",
+        bizPhone:       sched.phone    || "",   // 사무실 번호
+        manager:        sched.manager  || "",   // 담당자
+        managerPhone:   sched.phone    || "",   // 핸드폰 번호
+        date:           sched.date     || "",
+        time:           sched.time     || "",
+        people:         sched.people   || "",
+        age:            sched.age      || "",
+        assignee:       sched.assignee || "",
+        subCode:        "",                     // 섭외자 코드 (ex: S)
+        subject:        sched.subject  || "",
+        industry:       "",
         educationPlace: "사무실",
         foreignerCount: "",
         supportContent: "지역 후원사 안내",
@@ -3280,23 +3304,24 @@
       if(!itin) return;
       _itineraryCardId = id;
 
-      $("icAssignee").textContent   = itin.assignee || "";
-      $("icIndustry").textContent   = itin.industry || "";
-      $("icCompany").textContent    = itin.company  || "";
-      $("icDate").textContent       = formatDateKorean(itin.date);
-      $("icTime").textContent       = itin.time     || "";
-      $("icAddress").textContent    = itin.address  || "";
-      $("icPeople").textContent     = itin.people   || "";
-      $("icAge").textContent        = itin.age      || "";
-      $("icPlace").textContent      = itin.educationPlace || "사무실";
-      $("icSubject").textContent    = itin.subject  || "";
-      $("icForeigner").textContent  = itin.foreignerCount || "";
-      $("icManager").textContent    = itin.manager  || "";
-      $("icBizPhone").textContent   = formatPhone(itin.bizPhone)     || "";
+      $("icAssignee").textContent     = itin.assignee       || "";
+      $("icSubCode").textContent      = itin.subCode        || "";
+      $("icIndustry").textContent     = itin.industry       || "";
+      $("icCompany").textContent      = itin.company        || "";
+      $("icDate").textContent         = formatDateKorean(itin.date);
+      $("icTime").textContent         = itin.time           || "";
+      $("icAddress").textContent      = itin.address        || "";
+      $("icPeople").textContent       = itin.people         || "";
+      $("icAge").textContent          = itin.age            || "";
+      $("icPlace").textContent        = itin.educationPlace || "사무실";
+      $("icSubject").textContent      = itin.subject        || "";
+      $("icForeigner").textContent    = itin.foreignerCount || "";
+      $("icManager").textContent      = itin.manager        || "";
+      $("icBizPhone").textContent     = formatPhone(itin.bizPhone)     || "";
       $("icManagerPhone").textContent = formatPhone(itin.managerPhone) || "";
-      $("icSupport").textContent    = itin.supportContent || "";
-      $("icEtc").textContent        = itin.etcNote  || "";
-      $("icNote").textContent       = itin.specialNote || "";
+      $("icSupport").textContent      = itin.supportContent || "";
+      $("icEtc").textContent          = itin.etcNote        || "";
+      $("icNote").textContent         = itin.specialNote    || "";
 
       $("itineraryCardModal").classList.add("show");
     }
@@ -3332,18 +3357,19 @@
 
       $("editItinCompany").value      = itin.company        || "";
       $("editItinAssignee").value     = itin.assignee       || "";
+      $("editItinSubCode").value      = itin.subCode        || "";
+      $("editItinIndustry").value     = itin.industry       || "";
       $("editItinAddress").value      = itin.address        || "";
-      $("editItinManager").value      = itin.manager        || "";
-      $("editItinBizPhone").value     = itin.bizPhone       || "";
-      $("editItinManagerPhone").value = itin.managerPhone   || "";
       $("editItinDate").value         = itin.date           || "";
       $("editItinTime").value         = itin.time           || "";
       $("editItinPeople").value       = itin.people         || "";
       $("editItinAge").value          = itin.age            || "";
-      $("editItinSubject").value      = itin.subject        || "";
-      $("editItinIndustry").value     = itin.industry       || "";
       $("editItinPlace").value        = itin.educationPlace || "사무실";
+      $("editItinSubject").value      = itin.subject        || "";
       $("editItinForeigner").value    = itin.foreignerCount || "";
+      $("editItinManager").value      = itin.manager        || "";
+      $("editItinBizPhone").value     = itin.bizPhone       || "";
+      $("editItinManagerPhone").value = itin.managerPhone   || "";
       $("editItinSupport").value      = itin.supportContent || "";
       $("editItinEtc").value          = itin.etcNote        || "";
       $("editItinNote").value         = itin.specialNote    || "";
@@ -3362,18 +3388,19 @@
 
       itin.company        = $("editItinCompany").value.trim();
       itin.assignee       = $("editItinAssignee").value.trim();
+      itin.subCode        = $("editItinSubCode").value.trim();
+      itin.industry       = $("editItinIndustry").value.trim();
       itin.address        = $("editItinAddress").value.trim();
-      itin.manager        = $("editItinManager").value.trim();
-      itin.bizPhone       = $("editItinBizPhone").value.trim();
-      itin.managerPhone   = $("editItinManagerPhone").value.trim();
       itin.date           = $("editItinDate").value;
       itin.time           = $("editItinTime").value.trim();
       itin.people         = $("editItinPeople").value.trim();
       itin.age            = $("editItinAge").value.trim();
-      itin.subject        = $("editItinSubject").value.trim();
-      itin.industry       = $("editItinIndustry").value.trim();
       itin.educationPlace = $("editItinPlace").value.trim() || "사무실";
+      itin.subject        = $("editItinSubject").value.trim();
       itin.foreignerCount = $("editItinForeigner").value.trim();
+      itin.manager        = $("editItinManager").value.trim();
+      itin.bizPhone       = $("editItinBizPhone").value.trim();
+      itin.managerPhone   = $("editItinManagerPhone").value.trim();
       itin.supportContent = $("editItinSupport").value.trim();
       itin.etcNote        = $("editItinEtc").value.trim();
       itin.specialNote    = $("editItinNote").value.trim();
