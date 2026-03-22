@@ -1159,8 +1159,8 @@
 
           <div class="toolbar">
             <div id="excelUploadBox" class="hidden" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <select id="excelTargetStaff" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:700;cursor:pointer;">
-                <option value="">직원 선택</option>
+              <select id="excelTargetStaff" onchange="onLeadStaffFilter()" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:700;cursor:pointer;">
+                <option value="">전체 보기</option>
               </select>
               <label for="excelUpload" class="ghost-btn" style="cursor:pointer;display:inline-flex;align-items:center;height:46px;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:800;">
                 📂 엑셀 업로드
@@ -1610,12 +1610,7 @@
       if(!admin) $("aggScope").value = "mine";
 
       if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !admin);
-      // 직원 선택 드롭다운 채우기 (관리자 전용)
-      const excelStaffSel = $("excelTargetStaff");
-      if(excelStaffSel && admin){
-        excelStaffSel.innerHTML = `<option value="">직원 선택</option>` +
-          staffs.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)} (${escapeHtml(s.no)})</option>`).join("");
-      }
+      if(admin) refreshLeadStaffDropdown();
       onPerformanceTypeChange();
     }
 
@@ -1687,8 +1682,20 @@
       return isAdminMode() ? performances.slice() : performances.filter(p => p.createdByNo === currentStaffNo() || p.staff === currentStaffName());
     }
 
+    let _leadStaffFilter = "";
+
+    function onLeadStaffFilter(){
+      _leadStaffFilter = ($("excelTargetStaff") || {}).value || "";
+      renderLeads();
+    }
+
     function getVisibleLeads(){
-      return isAdminMode() ? leads : leads.filter(l => l.ownerNo === currentStaffNo());
+      if(isAdminMode()){
+        if(_leadStaffFilter) return leads.filter(l => l.ownerName === _leadStaffFilter);
+        return leads.slice();
+      }
+      // 직원 모드: 본인 이름 or 사번으로 매칭
+      return leads.filter(l => l.ownerNo === currentStaffNo() || l.ownerName === currentStaffName());
     }
 
     function renderNotices(){
@@ -2222,6 +2229,15 @@
       });
     }
 
+    function refreshLeadStaffDropdown(){
+      const sel = $("excelTargetStaff");
+      if(!sel) return;
+      const prev = sel.value; // 현재 선택값 유지
+      sel.innerHTML = `<option value="">전체 보기</option>` +
+        staffs.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join("");
+      if(prev) sel.value = prev;
+    }
+
     function addStaff(){
       if(!isAdminMode()) return alert("직원관리는 관리자 모드에서만 가능해.");
 
@@ -2233,12 +2249,16 @@
       if(!name || !no) return alert("직원명과 사번은 꼭 입력해줘.");
 
       staffs.unshift({ name, no, role, branch });
+      // authUsers에도 추가 (직원 로그인 가능하도록)
+      authUsers.unshift({ staffNo: no, password: no, name, role, branch });
+
       $("staffName").value = "";
       $("staffNo").value = "";
       $("staffBranch").value = "";
       renderStaffs();
+      refreshLeadStaffDropdown(); // 직원 선택 드롭다운 즉시 갱신
       applyRoleUI();
-      alert("직원 추가 완료");
+      alert(`✅ 직원 추가 완료!\n${name} / 사번 ${no}\n초기 비밀번호: ${no}`);
     }
 
     function renderLeads(){
@@ -2560,12 +2580,15 @@
       const file = input.files[0];
       if(!file) return;
 
-      // 선택된 직원 이름 가져오기
-      const targetStaffName = ($("excelTargetStaff") && $("excelTargetStaff").value) || currentStaffName();
-      const targetStaff = staffs.find(s => s.name === targetStaffName);
-      const targetStaffNo = targetStaff ? targetStaff.no : currentStaffNo();
-
-      if(!targetStaffName) return alert("직원을 먼저 선택해줘.");
+      // 선택된 직원 이름 가져오기 (미선택 시 업로드 차단)
+      const targetStaffName = ($("excelTargetStaff") && $("excelTargetStaff").value) || "";
+      if(!targetStaffName){
+        alert("직원을 먼저 선택해줘!\n업로드할 직원을 드롭다운에서 선택해.");
+        return;
+      }
+      // authUsers 기준 staffNo 사용 (직원 모드 필터와 동일하게 맞춤)
+      const targetAuthUser = authUsers.find(u => u.name === targetStaffName);
+      const targetStaffNo = targetAuthUser ? targetAuthUser.staffNo : targetStaffName;
 
       const reader = new FileReader();
       reader.onload = function(e){
