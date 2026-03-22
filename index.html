@@ -626,9 +626,29 @@
     }
     .tbl-del-btn:hover{ background:#ffe4e6; }
     .addr-link{
-      color:#2563eb;text-decoration:none;font-size:inherit;
+      color:#2563eb;text-decoration:none;font-size:inherit;cursor:pointer;
     }
     .addr-link:hover{ text-decoration:underline; }
+    .ampm-btn{
+      height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--line);
+      background:#fff;color:#64748b;font-size:13px;font-weight:800;cursor:pointer;
+    }
+    .ampm-btn.active{ background:var(--primary);color:#fff;border-color:transparent; }
+    .result-select{
+      height:30px;padding:0 6px;border-radius:8px;border:1px solid var(--line);
+      background:#fff;font-size:11px;font-weight:700;cursor:pointer;min-width:90px;
+    }
+    .memo-btn{
+      height:26px;padding:0 8px;border-radius:8px;font-size:11px;font-weight:800;
+      background:#f1f5f9;color:#475569;border:1px solid var(--line);cursor:pointer;white-space:nowrap;
+    }
+    .memo-btn.has-memo{ background:#fef9c3;color:#854d0e;border-color:#fde047; }
+    #leadTableBody td{ padding:6px 8px;font-size:12px;vertical-align:middle; }
+    #leadTableBody .edu-toggle-btn{ font-size:11px;height:24px;padding:0 8px; }
+    #leadTableBody .edu-pass{ font-size:11px;height:24px;padding:0 8px; }
+    #leadTableBody .edu-fail{ font-size:11px;height:24px;padding:0 8px; }
+    #leadTableBody .tbl-edit-btn,#leadTableBody .tbl-del-btn{ height:24px;padding:0 7px;font-size:11px; }
+    .lead-chk{ width:15px;height:15px;cursor:pointer; }
     .edu-cat-row{
       display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;
     }
@@ -1161,23 +1181,25 @@
 
           <div id="leadMsgBox" class="msg"></div>
 
-          <div class="toolbar">
+          <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
             <div id="excelUploadBox" class="hidden" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <select id="excelTargetStaff" onchange="onLeadStaffFilter()" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:700;cursor:pointer;">
+              <select id="excelTargetStaff" onchange="onLeadStaffFilter()" style="height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:700;cursor:pointer;">
                 <option value="">전체 보기</option>
               </select>
-              <label for="excelUpload" class="ghost-btn" style="cursor:pointer;display:inline-flex;align-items:center;height:46px;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:800;">
+              <label for="excelUpload" class="ghost-btn" style="cursor:pointer;display:inline-flex;align-items:center;height:40px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:800;">
                 📂 엑셀 업로드
               </label>
               <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" class="hidden" onchange="parseExcelFile(this)">
-              <span style="font-size:12px;color:#64748b;">관리자 전용 · 직원 선택 후 업로드</span>
+              <button id="btnDeleteAll" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteAllLeads()">🗑 전체삭제</button>
+              <button id="btnDeleteSel" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteSelectedLeads()">☑ 선택삭제</button>
             </div>
           </div>
 
           <div class="table-wrap">
-            <table>
+            <table style="font-size:12px;">
               <thead>
                 <tr>
+                  <th id="leadChkTh" class="hidden" style="width:32px;"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
                   <th>사업장</th>
                   <th>주소</th>
                   <th>키맨</th>
@@ -1186,7 +1208,9 @@
                   <th>인원</th>
                   <th>업종</th>
                   <th>섭외자</th>
-                  <th>교육 이수 확인 여부</th>
+                  <th>교육이수여부</th>
+                  <th>결과값</th>
+                  <th>메모</th>
                   <th id="leadActionTh" class="hidden"></th>
                 </tr>
               </thead>
@@ -1234,6 +1258,58 @@
       </div>
     </main>
   </section>
+
+  <!-- 메모 모달 -->
+  <div class="modal-backdrop hidden" id="leadMemoModal" onclick="if(event.target===this)closeLeadMemoModal()">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="modal-head">
+        <div><h4>메모</h4><p id="leadMemoCompanyLabel" style="font-weight:700;color:var(--primary);"></p></div>
+        <button class="icon-btn" onclick="closeLeadMemoModal()">✕</button>
+      </div>
+      <div style="padding:0 24px 16px;">
+        <textarea id="leadMemoText" rows="5" style="width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;font-size:14px;resize:vertical;font-family:inherit;" placeholder="이 사업장에 대한 메모를 입력해줘..."></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 24px 24px;">
+        <button class="ghost-btn" onclick="closeLeadMemoModal()">닫기</button>
+        <button class="small-btn" onclick="saveLeadMemo()">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 일정픽스 날짜/시간 선택 모달 -->
+  <div class="modal-backdrop hidden" id="resultFixModal" onclick="if(event.target===this)closeResultFixModal()">
+    <div class="modal-card" style="max-width:340px;">
+      <div class="modal-head">
+        <div><h4>일정픽스</h4><p id="resultFixCompanyLabel" style="font-weight:700;color:var(--primary);"></p></div>
+        <button class="icon-btn" onclick="closeResultFixModal()">✕</button>
+      </div>
+      <div style="padding:0 24px 16px;display:flex;flex-direction:column;gap:12px;">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">날짜</div>
+          <input type="date" id="resultFixDate" style="width:100%;height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);font-size:14px;">
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#64748b;margin-bottom:6px;">시간</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button id="rfAmBtn" class="ampm-btn active" onclick="setResultAmPm('오전')">오전</button>
+            <button id="rfPmBtn" class="ampm-btn" onclick="setResultAmPm('오후')">오후</button>
+            <select id="resultFixHour" style="height:40px;padding:0 8px;border-radius:12px;border:1px solid var(--line);font-size:14px;font-weight:700;">
+              <option>1시</option><option>2시</option><option>3시</option><option>4시</option>
+              <option>5시</option><option>6시</option><option>7시</option><option>8시</option>
+              <option>9시</option><option selected>10시</option><option>11시</option><option>12시</option>
+            </select>
+            <select id="resultFixMin" style="height:40px;padding:0 8px;border-radius:12px;border:1px solid var(--line);font-size:14px;font-weight:700;">
+              <option value="00">00분</option><option value="30">30분</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 24px 24px;">
+        <button class="ghost-btn" onclick="closeResultFixModal()">취소</button>
+        <button class="small-btn" onclick="saveResultFix()">확인</button>
+      </div>
+    </div>
+  </div>
 
   <!-- 교육섭외 DB 수정 모달 -->
   <div class="modal-backdrop hidden" id="leadEditModal" onclick="if(event.target===this)closeLeadEditModal()">
@@ -2281,27 +2357,48 @@
       const th = $("leadActionTh");
       if(th) th.classList.toggle("hidden", !admin);
 
+      // 관리자: 체크박스 열 / 전체삭제·선택삭제 버튼 토글
+      const chkTh = $("leadChkTh");
+      if(chkTh) chkTh.classList.toggle("hidden", !admin);
+      if($("btnDeleteAll")) $("btnDeleteAll").classList.toggle("hidden", !admin);
+      if($("btnDeleteSel")) $("btnDeleteSel").classList.toggle("hidden", !admin);
+
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="${admin ? 10 : 9}"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
         return;
       }
+
+      const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "일정픽스"];
 
       rows.forEach(l => {
         const sc = l.status === "교육 이수" ? "edu-pass" : l.status === "교육 미이수" ? "edu-fail" : "";
         const phone = l.phone || "";
-
-        // 주소 → 네이버 지도 링크
-        const addrText = escapeHtml(l.address || "");
         const addrIdx = leads.indexOf(l);
         const addrCell = l.address
-          ? `<span class="addr-link" onclick="openNaverMap(${addrIdx})" title="클릭하면 네이버 지도">${addrText}</span>`
+          ? `<span class="addr-link" onclick="openNaverMap(${addrIdx})">${escapeHtml(l.address)}</span>`
           : "";
 
-        // 교육 이수 여부: 관리자는 클릭 토글, 직원은 텍스트만
+        // 교육 이수 여부
         const statusCell = admin
-          ? `<button class="edu-toggle-btn ${sc}" onclick="toggleLeadStatus(${l.id})" title="클릭하면 상태 변경">${escapeHtml(l.status || "미지정")}</button>`
+          ? `<button class="edu-toggle-btn ${sc}" onclick="toggleLeadStatus(${l.id})">${escapeHtml(l.status || "미지정")}</button>`
           : `${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}`;
 
+        // 결과값 드롭다운
+        const resultOpts = RESULT_OPTIONS.map(o =>
+          `<option value="${o}" ${l.result===o?"selected":""}>${o||"선택"}</option>`).join("");
+        const resultLabel = l.result === "일정픽스" && l.resultDate
+          ? `<div style="font-size:10px;color:#2563eb;margin-top:2px;">${escapeHtml(l.resultDate)} ${escapeHtml(l.resultTime||"")}</div>` : "";
+        const resultCell = `<td>
+          <select class="result-select" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>
+          ${resultLabel}
+        </td>`;
+
+        // 메모 버튼
+        const hasMemo = !!(l.memo && l.memo.trim());
+        const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})" title="${hasMemo?escapeHtml(l.memo):'메모 없음'}">${hasMemo?"📝 메모":"메모"}</button></td>`;
+
+        // 관리자 수정/삭제
+        const chkCell = admin ? `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>` : "";
         const actionCell = admin
           ? `<td style="white-space:nowrap;">
                <button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button>
@@ -2311,6 +2408,7 @@
 
         body.innerHTML += `
           <tr>
+            ${chkCell}
             <td>${escapeHtml(l.company || "")}</td>
             <td>${addrCell}</td>
             <td>${escapeHtml(l.manager || "")}</td>
@@ -2320,6 +2418,8 @@
             <td>${escapeHtml(l.industry || "")}</td>
             <td>${escapeHtml(l.ownerName || "")}</td>
             <td>${statusCell}</td>
+            ${resultCell}
+            ${memoCell}
             ${actionCell}
           </tr>
         `;
@@ -2502,9 +2602,13 @@
             subject:   row.subject || "",
             industry:  row.industry || "",
             status:    row.status || "",
-            ownerNo:   row.staff_no || "",
-            ownerName: row.staff_name || "",
-            createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr()
+            ownerNo:    row.staff_no || "",
+            ownerName:  row.staff_name || "",
+            memo:       row.memo || "",
+            result:     row.result || "",
+            resultDate: row.result_date || "",
+            resultTime: row.result_time || "",
+            createdAt:  row.created_at ? row.created_at.slice(0,10) : todayStr()
           });
         });
 
@@ -2653,6 +2757,131 @@
         }
       };
       reader.readAsArrayBuffer(file);
+    }
+
+    // ── 전체삭제 / 선택삭제 ──────────────────────────────────────
+
+    async function deleteAllLeads(){
+      if(!isAdminMode()) return;
+      const cnt = getVisibleLeads().length;
+      if(!confirm(`현재 표시된 데이터 ${cnt}건을 모두 삭제할까요?\n이 작업은 되돌릴 수 없어요.`)) return;
+      const ids = getVisibleLeads().map(l => l.id);
+      ids.forEach(id => { leads = leads.filter(x => x.id !== id); });
+      renderLeads(); runHomeSummary();
+      try{
+        for(const id of ids){
+          await sbClient.from("education_db").delete().eq("id", id);
+        }
+        showLeadMsg(`🗑 ${ids.length}건 삭제 완료!`, "");
+      } catch(e){ console.warn(e); }
+    }
+
+    async function deleteSelectedLeads(){
+      if(!isAdminMode()) return;
+      const checked = Array.from(document.querySelectorAll('.lead-chk:checked')).map(c => Number(c.dataset.id));
+      if(!checked.length) return alert("삭제할 항목을 먼저 선택해줘.");
+      if(!confirm(`선택한 ${checked.length}건을 삭제할까요?`)) return;
+      checked.forEach(id => { leads = leads.filter(x => x.id !== id); });
+      renderLeads(); runHomeSummary();
+      try{
+        for(const id of checked){
+          await sbClient.from("education_db").delete().eq("id", id);
+        }
+        showLeadMsg(`🗑 ${checked.length}건 삭제 완료!`, "");
+      } catch(e){ console.warn(e); }
+    }
+
+    function toggleLeadCheckAll(chk){
+      document.querySelectorAll('.lead-chk').forEach(c => c.checked = chk.checked);
+    }
+
+    // ── 메모 ─────────────────────────────────────────────────────
+
+    let _memoLeadId = null;
+
+    function openLeadMemoModal(id){
+      const l = leads.find(x => x.id === id);
+      if(!l) return;
+      _memoLeadId = id;
+      $("leadMemoCompanyLabel").textContent = l.company || "";
+      $("leadMemoText").value = l.memo || "";
+      $("leadMemoModal").classList.remove("hidden");
+      setTimeout(() => $("leadMemoText").focus(), 100);
+    }
+
+    function closeLeadMemoModal(){
+      $("leadMemoModal").classList.add("hidden");
+      _memoLeadId = null;
+    }
+
+    async function saveLeadMemo(){
+      if(!_memoLeadId) return;
+      const l = leads.find(x => x.id === _memoLeadId);
+      if(!l) return;
+      l.memo = $("leadMemoText").value.trim();
+      closeLeadMemoModal();
+      renderLeads();
+      try{
+        await sbClient.from("education_db").update({ memo: l.memo }).eq("id", l.id);
+        showLeadMsg("📝 메모 저장 완료!", "");
+      } catch(e){ console.warn(e); }
+    }
+
+    // ── 결과값 + 일정픽스 ─────────────────────────────────────────
+
+    let _resultFixLeadId = null;
+    let _resultFixAmPm = "오전";
+
+    function onResultChange(id, value){
+      const l = leads.find(x => x.id === id);
+      if(!l) return;
+      if(value === "일정픽스"){
+        _resultFixLeadId = id;
+        _resultFixAmPm = "오전";
+        $("rfAmBtn").classList.add("active");
+        $("rfPmBtn").classList.remove("active");
+        $("resultFixDate").value = "";
+        $("resultFixCompanyLabel").textContent = l.company || "";
+        $("resultFixModal").classList.remove("hidden");
+      } else {
+        l.result = value;
+        l.resultDate = "";
+        l.resultTime = "";
+        renderLeads();
+        sbClient.from("education_db").update({ result: value, result_date: "", result_time: "" }).eq("id", l.id).then(({error}) => { if(error) console.warn(error); });
+      }
+    }
+
+    function setResultAmPm(v){
+      _resultFixAmPm = v;
+      $("rfAmBtn").classList.toggle("active", v === "오전");
+      $("rfPmBtn").classList.toggle("active", v === "오후");
+    }
+
+    function closeResultFixModal(){
+      $("resultFixModal").classList.add("hidden");
+      _resultFixLeadId = null;
+      renderLeads(); // 선택값 되돌리기
+    }
+
+    async function saveResultFix(){
+      const l = leads.find(x => x.id === _resultFixLeadId);
+      if(!l) return;
+      const date = $("resultFixDate").value;
+      const hour = $("resultFixHour").value;
+      const min  = $("resultFixMin").value;
+      if(!date) return alert("날짜를 선택해줘.");
+      const timeStr = `${_resultFixAmPm} ${hour} ${min}분`;
+      l.result = "일정픽스";
+      l.resultDate = date;
+      l.resultTime = timeStr;
+      $("resultFixModal").classList.add("hidden");
+      _resultFixLeadId = null;
+      renderLeads();
+      try{
+        await sbClient.from("education_db").update({ result:"일정픽스", result_date: date, result_time: timeStr }).eq("id", l.id);
+        showLeadMsg("📅 일정픽스 저장 완료!", "");
+      } catch(e){ console.warn(e); }
     }
 
     function openNaverMap(idx){
