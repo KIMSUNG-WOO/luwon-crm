@@ -702,36 +702,43 @@
       display:flex;gap:10px;justify-content:center;
       padding:12px 14px 16px;
     }
-    /* ── 카드 본체 ── */
+    /* ── 카드 본체 (CSS Grid 방식 - 절대 안 잘림) ── */
     .itinerary-card-wrap{
       font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;
-    }
-    .itinerary-card-wrap table{
-      border-collapse:collapse;
-      width:100%;
-      table-layout:fixed;
+      width:100%;box-sizing:border-box;
       border:2px solid #2e7d32;
     }
-    .itinerary-card-wrap .ic-title{
+    /* 3등분 행 */
+    .ic-row3{display:grid;grid-template-columns:1fr 1fr 1fr;width:100%;}
+    /* 2:1 행 (방문일자/강의시간, 참석인원/연령대, 후원내용/기타사항) */
+    .ic-row21{display:grid;grid-template-columns:2fr 1fr;width:100%;}
+    /* 전체 너비 셀 */
+    .ic-full{display:block;width:100%;box-sizing:border-box;}
+    /* 제목 */
+    .ic-title{
       background:#2e7d32;color:#fff;text-align:center;
       font-weight:900;font-size:14px;letter-spacing:2px;
-      padding:10px 0;
+      padding:10px 0;border-bottom:1px solid #1b5e20;
     }
-    .itinerary-card-wrap .ic-head{
+    /* 헤더 셀 */
+    .ic-head{
       background:#2e7d32;color:#fff;text-align:center;
       font-weight:700;font-size:12px;padding:6px 4px;
-      border:1px solid #1b5e20;
+      border:1px solid #1b5e20;box-sizing:border-box;
     }
-    .itinerary-card-wrap .ic-data{
+    /* 데이터 셀 */
+    .ic-data{
       background:#fff;text-align:center;
       font-size:12px;font-weight:500;padding:7px 4px;
       border:1px solid #c8e6c9;word-break:break-word;
+      box-sizing:border-box;
     }
-    .itinerary-card-wrap .ic-note{
+    /* 참고사항 */
+    .ic-note{
       background:#fff;font-size:12px;font-weight:500;
       padding:10px 12px;border:1px solid #c8e6c9;
       white-space:pre-wrap;text-align:left;line-height:1.9;
-      min-height:60px;
+      min-height:60px;box-sizing:border-box;
     }
     .itinerary-download-btn{
       height:40px;padding:0 18px;border-radius:12px;
@@ -1485,70 +1492,89 @@
       </div>
 
       <div id="itineraryCardBody" class="itinerary-card-wrap">
-          <table>
-            <tr><td colspan="3" class="ic-title" style="width:100%">〈 강의 일정표 〉</td></tr>
-            <tr>
-              <td class="ic-head" style="width:34%">섭외자</td>
-              <td class="ic-head" style="width:33%"></td>
-              <td class="ic-head" style="width:33%">업종</td>
-            </tr>
-            <tr>
-              <td class="ic-data" id="icAssignee"></td>
-              <td class="ic-data" id="icSubCode"></td>
-              <td class="ic-data" id="icIndustry"></td>
-            </tr>
-            <tr><td colspan="3" class="ic-head">업체명</td></tr>
-            <tr><td colspan="3" class="ic-data" id="icCompany"></td></tr>
-            <tr>
-              <td class="ic-head" colspan="2">방문일자</td>
-              <td class="ic-head">강의시간</td>
-            </tr>
-            <tr>
-              <td class="ic-data" colspan="2" id="icDate"></td>
-              <td class="ic-data" id="icTime"></td>
-            </tr>
-            <tr><td colspan="3" class="ic-head">방문주소</td></tr>
-            <tr><td colspan="3" class="ic-data" id="icAddress"></td></tr>
-            <tr>
-              <td class="ic-head" colspan="2">참석인원</td>
-              <td class="ic-head">연령대</td>
-            </tr>
-            <tr>
-              <td class="ic-data" colspan="2" id="icPeople"></td>
-              <td class="ic-data" id="icAge"></td>
-            </tr>
-            <tr>
-              <td class="ic-head">교육장소</td>
-              <td class="ic-head">강의내용</td>
-              <td class="ic-head">외국인</td>
-            </tr>
-            <tr>
-              <td class="ic-data" id="icPlace"></td>
-              <td class="ic-data" id="icSubject"></td>
-              <td class="ic-data" id="icForeigner"></td>
-            </tr>
-            <tr>
-              <td class="ic-head">담당자</td>
-              <td class="ic-head">사무실 번호</td>
-              <td class="ic-head">핸드폰 번호</td>
-            </tr>
-            <tr>
-              <td class="ic-data" id="icManager"></td>
-              <td class="ic-data" id="icBizPhone"></td>
-              <td class="ic-data" id="icManagerPhone"></td>
-            </tr>
-            <tr>
-              <td class="ic-head" colspan="2">후원내용</td>
-              <td class="ic-head">기타사항</td>
-            </tr>
-            <tr>
-              <td class="ic-data" colspan="2" id="icSupport"></td>
-              <td class="ic-data" id="icEtc"></td>
-            </tr>
-            <tr><td colspan="3" class="ic-head">참고사항</td></tr>
-            <tr><td colspan="3" class="ic-note" id="icNote"></td></tr>
-          </table>
+
+        <!-- 제목 -->
+        <div class="ic-title ic-full">〈 강의 일정표 〉</div>
+
+        <!-- 섭외자 | (공백) | 업종 -->
+        <div class="ic-row3">
+          <div class="ic-head">섭외자</div>
+          <div class="ic-head"></div>
+          <div class="ic-head">업종</div>
         </div>
+        <div class="ic-row3">
+          <div class="ic-data" id="icAssignee"></div>
+          <div class="ic-data" id="icSubCode"></div>
+          <div class="ic-data" id="icIndustry"></div>
+        </div>
+
+        <!-- 업체명 -->
+        <div class="ic-head ic-full">업체명</div>
+        <div class="ic-data ic-full" id="icCompany"></div>
+
+        <!-- 방문일자 | 강의시간 -->
+        <div class="ic-row21">
+          <div class="ic-head">방문일자</div>
+          <div class="ic-head">강의시간</div>
+        </div>
+        <div class="ic-row21">
+          <div class="ic-data" id="icDate"></div>
+          <div class="ic-data" id="icTime"></div>
+        </div>
+
+        <!-- 방문주소 -->
+        <div class="ic-head ic-full">방문주소</div>
+        <div class="ic-data ic-full" id="icAddress"></div>
+
+        <!-- 참석인원 | 연령대 -->
+        <div class="ic-row21">
+          <div class="ic-head">참석인원</div>
+          <div class="ic-head">연령대</div>
+        </div>
+        <div class="ic-row21">
+          <div class="ic-data" id="icPeople"></div>
+          <div class="ic-data" id="icAge"></div>
+        </div>
+
+        <!-- 교육장소 | 강의내용 | 외국인 -->
+        <div class="ic-row3">
+          <div class="ic-head">교육장소</div>
+          <div class="ic-head">강의내용</div>
+          <div class="ic-head">외국인</div>
+        </div>
+        <div class="ic-row3">
+          <div class="ic-data" id="icPlace"></div>
+          <div class="ic-data" id="icSubject"></div>
+          <div class="ic-data" id="icForeigner"></div>
+        </div>
+
+        <!-- 담당자 | 사무실 번호 | 핸드폰 번호 -->
+        <div class="ic-row3">
+          <div class="ic-head">담당자</div>
+          <div class="ic-head">사무실 번호</div>
+          <div class="ic-head">핸드폰 번호</div>
+        </div>
+        <div class="ic-row3">
+          <div class="ic-data" id="icManager"></div>
+          <div class="ic-data" id="icBizPhone"></div>
+          <div class="ic-data" id="icManagerPhone"></div>
+        </div>
+
+        <!-- 후원내용 | 기타사항 -->
+        <div class="ic-row21">
+          <div class="ic-head">후원내용</div>
+          <div class="ic-head">기타사항</div>
+        </div>
+        <div class="ic-row21">
+          <div class="ic-data" id="icSupport"></div>
+          <div class="ic-data" id="icEtc"></div>
+        </div>
+
+        <!-- 참고사항 -->
+        <div class="ic-head ic-full">참고사항</div>
+        <div class="ic-note ic-full" id="icNote"></div>
+
+      </div>
 
         <div class="itin-popup-foot">
           <button class="itinerary-download-btn" onclick="downloadItineraryCard()">⬇ 이미지 다운로드</button>
