@@ -886,25 +886,27 @@
           <div class="section-head">
             <div>
               <h4 id="scheduleTitle">일정등록</h4>
-              <p id="scheduleDesc">갑섭외 일정 입력, 풀 양식 복사, 네이트온 간단 양식 복사를 할 수 있어.</p>
+              <p id="scheduleDesc">교육섭외 일정 입력, 풀 양식 복사, 네이트온 간단 양식 복사를 할 수 있어.</p>
             </div>
           </div>
 
           <div class="form-grid">
             <input id="scheduleAssignee" placeholder="섭외자" readonly>
-            <input id="scheduleDate" type="date">
+            <input id="scheduleType" placeholder="섭외" value="교육섭외">
 
+            <input id="scheduleDate" type="date">
             <input id="scheduleTime" placeholder="시간 예: 1000 / 1700 / 09:30">
+
             <input id="scheduleCompany" placeholder="업체">
+            <input id="scheduleAddress" class="full" placeholder="주소">
 
             <input id="scheduleManager" placeholder="키맨">
             <input id="schedulePhone" placeholder="번호">
 
-            <input id="scheduleAddress" class="full" placeholder="주소">
             <input id="schedulePeople" placeholder="인원">
+            <input id="scheduleAge" placeholder="연령대 예: 20~40대">
 
-            <input id="scheduleGap" placeholder="갑사">
-            <input id="scheduleBank" placeholder="은행">
+            <input id="scheduleSubject" class="full" placeholder="교육과목">
 
             <textarea id="scheduleMemo" class="full" placeholder="특이사항"></textarea>
             <textarea id="scheduleNateonPreview" class="full" readonly placeholder="네이트온 양식"></textarea>
@@ -920,13 +922,15 @@
               <thead>
                 <tr>
                   <th>섭외자</th>
+                  <th>섭외</th>
                   <th>날짜</th>
                   <th>시간</th>
                   <th>업체</th>
                   <th>키맨</th>
                   <th>번호</th>
                   <th>인원</th>
-                  <th>갑사</th>
+                  <th>연령대</th>
+                  <th>교육과목</th>
                   <th>특이사항</th>
                   <th>관리</th>
                 </tr>
@@ -1786,8 +1790,9 @@
     }
 
     function buildFullCopyText(row){
-      return [
+      const lines = [
         `섭외자 : ${row.assignee || ""}`,
+        `섭외 : ${row.type || "교육섭외"}`,
         `날짜 : ${row.date || ""}`,
         `시간 : ${row.time || ""}`,
         `업체 : ${row.company || ""}`,
@@ -1795,10 +1800,11 @@
         `키맨 : ${row.manager || ""}`,
         `번호 : ${formatPhone(row.phone || "")}`,
         `인원 : ${row.people || ""}`,
-        `갑사: ${row.gap || ""}`,
-        `은행 : ${row.bank || ""}`,
-        `특이사항 : ${row.memo || ""}`
-      ].join("\n");
+        `연령대 : ${row.age || ""}`,
+        `교육과목 : ${row.subject || ""}`,
+      ];
+      if(row.memo) lines.push(`특이사항 : ${row.memo}`);
+      return lines.join("\n");
     }
 
     function buildNateonPreviewText(payload){
@@ -1867,16 +1873,17 @@
       if(!state.currentUser) return;
 
       const assignee = currentStaffName();
-      const date = normalizeText($("scheduleDate").value);
-      const time = normalizeManualTime($("scheduleTime").value);
+      const type    = normalizeText($("scheduleType").value) || "교육섭외";
+      const date    = normalizeText($("scheduleDate").value);
+      const time    = normalizeManualTime($("scheduleTime").value);
       const company = normalizeText($("scheduleCompany").value);
-      const manager = normalizeText($("scheduleManager").value);
-      const phone = normalizePhone($("schedulePhone").value);
       const address = normalizeText($("scheduleAddress").value);
-      const people = normalizeText($("schedulePeople").value);
-      const gap = normalizeText($("scheduleGap").value);
-      const bank = normalizeText($("scheduleBank").value);
-      const memo = normalizeText($("scheduleMemo").value);
+      const manager = normalizeText($("scheduleManager").value);
+      const phone   = normalizePhone($("schedulePhone").value);
+      const people  = normalizeText($("schedulePeople").value);
+      const age     = normalizeText($("scheduleAge").value);
+      const subject = normalizeText($("scheduleSubject").value);
+      const memo    = normalizeText($("scheduleMemo").value);
 
       if(!date) return alert("날짜는 꼭 입력해줘.");
       if(!time) return alert("시간은 꼭 입력해줘.");
@@ -1884,7 +1891,7 @@
 
       schedules.unshift({
         id: Date.now(),
-        assignee, date, time, company, manager, phone, address, people, gap, bank, memo,
+        assignee, type, date, time, company, address, manager, phone, people, age, subject, memo,
         createdBy: currentStaffName(),
         createdByNo: currentStaffNo(),
         createdAt: todayStr(),
@@ -1899,8 +1906,9 @@
 
       safeCopy(buildFullCopyText(schedules[0]));
 
-      ["scheduleDate","scheduleTime","scheduleCompany","scheduleManager","schedulePhone","scheduleAddress","schedulePeople","scheduleGap","scheduleBank","scheduleMemo"].forEach(id => { $(id).value = ""; });
+      ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { $(id).value = ""; });
       $("scheduleDate").value = tomorrowStr();
+      $("scheduleType").value = "교육섭외";
       $("scheduleAssignee").value = currentStaffName();
       updateNateonPreview();
     }
@@ -1917,7 +1925,7 @@
       body.innerHTML = "";
 
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="10"><div class="empty">등록된 일정이 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="12"><div class="empty">등록된 일정이 없어.</div></td></tr>`;
         return;
       }
 
@@ -1925,13 +1933,15 @@
         body.innerHTML += `
           <tr>
             <td>${escapeHtml(row.assignee)}</td>
+            <td>${escapeHtml(row.type || "교육섭외")}</td>
             <td>${escapeHtml(row.date)}</td>
             <td>${escapeHtml(row.time)}</td>
             <td>${escapeHtml(row.company)}</td>
             <td>${escapeHtml(row.manager)}</td>
             <td>${escapeHtml(formatPhone(row.phone))}</td>
             <td>${escapeHtml(row.people)}</td>
-            <td>${escapeHtml(row.gap)}</td>
+            <td>${escapeHtml(row.age || "")}</td>
+            <td>${escapeHtml(row.subject || "")}</td>
             <td>${escapeHtml(row.memo)}</td>
             <td>
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -2969,16 +2979,17 @@
         const row = schedules.find(x => x.id === state.manualEditId);
         if(row){
           row.assignee = rowData.assignee;
-          row.date = rowData.date;
-          row.time = rowData.time;
+          row.type    = rowData.type;
+          row.date    = rowData.date;
+          row.time    = rowData.time;
           row.company = rowData.company;
           row.address = rowData.address;
           row.manager = rowData.manager;
-          row.phone = rowData.phone;
-          row.people = rowData.people;
-          row.gap = rowData.gap;
-          row.bank = rowData.bank;
-          row.memo = rowData.memo;
+          row.phone   = rowData.phone;
+          row.people  = rowData.people;
+          row.age     = rowData.age;
+          row.subject = rowData.subject;
+          row.memo    = rowData.memo;
         }
       }else{
         schedules.unshift({
