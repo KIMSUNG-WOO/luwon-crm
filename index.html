@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>LUWON CRM</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <style>
     :root{
       --bg:#eef4fb;
@@ -620,6 +622,7 @@
       background:#fff7ed;color:#92400e;padding:0 14px;font-size:12px;font-weight:700;
       display:inline-flex;align-items:center;white-space:nowrap;
     }
+    .msg.show:not(.error){ background:#f0fdf4;color:#059669;border:1px solid #86efac; }
     .lead-status-row{
       display:flex;align-items:center;gap:10px;padding:6px 4px;
     }
@@ -1132,12 +1135,16 @@
 
           <div class="form-grid">
             <input id="leadStaff" placeholder="섭외자" readonly>
+            <input id="leadType" placeholder="섭외" value="교육섭외">
             <input id="leadDate" type="date">
+            <input id="leadTime" placeholder="시간 예: 10:00" onblur="onLeadTimeBlur()">
             <input id="leadCompany" placeholder="업체 / 사업장">
-            <input id="leadAddress" placeholder="주소">
+            <input id="leadAddress" class="full" placeholder="주소">
             <input id="leadManager" placeholder="키맨 (담당자)">
             <input id="leadPhone" placeholder="연락처" oninput="onLeadPhoneInput()">
             <input id="leadPeople" placeholder="인원">
+            <input id="leadAge" placeholder="연령대 예: 40대">
+            <input id="leadSubject" placeholder="교육과목">
             <input id="leadIndustry" placeholder="업종" oninput="onLeadIndustryInput()">
             <div class="lead-status-row">
               <span style="font-size:13px;color:#64748b;font-weight:700;">교육 이수 여부</span>
@@ -1145,8 +1152,17 @@
             </div>
           </div>
 
+          <div id="leadMsgBox" class="msg"></div>
+
           <div class="toolbar">
             <button class="small-btn" onclick="addLead()">추가</button>
+            <div id="excelUploadBox" class="hidden" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <label for="excelUpload" class="ghost-btn" style="cursor:pointer;display:inline-flex;align-items:center;height:46px;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:14px;font-weight:800;">
+                📂 엑셀 업로드
+              </label>
+              <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" class="hidden" onchange="parseExcelFile(this)">
+              <span style="font-size:12px;color:#64748b;">관리자 전용 · 기존 데이터 유지 + 누적 저장</span>
+            </div>
           </div>
 
           <div class="table-wrap">
@@ -1257,6 +1273,13 @@
   </div>
 
   <script>
+    // ── Supabase 초기화 ──────────────────────────────────────
+    const SUPABASE_URL = "https://nfmvuewdmsquaiorlpgo.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_ryXI7dfnqYSaXUu98jyrKw_fC5xmdFI";
+    const { createClient } = window.supabase;
+    const sbClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+    // ─────────────────────────────────────────────────────────
+
     const HOLIDAYS_2026 = new Set([
       "2026-01-01",
       "2026-02-16",
@@ -1316,8 +1339,8 @@
     ];
 
     let leads = [
-      { id:301, company:"예시사업장A", address:"인천 서구 청마로 66-7", manager:"홍길동", phone:"01011112222", people:"5명", industry:"음식점", status:"교육 미이수", ownerNo:"1379", ownerName:"김성우", createdAt:"2026-03-10" },
-      { id:302, company:"루원케어", address:"서울 서초구 방배로 123", manager:"김민수", phone:"01033334444", people:"3명", industry:"상조", status:"교육 이수", ownerNo:"1218", ownerName:"이상혁", createdAt:"2026-03-10" }
+      { id:301, type:"교육섭외", date:"2026-03-10", time:"10:00", company:"예시사업장A", address:"인천 서구 청마로 66-7", manager:"홍길동", phone:"01011112222", people:"5명", age:"40대", subject:"산업안전교육", industry:"음식점", status:"교육 미이수", ownerNo:"1379", ownerName:"김성우", createdAt:"2026-03-10" },
+      { id:302, type:"교육섭외", date:"2026-03-10", time:"14:00", company:"루원케어", address:"서울 서초구 방배로 123", manager:"김민수", phone:"01033334444", people:"3명", age:"30대", subject:"직무교육", industry:"상조", status:"교육 이수", ownerNo:"1218", ownerName:"이상혁", createdAt:"2026-03-10" }
     ];
 
     function $(id){ return document.getElementById(id); }
@@ -1450,6 +1473,7 @@
       hydrateUserUI();
       renderAll();
       setView("home");
+      loadData();
     }
 
     function logout(){
@@ -1554,6 +1578,7 @@
 
       if($("leadStaff")) $("leadStaff").value = currentStaffName();
       if($("leadDate")) $("leadDate").value = todayStr();
+      if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !admin);
       onPerformanceTypeChange();
     }
 
@@ -2208,29 +2233,41 @@
     function addLead(){
       if(!state.currentUser) return;
 
+      const type     = $("leadType").value.trim() || "교육섭외";
+      const date     = $("leadDate").value;
+      const time     = normalizeManualTime($("leadTime").value);
       const company  = $("leadCompany").value.trim();
       const address  = $("leadAddress").value.trim();
       const manager  = $("leadManager").value.trim();
       const phone    = normalizePhone($("leadPhone").value.trim());
       const people   = $("leadPeople").value.trim();
+      const age      = $("leadAge").value.trim();
+      const subject  = $("leadSubject").value.trim();
       const industry = $("leadIndustry").value.trim();
       const status   = checkEducationStatus(industry);
 
-      if(!company) return alert("업체/사업장명은 꼭 입력해줘.");
+      if(!company) return showLeadMsg("업체/사업장명은 꼭 입력해줘.", "error");
 
       leads.unshift({
         id: Date.now(),
-        company, address, manager, phone, people, industry, status,
+        type, date, time,
+        company, address, manager, phone, people,
+        age, subject, industry, status,
         ownerNo: currentStaffNo(),
         ownerName: currentStaffName(),
         createdAt: todayStr()
       });
 
+      $("leadType").value = "교육섭외";
+      $("leadDate").value = todayStr();
+      $("leadTime").value = "";
       $("leadCompany").value = "";
       $("leadAddress").value = "";
       $("leadManager").value = "";
       $("leadPhone").value = "";
       $("leadPeople").value = "";
+      $("leadAge").value = "";
+      $("leadSubject").value = "";
       $("leadIndustry").value = "";
       const prev = $("leadStatusPreview");
       if(prev) prev.style.display = "none";
@@ -2238,7 +2275,174 @@
       renderLeads();
       runHomeSummary();
       loadProgress();
-      alert("교육섭외 DB 추가 완료");
+      insertData(leads[0]);
+      showLeadMsg("✅ 추가 완료!", "");
+    }
+
+    // ── Supabase 함수 ─────────────────────────────────────────
+
+    async function loadData(){
+      try{
+        const { data, error } = await sbClient
+          .from("education_db")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if(error) throw error;
+        if(!data || !data.length) return;
+
+        // DB 데이터 → leads 배열로 변환 (중복 방지: id 기준)
+        const existingIds = new Set(leads.map(l => String(l.id)));
+        data.forEach(row => {
+          if(existingIds.has(String(row.id))) return;
+          leads.push({
+            id:        row.id,
+            type:      row.type || "교육섭외",
+            date:      row.date || "",
+            time:      row.time || "",
+            company:   row.company || "",
+            address:   row.address || "",
+            manager:   row.manager || "",
+            phone:     row.phone || "",
+            people:    row.people || "",
+            age:       row.age_group || "",
+            subject:   row.subject || "",
+            industry:  row.industry || "",
+            status:    row.status || "",
+            ownerNo:   row.staff_no || "",
+            ownerName: row.staff_name || "",
+            createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr()
+          });
+        });
+
+        renderLeads();
+        runHomeSummary();
+        loadProgress();
+      } catch(err){
+        console.warn("Supabase loadData 오류:", err.message);
+      }
+    }
+
+    async function insertData(row){
+      try{
+        const { error } = await sbClient
+          .from("education_db")
+          .insert([{
+            type:       row.type || "교육섭외",
+            date:       row.date || null,
+            time:       row.time || null,
+            company:    row.company || "",
+            address:    row.address || "",
+            manager:    row.manager || "",
+            phone:      row.phone || "",
+            people:     row.people || "",
+            age_group:  row.age || "",
+            subject:    row.subject || "",
+            industry:   row.industry || "",
+            status:     row.status || "",
+            staff_no:   row.ownerNo || "",
+            staff_name: row.ownerName || ""
+          }]);
+        if(error) throw error;
+      } catch(err){
+        console.warn("Supabase insertData 오류:", err.message);
+      }
+    }
+
+    async function syncAfterUpload(rows){
+      try{
+        const inserts = rows.map(row => ({
+          type:       row.type || "교육섭외",
+          date:       row.date || null,
+          time:       row.time || null,
+          company:    row.company || "",
+          address:    row.address || "",
+          manager:    row.manager || "",
+          phone:      row.phone || "",
+          people:     row.people || "",
+          age_group:  row.age || "",
+          subject:    row.subject || "",
+          industry:   row.industry || "",
+          status:     row.status || "",
+          staff_no:   row.ownerNo || "",
+          staff_name: row.ownerName || ""
+        }));
+        const { error } = await sbClient.from("education_db").insert(inserts);
+        if(error) throw error;
+      } catch(err){
+        console.warn("Supabase syncAfterUpload 오류:", err.message);
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+
+    // 엑셀 컬럼명 → 시스템 필드 매핑 테이블
+    const EXCEL_COL_MAP = {
+      "사업장":"company","업체":"company","회사":"company","업체명":"company","사업장명":"company",
+      "주소":"address","소재지":"address",
+      "키맨":"manager","담당자":"manager","키맨(담당자)":"manager",
+      "연락처":"phone","번호":"phone","전화":"phone","전화번호":"phone",
+      "인원":"people","인원수":"people",
+      "연령대":"age","나이":"age",
+      "교육과목":"subject","과목":"subject","교육명":"subject",
+      "업종":"industry","업태":"industry",
+      "섭외자":"ownerName","담당":"ownerName",
+      "섭외":"type",
+      "날짜":"date","교육일":"date",
+      "시간":"time"
+    };
+
+    function parseExcelFile(input){
+      if(!isAdminMode()) return alert("관리자만 엑셀 업로드 가능해.");
+      const file = input.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e){
+        try{
+          const data = new Uint8Array(e.target.result);
+          const wb = XLSX.read(data, { type:"array" });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval:"" });
+
+          if(!rows.length) return alert("엑셀에 데이터가 없어.");
+
+          let added = 0;
+          rows.forEach(row => {
+            const item = {};
+            // 컬럼명 자동 매칭
+            Object.keys(row).forEach(col => {
+              const key = EXCEL_COL_MAP[col.trim()] || null;
+              if(key) item[key] = String(row[col] || "").trim();
+            });
+
+            if(!item.company) return; // 사업장명 없으면 스킵
+
+            // 자동 처리
+            item.phone    = normalizePhone(item.phone || "");
+            item.status   = checkEducationStatus(item.industry || "");
+            item.ownerNo  = item.ownerName ? "" : currentStaffNo();
+            item.ownerName= item.ownerName || currentStaffName();
+            item.createdAt= todayStr();
+            item.id       = Date.now() + added;
+            item.type     = item.type || "교육섭외";
+
+            leads.unshift(item);
+            added++;
+          });
+
+          // 파일 입력 초기화
+          input.value = "";
+          renderLeads();
+          runHomeSummary();
+          loadProgress();
+          syncAfterUpload(leads.slice(0, added));
+          alert(`✅ 엑셀 업로드 완료!\n${added}건 누적 추가됐어.`);
+        } catch(err){
+          alert("엑셀 파일을 읽는 중 오류가 발생했어.\n" + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
     }
 
     function checkEducationStatus(industry){
@@ -2273,7 +2477,21 @@
     function onLeadPhoneInput(){
       const el = $("leadPhone");
       const raw = normalizePhone(el.value);
-      if(raw.length === 11) el.value = `${raw.slice(0,3)}-${raw.slice(3,7)}-${raw.slice(7)}`;
+      if(raw.length === 11)      el.value = `${raw.slice(0,3)}-${raw.slice(3,7)}-${raw.slice(7)}`;
+      else if(raw.length === 10) el.value = `${raw.slice(0,3)}-${raw.slice(3,6)}-${raw.slice(6)}`;
+    }
+
+    function onLeadTimeBlur(){
+      const el = $("leadTime");
+      if(el) el.value = normalizeManualTime(el.value);
+    }
+
+    function showLeadMsg(text, type){
+      let box = $("leadMsgBox");
+      if(!box) return;
+      box.textContent = text;
+      box.className = "msg show " + (type || "error");
+      setTimeout(() => { box.className = "msg"; box.textContent = ""; }, 3000);
     }
 
     function setLeadCat(cat, el){
