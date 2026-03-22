@@ -671,12 +671,25 @@
     }
 
     /* ── 일정표 관리 (강의 일정표 카드) ── */
+    /* 강의 일정표 모달 - 패딩 없애서 카드가 절대 안 잘리게 */
     .itin-modal-card{
-      max-width:640px;width:100%;
+      max-width:620px;width:100%;
+      padding:0 !important;   /* modal-card 기본 padding 제거 */
+    }
+    .itin-modal-head{
+      display:flex;justify-content:space-between;align-items:flex-start;
+      gap:12px;padding:20px 20px 12px;
+    }
+    .itin-card-container{
+      padding:0 16px 20px;
+    }
+    .itin-btn-row{
+      display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
+      padding:14px 16px 20px;
     }
     .itinerary-card-wrap{
       background:#fff;
-      width:520px;min-width:520px;
+      width:100%;          /* 모달 너비에 맞게 100% */
       font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;
       border:2px solid #2e7d32;
     }
@@ -684,9 +697,6 @@
       border-collapse:collapse;width:100%;
       table-layout:fixed;font-size:13px;
     }
-    .itinerary-card-wrap colgroup col:nth-child(1){ width:34%; }
-    .itinerary-card-wrap colgroup col:nth-child(2){ width:33%; }
-    .itinerary-card-wrap colgroup col:nth-child(3){ width:33%; }
     .itinerary-card-wrap .ic-title{
       background:#2e7d32;color:#fff;text-align:center;
       font-weight:900;font-size:15px;letter-spacing:3px;
@@ -700,7 +710,7 @@
     .itinerary-card-wrap .ic-data{
       background:#fff;text-align:center;
       font-size:13px;font-weight:500;padding:7px 4px;
-      border:1px solid #c8e6c9;word-break:keep-all;
+      border:1px solid #c8e6c9;word-break:break-all;
     }
     .itinerary-card-wrap .ic-note{
       background:#fff;font-size:12px;font-weight:500;
@@ -1451,20 +1461,23 @@
   <!-- ── 강의 일정표 카드 모달 ── -->
   <div class="modal-backdrop" id="itineraryCardModal" onclick="if(event.target===this)closeItineraryCard()">
     <div class="modal-card itin-modal-card">
-      <div class="modal-head">
-        <div><h4>강의 일정표</h4><p>이미지로 다운로드하거나 드래그로 복사할 수 있어.</p></div>
+      <!-- 헤더: 별도 패딩 적용 -->
+      <div class="itin-modal-head">
+        <div>
+          <h4 style="margin:0 0 2px;font-size:16px;">강의 일정표</h4>
+          <p style="margin:0;font-size:12px;color:#64748b;">이미지로 다운로드하거나 드래그로 복사할 수 있어.</p>
+        </div>
         <button class="icon-btn" onclick="closeItineraryCard()">✕</button>
       </div>
-      <div style="padding:16px 24px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;overflow-x:auto;">
-        <!-- 카드 본체 (html2canvas 캡처 대상) -->
+
+      <!-- 카드 본체: 좌우 패딩 최소화 -->
+      <div class="itin-card-container">
         <div id="itineraryCardBody" class="itinerary-card-wrap">
           <table>
             <colgroup>
               <col style="width:34%"><col style="width:33%"><col style="width:33%">
             </colgroup>
-            <!-- 제목 -->
             <tr><td colspan="3" class="ic-title">〈 강의 일정표 〉</td></tr>
-            <!-- 섭외자 / 업종 -->
             <tr>
               <td class="ic-head">섭외자</td>
               <td class="ic-head"></td>
@@ -1475,10 +1488,8 @@
               <td class="ic-data" id="icSubCode"></td>
               <td class="ic-data" id="icIndustry"></td>
             </tr>
-            <!-- 업체명 -->
             <tr><td colspan="3" class="ic-head">업체명</td></tr>
             <tr><td colspan="3" class="ic-data" id="icCompany"></td></tr>
-            <!-- 방문일자 / 강의시간 -->
             <tr>
               <td class="ic-head" colspan="2">방문일자</td>
               <td class="ic-head">강의시간</td>
@@ -1487,10 +1498,8 @@
               <td class="ic-data" colspan="2" id="icDate"></td>
               <td class="ic-data" id="icTime"></td>
             </tr>
-            <!-- 방문주소 -->
             <tr><td colspan="3" class="ic-head">방문주소</td></tr>
             <tr><td colspan="3" class="ic-data" id="icAddress"></td></tr>
-            <!-- 참석인원 / 연령대 -->
             <tr>
               <td class="ic-head" colspan="2">참석인원</td>
               <td class="ic-head">연령대</td>
@@ -1499,7 +1508,6 @@
               <td class="ic-data" colspan="2" id="icPeople"></td>
               <td class="ic-data" id="icAge"></td>
             </tr>
-            <!-- 교육장소 / 강의내용 / 외국인 -->
             <tr>
               <td class="ic-head">교육장소</td>
               <td class="ic-head">강의내용</td>
@@ -1510,7 +1518,6 @@
               <td class="ic-data" id="icSubject"></td>
               <td class="ic-data" id="icForeigner"></td>
             </tr>
-            <!-- 담당자 / 사무실 번호 / 핸드폰 번호 -->
             <tr>
               <td class="ic-head">담당자</td>
               <td class="ic-head">사무실 번호</td>
@@ -1521,7 +1528,6 @@
               <td class="ic-data" id="icBizPhone"></td>
               <td class="ic-data" id="icManagerPhone"></td>
             </tr>
-            <!-- 후원내용 / 기타사항 -->
             <tr>
               <td class="ic-head" colspan="2">후원내용</td>
               <td class="ic-head">기타사항</td>
@@ -1530,15 +1536,16 @@
               <td class="ic-data" colspan="2" id="icSupport"></td>
               <td class="ic-data" id="icEtc"></td>
             </tr>
-            <!-- 참고사항 -->
             <tr><td colspan="3" class="ic-head">참고사항</td></tr>
             <tr><td colspan="3" class="ic-note" id="icNote"></td></tr>
           </table>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
-          <button class="itinerary-download-btn" onclick="downloadItineraryCard()">⬇ 이미지 다운로드</button>
-          <button class="ghost-btn" onclick="closeItineraryCard()">닫기</button>
-        </div>
+      </div>
+
+      <!-- 버튼 -->
+      <div class="itin-btn-row">
+        <button class="itinerary-download-btn" onclick="downloadItineraryCard()">⬇ 이미지 다운로드</button>
+        <button class="ghost-btn" onclick="closeItineraryCard()">닫기</button>
       </div>
     </div>
   </div>
@@ -3335,16 +3342,30 @@
       const card = $("itineraryCardBody");
       if(!card) return;
       if(typeof html2canvas === "undefined") return alert("html2canvas 라이브러리가 로드되지 않았어.");
-      html2canvas(card, { scale: 2, backgroundColor: "#fff", useCORS: true }).then(canvas => {
-        const link = document.createElement("a");
-        const itin = itineraries.find(x => String(x.id) === String(_itineraryCardId));
-        const fname = (itin ? itin.company : "강의일정표") + "_일정표.png";
-        link.download = fname;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      }).catch(err => {
-        alert("이미지 생성 중 오류가 발생했어.\n" + err.message);
-      });
+
+      // 다운로드용: 카드를 520px 고정 너비로 캡처 후 복원
+      const origWidth = card.style.width;
+      const origMinWidth = card.style.minWidth;
+      card.style.width = "520px";
+      card.style.minWidth = "520px";
+
+      const itin = itineraries.find(x => String(x.id) === String(_itineraryCardId));
+      const fname = (itin ? itin.company : "강의일정표") + "_일정표.png";
+
+      html2canvas(card, { scale:2, backgroundColor:"#fff", useCORS:true })
+        .then(canvas => {
+          card.style.width = origWidth;
+          card.style.minWidth = origMinWidth;
+          const link = document.createElement("a");
+          link.download = fname;
+          link.href = canvas.toDataURL("image/png");
+          link.click();
+        })
+        .catch(err => {
+          card.style.width = origWidth;
+          card.style.minWidth = origMinWidth;
+          alert("이미지 생성 중 오류가 발생했어.\n" + err.message);
+        });
     }
 
     // ── 일정표 수정 모달 ──
