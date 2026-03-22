@@ -66,156 +66,167 @@
     .login-page{
       min-height:100vh;
       display:grid;
-      grid-template-columns:1fr 480px;
+      grid-template-columns:1fr 460px;
     }
 
-    /* Left branding panel */
+    /* ── 왼쪽 다크 브랜딩 패널 ── */
     .left-card{
-      background:linear-gradient(145deg,#0c1628 0%,#122040 45%,#0c1628 100%);
-      padding:52px 60px;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      position:relative;
-      overflow:hidden;
+      background:#080e1c;
+      background-image:
+        radial-gradient(ellipse at 25% 25%, rgba(59,130,246,.13) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 75%, rgba(99,102,241,.10) 0%, transparent 55%);
+      padding:48px 56px;
+      display:flex;flex-direction:column;
+      position:relative;overflow:hidden;
     }
     .left-card::before{
-      content:"";position:absolute;
-      width:700px;height:700px;border-radius:50%;
-      background:radial-gradient(circle,rgba(59,130,246,.12) 0%,transparent 65%);
-      top:-250px;right:-250px;pointer-events:none;
+      content:"";position:absolute;inset:0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+      background-size:72px 72px;pointer-events:none;
     }
     .left-card::after{
       content:"";position:absolute;
-      width:480px;height:480px;border-radius:50%;
-      background:radial-gradient(circle,rgba(99,102,241,.10) 0%,transparent 65%);
-      bottom:-180px;left:-120px;pointer-events:none;
+      width:560px;height:560px;border-radius:50%;
+      background:radial-gradient(circle,rgba(59,130,246,.09) 0%,transparent 60%);
+      top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;
     }
     .left-card > *{position:relative;z-index:1}
 
-    .brand{display:flex;align-items:center;gap:20px}
+    .brand{display:flex;align-items:center;gap:16px}
     .logo-wrap{
-      width:58px;height:58px;border-radius:16px;
-      background:linear-gradient(135deg,#3b82f6 0%,#6366f1 100%);
+      width:48px;height:48px;border-radius:14px;
+      background:linear-gradient(135deg,#3b82f6,#6366f1);
       display:flex;align-items:center;justify-content:center;flex-shrink:0;
-      box-shadow:0 8px 24px rgba(59,130,246,.40);
+      box-shadow:0 6px 20px rgba(59,130,246,.35);
     }
-    .logo{
-      font-size:26px;font-weight:900;letter-spacing:-1px;
-      color:#fff;background:none;-webkit-text-fill-color:#fff;
+    .logo{font-size:22px;font-weight:900;color:#fff;background:none;-webkit-text-fill-color:#fff}
+    .brand h1{color:#e2e8f0;font-size:24px;letter-spacing:-0.3px;font-weight:800}
+    .brand p{color:#334155;font-size:12px;margin-top:3px}
+
+    .hero{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
+    .lc-eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      font-size:11px;font-weight:700;color:#3b82f6;letter-spacing:1.5px;
+      text-transform:uppercase;margin-bottom:18px;
     }
-    .brand h1{color:#f1f5f9;font-size:27px;letter-spacing:-0.5px;font-weight:800}
-    .brand p{color:#64748b;font-size:13px;margin-top:4px}
-
-    .hero{margin-top:40px}
-    .hero .date-time{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px}
-
-    .chip{
-      display:inline-flex;align-items:center;height:34px;padding:0 16px;
-      border-radius:999px;
-      background:rgba(255,255,255,.07);
-      border:1px solid rgba(255,255,255,.11);
-      color:#cbd5e1;font-size:12px;font-weight:600;
+    .lc-eyebrow::before{
+      content:"";display:block;width:18px;height:1.5px;background:#3b82f6;border-radius:1px;
     }
-
     .hero h2{
-      color:#f1f5f9;font-size:46px;line-height:1.15;letter-spacing:-2px;font-weight:900;
+      font-size:40px;font-weight:900;line-height:1.12;letter-spacing:-1.5px;
+      color:#f1f5f9;margin-bottom:14px;
     }
-    .hero p{
-      margin-top:20px;color:#64748b;font-size:15px;line-height:1.85;max-width:540px;
+    .hero h2 em{
+      font-style:normal;
+      background:linear-gradient(135deg,#60a5fa,#818cf8);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
     }
+    .hero p{font-size:14px;color:#475569;line-height:1.8;margin-bottom:32px;max-width:440px}
 
-    .notice-card{
-      margin-top:32px;
-      background:rgba(255,255,255,.04);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:20px;padding:24px;
+    .lc-features{list-style:none;padding:0;display:flex;flex-direction:column;gap:9px}
+    .lc-features li{
+      display:flex;align-items:center;gap:12px;
+      font-size:13px;color:#64748b;font-weight:500;
+      padding:10px 14px;border-radius:11px;
+      border:1px solid rgba(255,255,255,.04);
+      background:rgba(255,255,255,.02);
+      transition:all .18s;
     }
-    .notice-card h3{margin:0 0 16px;font-size:17px;color:#e2e8f0;font-weight:800}
-    .notice-item{
-      display:flex;justify-content:space-between;gap:14px;
-      padding:13px 0;border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    .notice-item:last-child{border-bottom:0}
-    .notice-item b{display:block;font-size:13px;margin-bottom:3px;color:#cbd5e1;font-weight:700}
-    .notice-item span{color:#475569;font-size:12px;line-height:1.6}
+    .lc-features li:hover{color:#94a3b8;background:rgba(255,255,255,.04);border-color:rgba(59,130,246,.12)}
+    .lc-feat-dot{width:6px;height:6px;border-radius:50%;background:#3b82f6;flex-shrink:0;opacity:.75}
 
-    .pill{
-      display:inline-flex;align-items:center;height:24px;padding:0 10px;
+    .lc-bottom{
+      border-top:1px solid rgba(255,255,255,.05);padding-top:20px;
+      display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+    }
+    .date-time{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{
+      display:inline-flex;align-items:center;height:30px;padding:0 13px;
       border-radius:999px;
-      background:rgba(59,130,246,.18);color:#93c5fd;
-      border:1px solid rgba(59,130,246,.28);font-size:11px;font-weight:700;white-space:nowrap;
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);
+      color:#475569;font-size:11px;font-weight:600;
     }
+    .lc-copy{font-size:11px;color:#1e293b}
 
-    /* Right login form */
+    /* ── 오른쪽 로그인 폼 패널 ── */
     .login-card{
-      background:#ffffff;
-      padding:56px 48px;
-      display:flex;flex-direction:column;justify-content:center;
+      background:#fff;
+      display:flex;flex-direction:column;
       min-height:100vh;
-      box-shadow:-6px 0 48px rgba(0,0,0,.08);
+      box-shadow:-8px 0 48px rgba(0,0,0,.10);
     }
-    .login-head{margin-bottom:36px}
-    .login-head h2{font-size:30px;letter-spacing:-0.5px;font-weight:900;color:var(--text)}
-    .login-head p{margin-top:8px;color:var(--muted);font-size:13px;line-height:1.7}
-
+    .lf-top{
+      padding:26px 44px 22px;border-bottom:1px solid #f1f5f9;
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .lf-logo{display:flex;align-items:center;gap:10px}
+    .lf-logo .logo-wrap{width:30px;height:30px;border-radius:9px;box-shadow:none}
+    .lf-logo .logo{font-size:14px}
+    .lf-logo span{font-size:13px;font-weight:800;color:#0f172a}
     .secure{
-      display:inline-flex;align-items:center;gap:5px;margin-top:12px;
-      padding:5px 12px;border-radius:999px;
-      background:#eff6ff;color:#2563eb;
+      display:inline-flex;align-items:center;gap:5px;padding:4px 11px;
+      border-radius:999px;background:#eff6ff;color:#2563eb;
       border:1px solid #bfdbfe;font-size:11px;font-weight:700;
     }
-
-    .field{margin-bottom:16px}
-    .field label{
-      display:block;margin-bottom:7px;font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.4px;
+    .lf-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:44px 44px 36px}
+    .lf-greeting{
+      font-size:11px;font-weight:700;color:#3b82f6;
+      letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;
+    }
+    .login-head{margin-bottom:28px}
+    .login-head h2{font-size:26px;font-weight:900;letter-spacing:-0.5px;color:#0f172a}
+    .login-head p{margin-top:6px;color:#64748b;font-size:13px;line-height:1.65}
+    .lf-divider{
+      height:1px;
+      background:linear-gradient(90deg,transparent,#e2e8f0 30%,#e2e8f0 70%,transparent);
+      margin-bottom:24px;
     }
 
+    .field{margin-bottom:14px}
+    .field label{
+      display:block;margin-bottom:6px;font-size:11px;font-weight:700;
+      color:#6b7280;text-transform:uppercase;letter-spacing:0.6px;
+    }
     .input-wrap{position:relative}
     .input{
-      width:100%;height:50px;border-radius:var(--r10);
-      border:1.5px solid #e2e8f0;
-      background:#f9fafb;
-      color:var(--text);padding:0 16px 0 44px;font-size:14px;outline:none;
-      transition:border-color .15s,box-shadow .15s,background .15s;
+      width:100%;height:50px;border-radius:11px;
+      border:1.5px solid #e5e7eb;background:#fafafa;
+      color:#0f172a;padding:0 16px 0 44px;font-size:14px;outline:none;
+      transition:all .18s;font-family:inherit;
     }
-    .input:focus{
-      border-color:#93c5fd;
-      box-shadow:0 0 0 3px rgba(59,130,246,.12);
-      background:#fff;
-    }
+    .input:focus{border-color:#93c5fd;box-shadow:0 0 0 4px rgba(59,130,246,.10);background:#fff}
     .icon{
       position:absolute;left:14px;top:50%;transform:translateY(-50%);
-      color:#9ca3af;font-size:15px;pointer-events:none;
+      font-size:15px;pointer-events:none;opacity:.45;
     }
-
     .sub-row{
-      display:flex;justify-content:space-between;align-items:center;
-      margin:10px 0 20px;color:var(--muted);font-size:13px;
+      display:flex;justify-content:space-between;margin:4px 0 18px;color:#9ca3af;font-size:11px;
     }
-
     .login-btn{
-      height:50px;border:0;border-radius:var(--r10);
+      height:50px;border:0;border-radius:11px;
       background:linear-gradient(135deg,#3b82f6,#2563eb);
-      color:#fff;font-size:14px;font-weight:800;cursor:pointer;
-      box-shadow:0 4px 20px rgba(59,130,246,.32);width:100%;
-      transition:transform .15s,box-shadow .15s;letter-spacing:0.3px;
+      color:#fff;font-size:14px;font-weight:800;cursor:pointer;width:100%;
+      box-shadow:0 4px 20px rgba(59,130,246,.28);
+      transition:transform .15s,box-shadow .15s;letter-spacing:0.3px;font-family:inherit;
     }
-    .login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(59,130,246,.38)}
+    .login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(59,130,246,.34)}
     .login-btn:active{transform:translateY(0)}
-
     .msg{
-      margin-top:12px;padding:12px 16px;border-radius:var(--r10);font-size:13px;line-height:1.6;display:none;
+      margin-top:12px;padding:11px 14px;border-radius:10px;font-size:13px;line-height:1.6;display:none;
     }
     .msg.show{display:block}
     .msg.error{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
     .msg.show:not(.error){background:#f0fdf4;color:#059669;border:1px solid #bbf7d0}
-
-    .guide{
-      margin-top:18px;border-radius:var(--r10);border:1px solid #e2e8f0;background:#f9fafb;
-      padding:14px 16px;color:#6b7280;font-size:12px;line-height:1.7;
+    .lf-footer{
+      padding:18px 44px 24px;border-top:1px solid #f9fafb;
+      display:flex;justify-content:space-between;align-items:center;
+      font-size:11px;color:#9ca3af;
     }
-    .guide b{display:block;color:#374151;margin-bottom:4px;font-size:12px;font-weight:700}
+    .notice-card{display:none}
+    .pill{display:none}
+    .guide{display:none}
 
     /* ══════════════════════════════════════
        DASHBOARD LAYOUT
@@ -249,19 +260,41 @@
     .side-brand span{display:block;font-size:10px;color:#475569;margin-top:2px}
 
     .profile{
-      border-radius:var(--r10);padding:14px;
+      border-radius:var(--r10);padding:14px 16px;
       background:rgba(255,255,255,.04);
-      border:1px solid rgba(255,255,255,.06);
-      margin-bottom:8px;
+      border:1px solid rgba(255,255,255,.07);
+      margin-bottom:8px;position:relative;overflow:hidden;
     }
-    .profile .name{font-size:15px;font-weight:800;margin-bottom:5px;color:#f1f5f9}
-    .profile .desc{color:#475569;font-size:12px;line-height:1.5}
-    .profile .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
-    .profile .chip{
-      background:rgba(59,130,246,.14);
-      border:1px solid rgba(59,130,246,.22);
-      color:#93c5fd;font-size:10px;height:22px;padding:0 8px;
+    .profile::before{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,rgba(59,130,246,.07) 0%,transparent 60%);
+      pointer-events:none;
     }
+    .profile-avatar{
+      width:42px;height:42px;border-radius:12px;
+      background:linear-gradient(135deg,#3b82f6,#6366f1);
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;font-weight:800;color:#fff;
+      margin-bottom:10px;flex-shrink:0;
+    }
+    .profile-name-row{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;}
+    .profile .name{font-size:15px;font-weight:800;color:#f1f5f9;line-height:1.2;}
+    .profile-rank{
+      font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px;
+      background:rgba(190,18,60,.25);border:1px solid rgba(190,18,60,.4);color:#fda4af;
+      letter-spacing:.3px;white-space:nowrap;
+    }
+    .profile-rank.rank-staff{
+      background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.35);color:#93c5fd;
+    }
+    .profile-branch{
+      font-size:11px;color:#475569;margin-bottom:10px;
+    }
+    .profile-divider{height:1px;background:rgba(255,255,255,.06);margin:8px 0;}
+    .profile-stats{display:flex;gap:12px;}
+    .profile-stat{flex:1;text-align:center;}
+    .profile-stat .ps-val{font-size:13px;font-weight:800;color:#93c5fd;}
+    .profile-stat .ps-lbl{font-size:9px;color:#475569;margin-top:1px;letter-spacing:.4px;text-transform:uppercase;}
 
     .menu{
       display:flex;flex-direction:column;gap:1px;
@@ -580,6 +613,67 @@
     .manual-editor-text:focus{border-color:#93c5fd;box-shadow:0 0 0 3px rgba(59,130,246,.10)}
     .manual-editor-bottom{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;flex-wrap:wrap}
 
+    /* ── ITINERARY MINI CALENDAR ── */
+    .itin-top-area{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap}
+    .itin-cal-wrap{
+      background:#fff;border:1.5px solid var(--line);border-radius:14px;
+      padding:12px 14px;min-width:248px;max-width:260px;
+      box-shadow:0 2px 8px rgba(0,0,0,.05);
+    }
+    .itin-cal-header{
+      display:flex;align-items:center;gap:6px;margin-bottom:8px;
+    }
+    .itin-cal-header button{
+      background:none;border:1.5px solid var(--line);border-radius:7px;
+      width:26px;height:26px;cursor:pointer;font-size:14px;font-weight:700;
+      color:var(--text2);display:flex;align-items:center;justify-content:center;
+      padding:0;transition:all .15s;line-height:1;
+    }
+    .itin-cal-header button:hover{background:#f1f5f9;border-color:#94a3b8}
+    .itin-cal-header span{
+      flex:1;text-align:center;font-size:13px;font-weight:700;color:var(--text);
+    }
+    .itin-all-btn{
+      height:26px!important;width:auto!important;padding:0 10px!important;
+      font-size:11px!important;font-weight:700!important;border-radius:7px!important;
+      background:#f1f5f9!important;border:1.5px solid var(--line)!important;
+      color:var(--text2)!important;cursor:pointer;transition:all .15s;
+    }
+    .itin-all-btn.active,.itin-all-btn:hover{
+      background:var(--primary)!important;border-color:var(--primary)!important;
+      color:#fff!important;
+    }
+    .itin-cal-grid{
+      display:grid;grid-template-columns:repeat(7,1fr);gap:2px;
+    }
+    .itin-cal-dow{
+      text-align:center;font-size:10px;font-weight:700;color:var(--text3);
+      padding:2px 0 4px;
+    }
+    .itin-cal-dow.sun{color:#ef4444}
+    .itin-cal-dow.sat{color:#3b82f6}
+    .itin-cal-cell{
+      text-align:center;position:relative;border-radius:7px;
+      padding:3px 0 4px;font-size:12px;color:var(--text2);
+      min-height:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    }
+    .itin-cal-cell.clickable{cursor:pointer;transition:background .12s}
+    .itin-cal-cell.clickable:hover{background:#eff6ff}
+    .itin-cal-cell span.sun{color:#ef4444}
+    .itin-cal-cell span.sat{color:#3b82f6}
+    .itin-cal-cell.is-today>span{
+      background:#e0f2fe;border-radius:50%;width:22px;height:22px;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;color:#0284c7;
+    }
+    .itin-cal-cell.sel{background:var(--primary)!important}
+    .itin-cal-cell.sel>span{color:#fff!important;background:none!important}
+    .itin-cal-cell.has-itin i{
+      display:block;width:5px;height:5px;border-radius:50%;
+      background:var(--primary);margin:1px auto 0;
+    }
+    .itin-cal-cell.sel i{background:#fff!important}
+
     /* ── RESPONSIVE ── */
     @media(max-width:1320px){
       .summary-grid{grid-template-columns:repeat(2,1fr)}
@@ -754,97 +848,89 @@
 <body>
 
   <section class="login-page" id="loginPage">
+
+    <!-- ── 왼쪽 다크 브랜딩 패널 ── -->
     <div class="left-card">
-      <div>
-        <div class="brand">
-          <div class="logo-wrap"><div class="logo">L</div></div>
-          <div>
-            <h1>LUWON CRM</h1>
-            <p>루원지점 TM 운영 전산 시스템</p>
-          </div>
-        </div>
-
-        <div class="hero">
-          <div class="date-time">
-            <div class="chip" id="todayText">날짜</div>
-            <div class="chip" id="clockText">시간</div>
-          </div>
-
-          <h2>깔끔하고 빠르게 쓰는<br>루원 전산 시스템</h2>
-
-          <p>
-            직원이 복잡하지 않게 바로 적응할 수 있도록,
-            로그인부터 공지, 일정, 실적, 직원관리, 교육섭외 DB, 진행률까지
-            한 흐름으로 사용할 수 있게 정리한 루원 CRM 화면입니다.
-          </p>
-        </div>
-      </div>
-
-      <div class="notice-card">
-        <h3>최근 공지</h3>
-        <div class="notice-item">
-          <div>
-            <b>3월 운영 공지</b>
-            <span>출근 후 일정 등록 누락 없이 진행해주세요.</span>
-          </div>
-          <div class="pill">오늘</div>
-        </div>
-        <div class="notice-item">
-          <div>
-            <b>실적 입력 기준 안내</b>
-            <span>월 마감 전 누락된 계약 건은 반드시 다시 확인해주세요.</span>
-          </div>
-          <div class="pill">업데이트</div>
-        </div>
-        <div class="notice-item">
-          <div>
-            <b>모바일 접속 안내</b>
-            <span>휴대폰에서도 동일한 주소로 로그인 가능합니다.</span>
-          </div>
-          <div class="pill">안내</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="login-card">
-      <div class="login-head">
+      <div class="brand">
+        <div class="logo-wrap"><div class="logo">L</div></div>
         <div>
-          <h2>전산 로그인</h2>
-          <p>사번과 비밀번호를 입력해 루원 CRM 전산에 로그인하세요.</p>
-        </div>
-        <div class="secure">보안 로그인</div>
-      </div>
-
-      <div class="field">
-        <label for="staffId">사번</label>
-        <div class="input-wrap">
-          <span class="icon">👤</span>
-          <input class="input" id="staffId" placeholder="사번을 입력하세요">
+          <h1>LUWON CRM</h1>
+          <p>루원지점 TM 운영 전산</p>
         </div>
       </div>
 
-      <div class="field">
-        <label for="password">비밀번호</label>
-        <div class="input-wrap">
-          <span class="icon">🔒</span>
-          <input class="input" id="password" type="password" placeholder="비밀번호를 입력하세요">
+      <div class="hero">
+        <div class="lc-eyebrow">Luwon Branch System</div>
+        <h2>루원지점<br><em>통합 전산</em>시스템</h2>
+        <p>일정·실적·직원·섭외 데이터를<br>하나의 화면에서 빠르게 관리하세요.</p>
+
+        <ul class="lc-features">
+          <li><span class="lc-feat-dot"></span> 일정 등록 및 캘린더 관리</li>
+          <li><span class="lc-feat-dot"></span> 실적 집계 및 월별 진행률</li>
+          <li><span class="lc-feat-dot"></span> 직원 관리 및 권한 분리</li>
+          <li><span class="lc-feat-dot"></span> 교육섭외 DB 및 강의 일정표</li>
+        </ul>
+      </div>
+
+      <div class="lc-bottom">
+        <div class="date-time">
+          <div class="chip" id="todayText">날짜</div>
+          <div class="chip" id="clockText">시간</div>
         </div>
-      </div>
-
-      <div class="sub-row">
-        <span>LUWON CRM 직원 전용</span>
-        <span>도메인: luwon.pro</span>
-      </div>
-
-      <button class="login-btn" onclick="login()">로그인</button>
-      <div class="msg" id="msg"></div>
-
-      <div class="guide">
-        <b>테스트 계정</b>
-        관리자: 0408 / 0408<br>
-        직원: 1218 / 1218
+        <span class="lc-copy">© 2025 LUWON · Private</span>
       </div>
     </div>
+
+    <!-- ── 오른쪽 로그인 폼 ── -->
+    <div class="login-card">
+      <div class="lf-top">
+        <div class="lf-logo">
+          <div class="logo-wrap"><div class="logo">L</div></div>
+          <span>LUWON CRM</span>
+        </div>
+        <span class="secure">🔐 보안 로그인</span>
+      </div>
+
+      <div class="lf-body">
+        <div class="lf-greeting">Welcome back</div>
+        <div class="login-head">
+          <h2>전산 로그인</h2>
+          <p>사번과 비밀번호를 입력해<br>루원 CRM에 로그인하세요.</p>
+        </div>
+
+        <div class="lf-divider"></div>
+
+        <div class="field">
+          <label for="staffId">사번</label>
+          <div class="input-wrap">
+            <span class="icon">👤</span>
+            <input class="input" id="staffId" placeholder="사번을 입력하세요">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="password">비밀번호</label>
+          <div class="input-wrap">
+            <span class="icon">🔒</span>
+            <input class="input" id="password" type="password" placeholder="비밀번호를 입력하세요">
+          </div>
+        </div>
+
+        <div class="sub-row">
+          <span>직원 전용 시스템</span>
+          <span>luwon.pro</span>
+        </div>
+
+        <button class="login-btn" onclick="login()">로그인</button>
+        <div class="msg" id="msg"></div>
+      </div>
+
+      <div class="lf-footer">
+        <span>LUWON Branch CRM v2.0</span>
+        <span>© 2025 Private Access Only</span>
+      </div>
+    </div>
+
   </section>
 
   <section class="dashboard" id="dashboard">
@@ -858,12 +944,22 @@
       </div>
 
       <div class="profile">
-        <div class="name" id="profileName">김성우님</div>
-        <div class="desc" id="profileDesc">루원지점 전산에 로그인되었습니다.</div>
-        <div class="chips">
-          <span class="chip" id="roleChip">관리자</span>
-          <span class="chip" id="modeChip">관리자 모드</span>
-          <span class="chip" id="empChip">사번 1379</span>
+        <div class="profile-avatar" id="profileAvatar">김</div>
+        <div class="profile-name-row">
+          <div class="name" id="profileName">김성우</div>
+          <span class="profile-rank" id="profileRank">지점장</span>
+        </div>
+        <div class="profile-branch" id="profileBranch">루원지점</div>
+        <div class="profile-divider"></div>
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div class="ps-val" id="profileStatMode">관리자</div>
+            <div class="ps-lbl">모드</div>
+          </div>
+          <div class="profile-stat">
+            <div class="ps-val" id="profileStatSchedCount">0</div>
+            <div class="ps-lbl">이번달 일정</div>
+          </div>
         </div>
       </div>
 
@@ -906,7 +1002,7 @@
             <div class="summary-card">
               <div class="k" id="homeCardLabel2">내 오늘 콜량</div>
               <div class="v" id="homeValue2">0</div>
-              <div class="s" id="homeCardDesc2">교육섭외 DB 등록 건수</div>
+              <div class="s" id="homeCardDesc2">결과값 입력된 DB 건수</div>
             </div>
             <div class="summary-card">
               <div class="k" id="homeCardLabel3">내 익일 일정</div>
@@ -1138,11 +1234,16 @@
               <div class="s">조회 조건 합계</div>
             </div>
             <div class="summary-card">
-              <div class="k">총 수익</div>
+              <div class="k">직원 수익 합계</div>
               <div class="v" id="perfReportTake">0</div>
-              <div class="s">직원 수익 합계</div>
+              <div class="s">직원 지급 수익 합계</div>
             </div>
-            <div class="summary-card">
+            <div class="summary-card" id="perfMarginCard" style="border:2px solid #fca5a5;background:#fff7f7;display:none;">
+              <div class="k" style="color:#be123c;">지점장 마진 합계</div>
+              <div class="v" style="color:#be123c;" id="perfReportMargin">0</div>
+              <div class="s" style="color:#9f1239;">관리자 전용</div>
+            </div>
+            <div class="summary-card" id="perfKindsCard">
               <div class="k">상품 종류 수</div>
               <div class="v" id="perfReportKinds">0</div>
               <div class="s">조회 상품 종류</div>
@@ -1157,7 +1258,8 @@
                   <th>직원명</th>
                   <th>상품항목</th>
                   <th>건수/금액</th>
-                  <th>수익</th>
+                  <th>직원 수익</th>
+                  <th id="perfMarginTh" style="color:#be123c;display:none;">지점장 마진</th>
                   <th>메모</th>
                   <th>관리</th>
                 </tr>
@@ -1237,6 +1339,7 @@
                 <tr>
                   <th>이름</th>
                   <th>사번</th>
+                  <th>직급</th>
                   <th>권한</th>
                   <th>지점</th>
                 </tr>
@@ -1311,11 +1414,27 @@
 
           <div id="itineraryMsgBox" class="msg"></div>
 
-          <!-- 관리자 직원 필터 -->
-          <div class="toolbar" style="flex-wrap:wrap;gap:8px;" id="itineraryFilterBox">
-            <select id="itineraryStaffFilter" style="height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:700;cursor:pointer;" onchange="renderItineraries()">
-              <option value="">전체 보기</option>
-            </select>
+          <!-- 상단 툴바: 직원 필터 + 날짜 캘린더 -->
+          <div class="itin-top-area">
+
+            <!-- 왼쪽: 미니 캘린더 -->
+            <div class="itin-cal-wrap">
+              <div class="itin-cal-header">
+                <button onclick="itinCalPrev()">‹</button>
+                <span id="itinCalTitle"></span>
+                <button onclick="itinCalNext()">›</button>
+                <button class="itin-all-btn active" id="itinCalAllBtn" onclick="clearItinDate()">전체</button>
+              </div>
+              <div class="itin-cal-grid" id="itinCalGrid"></div>
+            </div>
+
+            <!-- 오른쪽: 직원 필터 (관리자 전용) -->
+            <div id="itineraryFilterBox" class="hidden">
+              <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">섭외자 필터</div>
+              <select id="itineraryStaffFilter" style="height:38px;padding:0 12px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:600;cursor:pointer;min-width:140px;" onchange="renderItineraries()">
+                <option value="">전체 보기</option>
+              </select>
+            </div>
           </div>
 
           <div class="table-wrap">
@@ -1363,6 +1482,14 @@
               <div class="form-grid">
                 <input id="setStaffName" placeholder="직원명 (예: 홍길동)">
                 <input id="setStaffNo" placeholder="사번 (예: 2024001)">
+                <select id="setStaffRank" style="height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;">
+                  <option value="대리">대리</option>
+                  <option value="과장">과장</option>
+                  <option value="부팀장">부팀장</option>
+                  <option value="팀장">팀장</option>
+                  <option value="부지점장">부지점장</option>
+                  <option value="지점장">지점장</option>
+                </select>
                 <select id="setStaffRole" style="height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;">
                   <option value="staff">직원</option>
                   <option value="admin">관리자</option>
@@ -1379,8 +1506,8 @@
               <h5 style="margin:0 0 14px;font-size:15px;">직원 목록</h5>
               <div class="table-wrap">
                 <table>
-                  <thead><tr><th>이름</th><th>사번</th><th>비밀번호</th><th>권한</th><th>지점</th><th>관리</th></tr></thead>
-                  <tbody id="setStaffTableBody"><tr><td colspan="6"><div class="empty">직원 목록이 없어.</div></td></tr></tbody>
+                  <thead><tr><th>이름</th><th>사번</th><th>비밀번호</th><th>직급</th><th>권한</th><th>지점</th><th>관리</th></tr></thead>
+                  <tbody id="setStaffTableBody"><tr><td colspan="7"><div class="empty">직원 목록이 없어.</div></td></tr></tbody>
                 </table>
               </div>
             </div>
@@ -1418,11 +1545,34 @@
 
           <!-- ── 단가 / 수익 탭 ── -->
           <div id="settingsPanePay" class="hidden">
+
+            <!-- 지점장 기준 단가 설정 -->
+            <div class="panel" style="margin-bottom:16px;border:2px solid #fca5a5;background:#fff7f7;">
+              <h5 style="margin:0 0 4px;font-size:15px;color:#be123c;">🏢 지점장 기준 단가 (총량)</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:#9f1239;">지점장이 받는 총 단가야. 직원 단가를 뺀 나머지가 지점장 마진이 돼.</p>
+              <div class="form-grid">
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">상조 (1건당, 원)</label>
+                  <input id="adminRateSanjo" type="number" min="0" placeholder="100000" value="100000">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">건식 (1건당, 원)</label>
+                  <input id="adminRateHealth" type="number" min="0" placeholder="40000" value="40000">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">보험 (계약금액의 %)</label>
+                  <input id="adminRateIns" type="number" min="0" step="0.1" placeholder="107.5" value="107.5">
+                </div>
+              </div>
+              <div style="text-align:right;margin-top:10px;">
+                <button class="small-btn" style="background:#be123c;" onclick="saveAdminRates()">지점장 단가 저장</button>
+              </div>
+            </div>
+
+            <!-- 직원별 단가 설정 -->
             <div class="panel" style="margin-bottom:16px;">
               <h5 style="margin:0 0 6px;font-size:15px;">직원별 단가 설정</h5>
-              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원을 선택한 뒤 단가를 입력하고 저장해.</p>
-
-              <!-- 직원 선택 -->
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원을 선택한 뒤 단가를 입력하고 저장해. 보험은 계약금액 대비 % 로 입력해.</p>
               <div style="margin-bottom:16px;">
                 <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">직원 선택</label>
                 <select id="payStaffSelect" onchange="onPayStaffChange()"
@@ -1430,8 +1580,6 @@
                   <option value="">-- 직원을 선택해줘 --</option>
                 </select>
               </div>
-
-              <!-- 단가 입력 (교육 단가 없음) -->
               <div class="form-grid" id="payRateFields" style="opacity:.4;pointer-events:none;">
                 <div>
                   <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">상조 단가 (1건당, 원)</label>
@@ -1442,28 +1590,29 @@
                   <input id="payRateHealth" type="number" min="0" placeholder="0">
                 </div>
                 <div>
-                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">보험 단가 (1건당, 원)</label>
-                  <input id="payRateInsurance" type="number" min="0" placeholder="0">
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">보험 단가 (계약금액의 %)</label>
+                  <input id="payRateInsurance" type="number" min="0" step="0.1" placeholder="0">
                 </div>
               </div>
               <div style="text-align:right;margin-top:14px;">
-                <button class="small-btn" onclick="savePaySettings()">저장</button>
+                <button class="small-btn" onclick="savePaySettings()">직원 단가 저장</button>
               </div>
             </div>
 
             <!-- 수익 현황 -->
             <div class="panel">
               <h5 style="margin:0 0 14px;font-size:15px;">이번달 수익 현황</h5>
-              <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
-                <div class="kpi-card"><div class="k">이번달 일정 건수</div><div class="v" id="payCountAll">-</div></div>
-                <div class="kpi-card"><div class="k">총 수익 (추정)</div><div class="v" id="payTotalAll">-</div></div>
+              <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">
+                <div class="kpi-card"><div class="k">이번달 실적 건수</div><div class="v" id="payCountAll">-</div></div>
+                <div class="kpi-card"><div class="k">직원 지급 총액</div><div class="v" id="payTotalAll">-</div></div>
+                <div class="kpi-card" style="border:2px solid #fca5a5;background:#fff7f7;"><div class="k" style="color:#be123c;">지점장 마진 (추정)</div><div class="v" style="color:#be123c;" id="payMarginAll">-</div></div>
               </div>
               <div>
-                <h5 style="margin:0 0 10px;font-size:13px;color:var(--muted);">직원별 이번달 수익</h5>
+                <h5 style="margin:0 0 10px;font-size:13px;color:var(--muted);">직원별 이번달 수익 · 마진</h5>
                 <div class="table-wrap">
                   <table>
-                    <thead><tr><th>직원명</th><th>이번달 일정</th><th>단가/건</th><th>수익 (추정)</th></tr></thead>
-                    <tbody id="payStaffTableBody"><tr><td colspan="4"><div class="empty">데이터 없음</div></td></tr></tbody>
+                    <thead><tr><th>직원명</th><th>이번달 실적</th><th>단가</th><th>직원 수익</th><th style="color:#be123c;">지점장 마진</th></tr></thead>
+                    <tbody id="payStaffTableBody"><tr><td colspan="5"><div class="empty">데이터 없음</div></td></tr></tbody>
                   </table>
                 </div>
               </div>
@@ -1844,6 +1993,23 @@
       { staffNo:"1218", password:"1218", name:"이상혁", role:"staff", branch:"루원지점" }
     ];
 
+    // 직급 설정 - 직원별 { [staffNo]: rank }
+    const RANK_OPTIONS = ["대리","과장","부팀장","팀장","부지점장","지점장"];
+    const RANK_COLORS  = { "대리":"#3b82f6","과장":"#8b5cf6","부팀장":"#f59e0b","팀장":"#ef4444","부지점장":"#0f172a","지점장":"#be123c" };
+    // 지점장(관리자 김성우) 번호 – 직급 변경 불가
+    const ADMIN_JIJUMJANG_NO = "0408";
+    let staffRanks = {
+      "0408": "지점장",
+      "1218": "대리"
+    };
+
+    // 지점장 기준 단가 (관리자가 받는 총량)
+    let adminRates = {
+      sanjo:       100000,   // 상조 1건당 원
+      health:       40000,   // 건식 1건당 원
+      insurancePct: 107.5    // 보험 계약금액의 %
+    };
+
     let notices = [
       { id:1, title:"3월 운영 공지", body:"출근 후 일정 등록 누락 없이 진행해주세요.", tag:"오늘" },
       { id:2, title:"실적 입력 기준 안내", body:"월 마감 전 누락된 계약 건은 반드시 다시 확인해주세요.", tag:"업데이트" },
@@ -1851,8 +2017,8 @@
     ];
 
     let staffs = [
-      { name:"김성우", no:"1379", role:"admin", branch:"루원지점" },
-      { name:"이상혁", no:"1218", role:"staff", branch:"루원지점" }
+      { name:"김성우", no:"1379", role:"admin", branch:"루원지점", rank:"지점장" },
+      { name:"이상혁", no:"1218", role:"staff", branch:"루원지점", rank:"대리" }
     ];
 
     let schedules = [
@@ -1861,8 +2027,8 @@
     ];
 
     let performances = [
-      { id:201, staff:"김성우", type:"상조", value:"3", amount:300000, take:210000, memo:"관리자 입력", date:"2026-03-10", createdByNo:"1379" },
-      { id:202, staff:"이상혁", type:"건식", value:"2", amount:80000, take:60000, memo:"직원 입력", date:"2026-03-10", createdByNo:"1218" }
+      { id:201, staff:"김성우", staffNo:"1379", type:"상조", value:"3", amount:0, take:0, memo:"관리자 입력", date:"2026-03-10", createdByNo:"1379" },
+      { id:202, staff:"이상혁", staffNo:"1218", type:"건식", value:"2", amount:0, take:0, memo:"직원 입력", date:"2026-03-10", createdByNo:"1218" }
     ];
 
     let leads = [
@@ -1872,6 +2038,13 @@
 
     // 일정표 관리 데이터 (일정등록 시 자동 생성)
     let itineraries = [];
+
+    // 일정표 관리 미니 캘린더 상태
+    const itinCalState = {
+      year: new Date().getFullYear(),
+      month: new Date().getMonth(),
+      selectedDate: null
+    };
 
     // 단가 / 수익 설정 - 직원별 { [staffNo]: { edu, sanjo, health, insurance } }
     let paySettings = {};
@@ -1997,8 +2170,10 @@
       if(!user) return showMsg("사번 또는 비밀번호가 틀렸습니다.", "error");
 
       state.currentUser = user;
-      state.currentMode = user.role === "admin" ? "admin" : "staff";
+      // 관리자 모드는 지점장(ADMIN_JIJUMJANG_NO)만 가능
+      state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
       clearMsg();
+      try{ localStorage.setItem("luwon_auth", JSON.stringify({ staffNo: user.staffNo, password: user.password })); }catch(e){}
 
       $("loginPage").style.display = "none";
       $("dashboard").style.display = "grid";
@@ -2013,6 +2188,7 @@
       state.currentUser = null;
       state.currentMode = "staff";
       state.currentView = "home";
+      try{ localStorage.removeItem("luwon_auth"); }catch(e){}
       $("dashboard").style.display = "none";
       $("loginPage").style.display = "grid";
       $("staffId").value = "";
@@ -2024,32 +2200,69 @@
       const user = state.currentUser;
       if(!user) return;
 
-      $("profileName").textContent = `${user.name}님`;
-      $("profileDesc").textContent = user.role === "admin"
-        ? "관리와 실무를 함께 사용할 수 있는 계정입니다."
-        : "본인 정보만 확인 가능한 직원 계정입니다.";
+      // 프로필 이름 · 직급
+      const staffData = staffs.find(x => x.no === user.staffNo || x.name === user.name);
+      const rank      = staffData ? (staffData.rank || "대리") : (user.role === "admin" ? "지점장" : "대리");
+      const isJijum   = user.staffNo === ADMIN_JIJUMJANG_NO;
+      const rankColor = isJijum ? "" : "rank-staff";
 
-      $("roleChip").textContent = user.role === "admin" ? "관리자" : "직원";
-      $("modeChip").textContent = state.currentMode === "admin" ? "관리자 모드" : "직원 모드";
-      $("empChip").textContent = `사번 ${user.staffNo}`;
+      $("profileName").textContent   = user.name;
+      $("profileRank").textContent   = rank;
+      $("profileRank").className     = `profile-rank ${rankColor}`;
+      $("profileBranch").textContent = user.branch || "루원지점";
 
-      $("modeToggle").classList.toggle("hidden", user.role !== "admin");
-      $("staffModeBtn").classList.toggle("active", state.currentMode === "staff");
-      $("adminModeBtn").classList.toggle("active", state.currentMode === "admin");
+      // 아바타 이니셜
+      const av = $("profileAvatar");
+      if(av){
+        av.textContent = user.name.charAt(0);
+        av.style.background = isJijum
+          ? "linear-gradient(135deg,#be123c,#9f1239)"
+          : "linear-gradient(135deg,#3b82f6,#6366f1)";
+      }
+
+      // 모드 표시
+      const modeEl = $("profileStatMode");
+      if(modeEl){
+        if(isJijum){
+          modeEl.textContent = state.currentMode === "admin" ? "관리자" : "직원";
+          modeEl.style.color = state.currentMode === "admin" ? "#fda4af" : "#93c5fd";
+        } else {
+          modeEl.textContent = "직원";
+          modeEl.style.color = "#93c5fd";
+        }
+      }
+
+      // 이번달 일정 건수 표시
+      const month = monthPrefix();
+      const mySchedCount = schedules.filter(s =>
+        String(s.createdAt || "").startsWith(month) && s.createdByNo === user.staffNo
+      ).length;
+      const scEl = $("profileStatSchedCount");
+      if(scEl) scEl.textContent = mySchedCount + "건";
+
+      // 지점장만 모드 토글 표시
+      $("modeToggle").classList.toggle("hidden", !isJijum);
+      if(isJijum){
+        $("staffModeBtn").classList.toggle("active", state.currentMode === "staff");
+        $("adminModeBtn").classList.toggle("active", state.currentMode === "admin");
+      }
 
       renderMenu();
       applyRoleUI();
     }
 
     function switchMode(mode){
-      if(!state.currentUser || state.currentUser.role !== "admin") return;
+      if(!state.currentUser || state.currentUser.staffNo !== ADMIN_JIJUMJANG_NO) return;
       state.currentMode = mode;
       hydrateUserUI();
       setView("home");
     }
 
     function isAdminMode(){
-      return state.currentUser && state.currentUser.role === "admin" && state.currentMode === "admin";
+      // 관리자 모드는 지점장(ADMIN_JIJUMJANG_NO)만 가능
+      return state.currentUser
+        && state.currentUser.staffNo === ADMIN_JIJUMJANG_NO
+        && state.currentMode === "admin";
     }
 
     function currentStaffNo(){ return state.currentUser ? state.currentUser.staffNo : ""; }
@@ -2162,8 +2375,19 @@
       const tomorrow = tomorrowStr();
       const month = monthPrefix();
 
+      // 레이블을 전직원 기준으로 변경
+      $("homeCardLabel1").textContent = "금일 전직원 등록 일정";
+      $("homeCardDesc1").textContent  = "오늘 전직원이 등록한 일정 수";
+      $("homeCardLabel2").textContent = "오늘 전직원 콜량";
+      $("homeCardDesc2").textContent  = "결과값 입력된 DB 건수 (전직원)";
+      $("homeCardLabel3").textContent = "전직원 익일 일정";
+      $("homeCardDesc3").textContent  = "내일 나가는 전직원 일정 수";
+      $("homeCardLabel4").textContent = "전직원 이번달 등록 일정";
+      $("homeCardDesc4").textContent  = "이번달 전직원 등록 누적";
+
       $("homeValue1").textContent = schedules.filter(s => s.createdAt === today).length;
-      $("homeValue2").textContent = leads.length;
+      // 콜량: 결과값이 빈값(선택) 이 아닌 건수
+      $("homeValue2").textContent = leads.filter(l => l.result && l.result !== "").length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month)).length;
     }
@@ -2174,8 +2398,19 @@
       const month = monthPrefix();
       const no = currentStaffNo();
 
+      // 레이블을 내 기준으로 복원
+      $("homeCardLabel1").textContent = "내 오늘 등록 일정";
+      $("homeCardDesc1").textContent  = "내가 오늘 등록한 일정 수";
+      $("homeCardLabel2").textContent = "내 오늘 콜량";
+      $("homeCardDesc2").textContent  = "결과값 입력된 DB 건수";
+      $("homeCardLabel3").textContent = "내 익일 일정";
+      $("homeCardDesc3").textContent  = "내일 나가는 일정 수";
+      $("homeCardLabel4").textContent = "내 이번달 등록 일정";
+      $("homeCardDesc4").textContent  = "이번달 등록 누적";
+
       $("homeValue1").textContent = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
-      $("homeValue2").textContent = leads.filter(l => l.ownerNo === no).length;
+      // 콜량: 내 DB 중 결과값 입력된 건수
+      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "").length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month) && s.createdByNo === no).length;
     }
@@ -2578,13 +2813,18 @@
       }
 
       const amount = type === "보험" ? Number(rawValue) : 0;
-      const take = type === "상조" ? Number(rawValue) * 70000
-                 : type === "건식" ? Number(rawValue) * 30000
-                 : Math.round(amount * 0.7);
+      // 직원 단가 기준으로 take 계산
+      const staffForPay = staffs.find(x => x.name === staffName);
+      const staffPayNo  = staffForPay ? staffForPay.no : "";
+      const pRate       = staffPayNo ? (paySettings[staffPayNo] || {}) : {};
+      const take = type === "상조" ? Number(rawValue) * (pRate.sanjo || 0)
+                 : type === "건식" ? Number(rawValue) * (pRate.health || 0)
+                 : Math.round(amount * ((pRate.insurancePct || 0) / 100));
 
       performances.unshift({
         id: Date.now(),
         staff: staffName,
+        staffNo: staffPayNo,
         type,
         value: type === "보험" ? money(amount) : rawValue,
         amount,
@@ -2602,28 +2842,83 @@
       alert("실적 저장 완료");
     }
 
+    // ──────────────────────────────────────────────────
+    // 수익 계산 헬퍼
+    // 직원 단가:  상조 = 건수 × 원/건,  건식 = 건수 × 원/건,  보험 = 금액 × %/100
+    // 지점장 마진: 상조 = 건수 × (10만 - 직원단가),  건식 = 건수 × (4만 - 직원단가),  보험 = 금액 × (107.5% - 직원%) / 100
+    // ──────────────────────────────────────────────────
+
+    // 직원 단가 설정 여부 + 수익 반환
+    // 반환값: { take: 숫자, configured: true/false }
+    function calcStaffTake(p){
+      const sNo = p.staffNo || (staffs.find(x => x.name === p.staff) || {}).no || "";
+      const rate = paySettings[sNo];          // undefined = 미설정
+      const configured = !!rate;
+      const r   = rate || {};
+      const val = Number(String(p.value || "").replace(/[^\d]/g, "")) || 0;
+
+      let take = 0;
+      if(p.type === "상조")      take = val * (r.sanjo || 0);
+      else if(p.type === "건식") take = val * (r.health || 0);
+      else if(p.type === "보험") take = Math.round((Number(p.amount) || 0) * ((r.insurancePct || 0) / 100));
+
+      return { take, configured };
+    }
+
+    // 지점장 마진: adminRates 총량 - 직원 수익
+    // 반환값: { margin: 숫자, configured: true/false }
+    function calcAdminMargin(p){
+      const { take: staffTake, configured } = calcStaffTake(p);
+      const val = Number(String(p.value || "").replace(/[^\d]/g, "")) || 0;
+      const amt = Number(p.amount) || 0;
+
+      let adminGross = 0;
+      if(p.type === "상조")      adminGross = val * adminRates.sanjo;
+      else if(p.type === "건식") adminGross = val * adminRates.health;
+      else if(p.type === "보험") adminGross = Math.round(amt * adminRates.insurancePct / 100);
+
+      // 마진 = 지점장 총량 - 직원 수익
+      const margin = adminGross - staffTake;
+      return { margin, configured };
+    }
+
     function renderPerformances(){
-      const body = $("performanceTableBody");
+      const body  = $("performanceTableBody");
       const start = $("perfReportStart").value;
-      const end = $("perfReportEnd").value;
+      const end   = $("perfReportEnd").value;
       const scope = $("perfReportScope").value;
+      const admin = isAdminMode();
 
       const rows = performances.filter(p => {
-        if(scope !== "all" || !isAdminMode()){
+        if(scope !== "all" || !admin){
           if(!(p.createdByNo === currentStaffNo() || p.staff === currentStaffName())) return false;
         }
         if(start && p.date < start) return false;
-        if(end && p.date > end) return false;
+        if(end   && p.date > end)   return false;
         return true;
       });
 
+      // 마진 컬럼 가시성 토글 (관리자 전체조회 시만)
+      const showMargin = admin && scope === "all";
+      if($("perfMarginTh"))   $("perfMarginTh").style.display   = showMargin ? "" : "none";
+      if($("perfMarginCard")) $("perfMarginCard").style.display  = showMargin ? "" : "none";
+
       body.innerHTML = "";
 
+      const colSpan = showMargin ? 8 : 7;
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="7"><div class="empty">조회된 실적이 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="${colSpan}"><div class="empty">조회된 실적이 없어.</div></td></tr>`;
       } else {
         rows.forEach(p => {
-          const editable = isAdminMode();
+          const editable  = admin;
+          const { take: staffTake, configured: takeConf } = calcStaffTake(p);
+          const { margin,          configured: margConf } = calcAdminMargin(p);
+          const takeCell = takeConf
+            ? money(staffTake)
+            : `<span style="color:#f59e0b;font-size:11px;font-weight:700;">⚠ ${money(staffTake)} (단가미설정)</span>`;
+          const marginCell = showMargin
+            ? `<td style="font-weight:700;color:${margConf?"#be123c":"#f59e0b"};">${margConf ? money(margin) : `⚠ ${money(margin)} (미설정)`}</td>`
+            : "";
           body.innerHTML += `
             <tr>
               <td>${escapeHtml(p.date)}</td>
@@ -2636,7 +2931,8 @@
                 </select>
               ` : escapeHtml(p.type)}</td>
               <td>${editable ? `<input id="perf-value-${p.id}" value="${escapeHtml(p.value)}">` : escapeHtml(p.value)}</td>
-              <td>${money(p.take)}</td>
+              <td>${takeCell}</td>
+              ${marginCell}
               <td>${editable ? `<input id="perf-memo-${p.id}" value="${escapeHtml(p.memo)}">` : escapeHtml(p.memo)}</td>
               <td>
                 ${editable ? `
@@ -2651,10 +2947,17 @@
         });
       }
 
-      $("perfReportCount").textContent = rows.length;
-      $("perfReportAmount").textContent = money(rows.reduce((s,r)=>s+Number(r.amount||0),0));
-      $("perfReportTake").textContent = money(rows.reduce((s,r)=>s+Number(r.take||0),0));
-      $("perfReportKinds").textContent = new Set(rows.map(r=>r.type)).size;
+      // 합산 (단가 미설정 건도 0으로 포함)
+      let totalTake = 0, totalMargin = 0;
+      rows.forEach(r => {
+        totalTake   += calcStaffTake(r).take;
+        totalMargin += calcAdminMargin(r).margin;
+      });
+      $("perfReportCount").textContent  = rows.length;
+      $("perfReportAmount").textContent = money(rows.reduce((s,r) => s + Number(r.amount||0), 0));
+      $("perfReportTake").textContent   = money(totalTake);
+      $("perfReportKinds").textContent  = new Set(rows.map(r => r.type)).size;
+      if($("perfReportMargin")) $("perfReportMargin").textContent = money(showMargin ? totalMargin : 0);
     }
 
     function savePerformanceRow(id){
@@ -2665,14 +2968,20 @@
       row.value = $(`perf-value-${id}`).value.trim();
       row.memo = $(`perf-memo-${id}`).value.trim();
 
+      // staffNo 갱신
+      const sf = staffs.find(x => x.name === row.staff);
+      if(sf) row.staffNo = sf.no;
+      const pRate = paySettings[row.staffNo || ""] || {};
+
       if(row.type === "보험"){
         const amt = Number(String(row.value).replace(/[^\d]/g,""));
         row.amount = amt;
-        row.value = amt ? amt.toLocaleString() : "";
-        row.take = Math.round(amt * 0.7);
+        row.value  = amt ? amt.toLocaleString() : "";
+        row.take   = Math.round(amt * ((pRate.insurancePct || 0) / 100));
       }else{
+        const cnt = Number(row.value || 0);
         row.amount = 0;
-        row.take = row.type === "상조" ? Number(row.value || 0) * 70000 : Number(row.value || 0) * 30000;
+        row.take   = row.type === "상조" ? cnt * (pRate.sanjo || 0) : cnt * (pRate.health || 0);
       }
 
       renderPerformances();
@@ -2728,20 +3037,23 @@
       body.innerHTML = "";
 
       if(!isAdminMode()){
-        body.innerHTML = `<tr><td colspan="4"><div class="empty">직원관리는 관리자 모드에서만 볼 수 있어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="5"><div class="empty">직원관리는 관리자 모드에서만 볼 수 있어.</div></td></tr>`;
         return;
       }
 
       if(staffs.length === 0){
-        body.innerHTML = `<tr><td colspan="4"><div class="empty">등록된 직원이 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="5"><div class="empty">등록된 직원이 없어.</div></td></tr>`;
         return;
       }
 
       staffs.forEach(s => {
+        const rank = s.rank || "대리";
+        const rc = RANK_COLORS[rank] || "#64748b";
         body.innerHTML += `
           <tr>
             <td>${escapeHtml(s.name)}</td>
             <td>${escapeHtml(s.no)}</td>
+            <td><span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;background:${rc};">${escapeHtml(rank)}</span></td>
             <td>${escapeHtml(s.role === "admin" ? "관리자" : "직원")}</td>
             <td>${escapeHtml(s.branch)}</td>
           </tr>
@@ -2768,9 +3080,10 @@
 
       if(!name || !no) return alert("직원명과 사번은 꼭 입력해줘.");
 
-      staffs.unshift({ name, no, role, branch });
+      staffs.unshift({ name, no, rank: "대리", role, branch });
       // authUsers에도 추가 (직원 로그인 가능하도록)
       authUsers.unshift({ staffNo: no, password: no, name, role, branch });
+      staffRanks[no] = "대리";
 
       $("staffName").value = "";
       $("staffNo").value = "";
@@ -2803,7 +3116,7 @@
         return;
       }
 
-      const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "일정픽스"];
+      const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "일정픽스", "기타"];
 
       rows.forEach(l => {
         const sc = l.status === "교육 이수" ? "edu-pass" : l.status === "교육 미이수" ? "edu-fail" : "";
@@ -3426,13 +3739,23 @@
       } catch(e){ return dateStr; }
     }
 
-    function getVisibleItineraries(){
-      const filter = $("itineraryStaffFilter") ? $("itineraryStaffFilter").value : "";
+    // 날짜 필터 없이 권한 기반 필터만 적용 (캘린더 점 표시용)
+    function getVisibleItinerariesBase(){
+      const staffFilter = $("itineraryStaffFilter") ? $("itineraryStaffFilter").value : "";
+      let result;
       if(isAdminMode()){
-        if(filter) return itineraries.filter(i => i.assignee === filter);
-        return itineraries.slice();
+        result = itineraries.slice();
+        if(staffFilter) result = result.filter(i => i.assignee === staffFilter);
+      } else {
+        result = itineraries.filter(i => i.createdByNo === currentStaffNo() || i.assignee === currentStaffName());
       }
-      return itineraries.filter(i => i.createdByNo === currentStaffNo() || i.assignee === currentStaffName());
+      return result;
+    }
+
+    function getVisibleItineraries(){
+      let result = getVisibleItinerariesBase();
+      if(itinCalState.selectedDate) result = result.filter(i => i.date === itinCalState.selectedDate);
+      return result;
     }
 
     function refreshItineraryStaffDropdown(){
@@ -3443,14 +3766,85 @@
         staffs.map(s => `<option value="${escapeHtml(s.name)}" ${cur===s.name?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
     }
 
+    function renderItineraryMiniCal(){
+      const titleEl = $("itinCalTitle");
+      const grid    = $("itinCalGrid");
+      if(!titleEl || !grid) return;
+
+      const { year, month, selectedDate } = itinCalState;
+      titleEl.textContent = `${year}년 ${month + 1}월`;
+
+      // 이번 달 일정 있는 날짜 Set
+      const baseDates = new Set(getVisibleItinerariesBase().map(i => i.date));
+
+      const firstDow   = new Date(year, month, 1).getDay();
+      const daysInMon  = new Date(year, month + 1, 0).getDate();
+      const today      = todayStr();
+      const DOWS       = ['일','월','화','수','목','금','토'];
+
+      let html = DOWS.map((d, i) =>
+        `<div class="itin-cal-dow${i===0?' sun':i===6?' sat':''}">${d}</div>`
+      ).join('');
+
+      for(let i = 0; i < firstDow; i++) html += `<div class="itin-cal-cell"></div>`;
+
+      for(let d = 1; d <= daysInMon; d++){
+        const ds  = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const dow = (firstDow + d - 1) % 7;
+        const cls = [
+          'itin-cal-cell clickable',
+          baseDates.has(ds) ? 'has-itin'  : '',
+          ds === selectedDate ? 'sel'      : '',
+          ds === today        ? 'is-today' : ''
+        ].filter(Boolean).join(' ');
+        const numCls = dow===0?'sun':dow===6?'sat':'';
+        html += `<div class="${cls}" onclick="selectItinDate('${ds}')">
+          <span class="${numCls}">${d}</span>
+          ${baseDates.has(ds) ? '<i></i>' : ''}
+        </div>`;
+      }
+
+      grid.innerHTML = html;
+
+      // 전체 버튼 활성 상태
+      const allBtn = $("itinCalAllBtn");
+      if(allBtn) allBtn.classList.toggle("active", !selectedDate);
+    }
+
+    function selectItinDate(ds){
+      itinCalState.selectedDate = (itinCalState.selectedDate === ds) ? null : ds;
+      renderItineraryMiniCal();
+      renderItineraries();
+    }
+    function itinCalPrev(){
+      if(itinCalState.month === 0){ itinCalState.month = 11; itinCalState.year--; }
+      else itinCalState.month--;
+      renderItineraryMiniCal();
+    }
+    function itinCalNext(){
+      if(itinCalState.month === 11){ itinCalState.month = 0; itinCalState.year++; }
+      else itinCalState.month++;
+      renderItineraryMiniCal();
+    }
+    function clearItinDate(){
+      itinCalState.selectedDate = null;
+      renderItineraryMiniCal();
+      renderItineraries();
+    }
+
     function renderItineraries(){
+      renderItineraryMiniCal();
       const body = $("itineraryTableBody");
       if(!body) return;
-      const rows  = getVisibleItineraries().sort((a,b) => b.date.localeCompare(a.date));
+      const rows  = getVisibleItineraries().sort((a,b) => (a.date||'').localeCompare(b.date||''));
       const admin = isAdminMode();
 
+      const emptyMsg = itinCalState.selectedDate
+        ? `${itinCalState.selectedDate} 날짜에 등록된 일정표가 없어.`
+        : `등록된 일정표가 없어. 일정등록에서 일정을 추가하면 자동으로 생성돼.`;
+
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="12"><div class="empty">등록된 일정표가 없어. 일정등록에서 일정을 추가하면 자동으로 생성돼.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="12"><div class="empty">${emptyMsg}</div></td></tr>`;
         return;
       }
 
@@ -3468,7 +3862,7 @@
           <td>${escapeHtml(itin.assignee)}</td>
           <td class="itin-note-cell" onclick="openItineraryEditModal('${itin.id}')" title="${escapeHtml(itin.specialNote)}">${escapeHtml((itin.specialNote||'').split('\n')[0] || '')}</td>
           <td>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
               <button class="small-btn" type="button" onclick="openItineraryCard('${itin.id}')">섭외지</button>
               <button class="ghost-btn" type="button" onclick="openItineraryEditModal('${itin.id}')">수정</button>
               ${admin ? `<button class="danger-btn" type="button" onclick="deleteItinerary('${itin.id}')">삭제</button>` : ""}
@@ -3955,6 +4349,25 @@
     $("staffId").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
     $("password").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
 
+    // ── 새로고침 후 세션 자동 복원 ──
+    (function restoreSession(){
+      try{
+        const saved = localStorage.getItem("luwon_auth");
+        if(!saved) return;
+        const { staffNo, password } = JSON.parse(saved);
+        const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+        if(!user){ localStorage.removeItem("luwon_auth"); return; }
+        state.currentUser = user;
+        state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
+        $("loginPage").style.display = "none";
+        $("dashboard").style.display = "grid";
+        hydrateUserUI();
+        renderAll();
+        setView("home");
+        loadData();
+      } catch(e){ try{ localStorage.removeItem("luwon_auth"); }catch(_){} }
+    })();
+
     renderNotices();
     $("progressDate").value = todayStr();
     $("perfReportStart").value = monthPrefix() + "-01";
@@ -3976,25 +4389,30 @@
       const body = $("setStaffTableBody");
       if(!body) return;
       if(!staffs.length){
-        body.innerHTML = `<tr><td colspan="5"><div class="empty">등록된 직원이 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="7"><div class="empty">등록된 직원이 없어.</div></td></tr>`;
         return;
       }
       body.innerHTML = staffs.map(s => {
         const au = authUsers.find(x => x.staffNo === s.no);
         const pw = au ? au.password : "-";
-        // 비밀번호는 * 마스킹으로 표시
         const pwMask = pw !== "-" ? "●".repeat(Math.min(pw.length, 6)) : "-";
+        const rank = s.rank || "대리";
+        const rc   = RANK_COLORS[rank] || "#64748b";
+        const isJijum = s.no === ADMIN_JIJUMJANG_NO;
         return `
         <tr id="staffRow_${escapeHtml(s.no)}">
-          <td>${escapeHtml(s.name)}</td>
+          <td>${escapeHtml(s.name)}${isJijum ? ' <span style="font-size:10px;color:#be123c;">👑</span>' : ""}</td>
           <td>${escapeHtml(s.no)}</td>
           <td style="letter-spacing:2px;color:var(--muted);">${pwMask}</td>
+          <td>
+            <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff;background:${rc};">${escapeHtml(rank)}</span>
+          </td>
           <td>${escapeHtml(s.role === "admin" ? "관리자" : "직원")}</td>
           <td>${escapeHtml(s.branch || "")}</td>
           <td>
             <div style="display:flex;gap:6px;">
               <button class="ghost-btn" style="font-size:11px;height:28px;padding:0 10px;" onclick="editStaffRow('${escapeHtml(s.no)}')">수정</button>
-              <button class="danger-btn" style="font-size:11px;height:28px;padding:0 10px;" onclick="deleteStaff('${escapeHtml(s.no)}')">삭제</button>
+              ${isJijum ? "" : `<button class="danger-btn" style="font-size:11px;height:28px;padding:0 10px;" onclick="deleteStaff('${escapeHtml(s.no)}')">삭제</button>`}
             </div>
           </td>
         </tr>`;
@@ -4011,12 +4429,19 @@
       const row = $(`staffRow_${no}`);
       if(!row) return;
       const inp = "width:76px;height:32px;border:1px solid var(--line);border-radius:8px;padding:0 8px;font-size:12px;";
+      const selStyle = "height:32px;border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;";
+      const isJijum  = no === ADMIN_JIJUMJANG_NO;
+      const rankOpts = RANK_OPTIONS.map(r => `<option value="${r}" ${(s.rank||"대리")===r?"selected":""}>${r}</option>`).join("");
       row.innerHTML = `
         <td><input id="edt_name_${no}"   value="${escapeHtml(s.name)}"       style="${inp}"></td>
-        <td><input id="edt_no_${no}"     value="${escapeHtml(s.no)}"         style="${inp}" placeholder="사번"></td>
+        <td><input id="edt_no_${no}"     value="${escapeHtml(s.no)}"         style="${inp}" placeholder="사번" ${isJijum?"readonly":""}></td>
         <td><input id="edt_pw_${no}"     value="${escapeHtml(au?.password||"")}" style="${inp}" placeholder="비밀번호"></td>
         <td>
-          <select id="edt_role_${no}" style="height:32px;border:1px solid var(--line);border-radius:8px;padding:0 6px;font-size:12px;">
+          <select id="edt_rank_${no}" style="${selStyle}" ${isJijum?"disabled":""}>${rankOpts}</select>
+          ${isJijum ? `<span style="font-size:10px;color:#be123c;">👑 고정</span>` : ""}
+        </td>
+        <td>
+          <select id="edt_role_${no}" style="${selStyle}">
             <option value="staff" ${s.role==="staff"?"selected":""}>직원</option>
             <option value="admin" ${s.role==="admin"?"selected":""}>관리자</option>
           </select>
@@ -4036,6 +4461,7 @@
       const newName   = $(`edt_name_${oldNo}`)?.value.trim();
       const newNo     = $(`edt_no_${oldNo}`)?.value.trim();
       const newPw     = $(`edt_pw_${oldNo}`)?.value.trim();
+      const newRank   = $(`edt_rank_${oldNo}`)?.value || "대리";
       const newRole   = $(`edt_role_${oldNo}`)?.value;
       const newBranch = $(`edt_branch_${oldNo}`)?.value.trim() || "루원지점";
 
@@ -4046,7 +4472,7 @@
       // staffs 업데이트
       const s = staffs.find(x => x.no === oldNo);
       if(!s) return;
-      s.name = newName; s.no = newNo; s.role = newRole; s.branch = newBranch;
+      s.name = newName; s.no = newNo; s.rank = newRank; s.role = newRole; s.branch = newBranch;
 
       // authUsers 업데이트 (사번 + 비밀번호 모두)
       const au = authUsers.find(x => x.staffNo === oldNo);
@@ -4058,6 +4484,10 @@
         au.branch   = newBranch;
       }
 
+      // staffRanks 업데이트
+      staffRanks[newNo] = newRank;
+      if(newNo !== oldNo) delete staffRanks[oldNo];
+
       // paySettings 키 이동 (사번 변경 시)
       if(newNo !== oldNo && paySettings[oldNo]){
         paySettings[newNo] = paySettings[oldNo];
@@ -4068,19 +4498,21 @@
       renderStaffs();
       refreshLeadStaffDropdown();
       refreshPayStaffDropdown();
-      alert(`✅ [${newName}] 정보가 수정됐어.\n사번: ${newNo}`);
+      alert(`✅ [${newName}] 정보가 수정됐어.\n사번: ${newNo} / 직급: ${newRank}`);
     }
 
     function addSettingsStaff(){
       if(!isAdminMode()) return alert("관리자 모드에서만 가능해.");
       const name   = $("setStaffName").value.trim();
       const no     = $("setStaffNo").value.trim();
+      const rank   = $("setStaffRank")?.value || "대리";
       const role   = $("setStaffRole").value;
       const branch = $("setStaffBranch").value.trim() || "루원지점";
       if(!name || !no) return alert("직원명과 사번을 입력해줘.");
       if(staffs.find(s => s.no === no)) return alert("이미 등록된 사번이야.");
-      staffs.unshift({ name, no, role, branch });
+      staffs.unshift({ name, no, rank, role, branch });
       authUsers.unshift({ staffNo: no, password: no, name, role, branch });
+      staffRanks[no] = rank;
       $("setStaffName").value = "";
       $("setStaffNo").value   = "";
       $("setStaffBranch").value = "";
@@ -4088,7 +4520,7 @@
       renderStaffs();
       refreshLeadStaffDropdown();
       refreshPayStaffDropdown();
-      alert(`✅ 직원 추가 완료!\n${name} / 사번 ${no}\n초기 비밀번호: ${no}`);
+      alert(`✅ 직원 추가 완료!\n${name} / 사번 ${no} / 직급 ${rank}\n초기 비밀번호: ${no}`);
     }
 
     function deleteStaff(no){
@@ -4099,6 +4531,7 @@
       staffs    = staffs.filter(x => x.no !== no);
       authUsers = authUsers.filter(x => x.staffNo !== no);
       delete paySettings[no]; // 단가 설정도 제거
+      delete staffRanks[no];  // 직급 설정도 제거
       renderSettingsStaff();
       renderStaffs();
       refreshLeadStaffDropdown();
@@ -4190,6 +4623,15 @@
       if(cur) sel.value = cur;
     }
 
+    // 지점장 기준 단가 저장
+    function saveAdminRates(){
+      adminRates.sanjo        = Number($("adminRateSanjo").value)  || 0;
+      adminRates.health       = Number($("adminRateHealth").value) || 0;
+      adminRates.insurancePct = Number($("adminRateIns").value)    || 0;
+      renderPaySummary();
+      alert(`✅ 지점장 기준 단가 저장 완료!\n상조 ${adminRates.sanjo.toLocaleString()}원 / 건식 ${adminRates.health.toLocaleString()}원 / 보험 ${adminRates.insurancePct}%`);
+    }
+
     // 직원 선택 시 해당 직원의 단가를 입력 필드에 표시
     function onPayStaffChange(){
       const no     = $("payStaffSelect").value;
@@ -4205,9 +4647,9 @@
       fields.style.opacity       = "1";
       fields.style.pointerEvents = "auto";
       const p = paySettings[no] || {};
-      $("payRateSanjo").value     = p.sanjo     !== undefined ? p.sanjo     : "";
-      $("payRateHealth").value    = p.health    !== undefined ? p.health    : "";
-      $("payRateInsurance").value = p.insurance !== undefined ? p.insurance : "";
+      $("payRateSanjo").value     = p.sanjo        !== undefined ? p.sanjo        : "";
+      $("payRateHealth").value    = p.health        !== undefined ? p.health       : "";
+      $("payRateInsurance").value = p.insurancePct  !== undefined ? p.insurancePct : "";
     }
 
     // 선택된 직원의 단가 저장
@@ -4216,13 +4658,13 @@
       if(!no) return alert("직원을 먼저 선택해줘.");
       const s = staffs.find(x => x.no === no);
       paySettings[no] = {
-        name:      s ? s.name : no,
-        sanjo:     Number($("payRateSanjo").value)     || 0,
-        health:    Number($("payRateHealth").value)    || 0,
-        insurance: Number($("payRateInsurance").value) || 0,
+        name:         s ? s.name : no,
+        sanjo:        Number($("payRateSanjo").value)     || 0,
+        health:       Number($("payRateHealth").value)    || 0,
+        insurancePct: Number($("payRateInsurance").value) || 0,
       };
       renderPaySummary();
-      alert(`✅ [${s ? s.name : no}] 단가가 저장됐어.`);
+      alert(`✅ [${s ? s.name : no}] 단가가 저장됐어.\n상조 ${paySettings[no].sanjo.toLocaleString()}원 / 건식 ${paySettings[no].health.toLocaleString()}원 / 보험 ${paySettings[no].insurancePct}%`);
     }
 
     // 수익 현황 렌더링 (performances 기반 - 타입별 단가 적용)
@@ -4230,55 +4672,79 @@
       refreshPayStaffDropdown();
       onPayStaffChange();
 
-      const month   = monthPrefix();
-      // performances 에서 이번달 데이터 집계
+      // 지점장 기준 단가 UI 초기화
+      if($("adminRateSanjo"))  $("adminRateSanjo").value  = adminRates.sanjo;
+      if($("adminRateHealth")) $("adminRateHealth").value = adminRates.health;
+      if($("adminRateIns"))    $("adminRateIns").value    = adminRates.insurancePct;
+
+      const month      = monthPrefix();
       const monthPerfs = performances.filter(p => String(p.date || "").startsWith(month));
 
-      // 직원별 타입별 건수 집계
-      const grouped = {}; // { [staffNo]: { name, sanjo, health, insurance } }
+      // 직원별 타입별 실적 집계
+      const grouped = {}; // { [staffNo]: { name, entries: [] } }
       monthPerfs.forEach(pf => {
         const s  = staffs.find(x => x.name === pf.staff);
-        const no = s ? s.no : pf.staff;
+        const no = s ? s.no : (pf.staffNo || pf.staff);
         const nm = pf.staff || "미지정";
-        if(!grouped[no]) grouped[no] = { name: nm, sanjo:0, health:0, insurance:0 };
-        const t = (pf.type || "").trim();
-        if(t === "상조")      grouped[no].sanjo++;
-        else if(t === "건식") grouped[no].health++;
-        else if(t === "보험") grouped[no].insurance++;
+        if(!grouped[no]) grouped[no] = { name: nm, entries: [] };
+        grouped[no].entries.push(pf);
       });
 
-      // 전체 수익 합산
-      let totalRev = 0;
+      // 직원 지급 총액 & 지점장 마진 합산
+      let totalStaffPay = 0;
+      let totalMargin   = 0;
       Object.keys(grouped).forEach(no => {
-        const g = grouped[no];
-        const p = paySettings[no] || {};
-        totalRev += g.sanjo*(p.sanjo||0) + g.health*(p.health||0) + g.insurance*(p.insurance||0);
+        grouped[no].entries.forEach(pf => {
+          totalStaffPay += calcStaffTake(pf).take;
+          totalMargin   += calcAdminMargin(pf).margin;
+        });
       });
 
-      if($("payCountAll")) $("payCountAll").textContent = monthPerfs.length + "건";
-      if($("payTotalAll")) $("payTotalAll").textContent = totalRev.toLocaleString() + "원";
+      if($("payCountAll"))  $("payCountAll").textContent  = monthPerfs.length + "건";
+      if($("payTotalAll"))  $("payTotalAll").textContent  = totalStaffPay.toLocaleString() + "원";
+      if($("payMarginAll")) $("payMarginAll").textContent = totalMargin.toLocaleString() + "원";
 
       const staffBody = $("payStaffTableBody");
       if(!staffBody) return;
       const nos = Object.keys(grouped);
       if(!nos.length){
-        staffBody.innerHTML = `<tr><td colspan="4"><div class="empty">이번달 실적 없음</div></td></tr>`;
+        staffBody.innerHTML = `<tr><td colspan="5"><div class="empty">이번달 실적 없음</div></td></tr>`;
         return;
       }
       staffBody.innerHTML = nos.map(no => {
         const g   = grouped[no];
-        const p   = paySettings[no] || {};
-        const rev = g.sanjo*(p.sanjo||0) + g.health*(p.health||0) + g.insurance*(p.insurance||0);
-        const detail = [
-          g.sanjo    ? `상조 ${g.sanjo}건` : "",
-          g.health   ? `건식 ${g.health}건` : "",
-          g.insurance? `보험 ${g.insurance}건` : ""
+        const p   = paySettings[no] || null;
+        const sanjo    = g.entries.filter(e=>e.type==="상조").length;
+        const health   = g.entries.filter(e=>e.type==="건식").length;
+        const insurCnt = g.entries.filter(e=>e.type==="보험").length;
+        // 동적 계산
+        let staffRev = 0, margin = 0, hasUnset = false;
+        g.entries.forEach(e => {
+          const { take, configured } = calcStaffTake(e);
+          const { margin: m }        = calcAdminMargin(e);
+          if(!configured) hasUnset = true;
+          staffRev += take;
+          margin   += m;
+        });
+        const detail   = [
+          sanjo    ? `상조 ${sanjo}건`    : "",
+          health   ? `건식 ${health}건`   : "",
+          insurCnt ? `보험 ${insurCnt}건` : ""
         ].filter(Boolean).join(" / ") || "0건";
+        const rateStr = p ? [
+          p.sanjo        ? `상조 ${p.sanjo.toLocaleString()}원`  : "",
+          p.health       ? `건식 ${p.health.toLocaleString()}원` : "",
+          p.insurancePct ? `보험 ${p.insurancePct}%`            : ""
+        ].filter(Boolean).join(" / ") || "미설정" : `<span style="color:#f59e0b;font-weight:700;">⚠ 단가 미설정</span>`;
+        const unsetTag = `<span style="color:#f59e0b;font-size:10px;font-weight:700;"> ⚠미설정</span>`;
+        const revDisplay    = `${staffRev.toLocaleString()}원${hasUnset ? unsetTag : ""}`;
+        const marginDisplay = `${margin.toLocaleString()}원${hasUnset ? unsetTag : ""}`;
         return `<tr>
-          <td>${escapeHtml(g.name)}</td>
+          <td style="font-weight:700;">${escapeHtml(g.name)}</td>
           <td>${detail}</td>
-          <td style="font-size:11px;color:var(--muted);">상조 ${(p.sanjo||0).toLocaleString()} / 건식 ${(p.health||0).toLocaleString()} / 보험 ${(p.insurance||0).toLocaleString()}</td>
-          <td style="font-weight:700;color:var(--ok);">${rev.toLocaleString()}원</td>
+          <td style="font-size:11px;color:var(--muted);">${rateStr}</td>
+          <td style="font-weight:700;color:var(--ok);">${revDisplay}</td>
+          <td style="font-weight:700;color:#be123c;">${marginDisplay}</td>
         </tr>`;
       }).join("");
     }
