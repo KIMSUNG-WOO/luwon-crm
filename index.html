@@ -6,6 +6,7 @@
   <title>LUWON CRM</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <style>
     :root{
       --bg:#eef4fb;
@@ -668,6 +669,50 @@
     .lead-status-row{
       display:flex;align-items:center;gap:10px;padding:6px 4px;
     }
+
+    /* ── 일정표 관리 (강의 일정표 카드) ── */
+    .itinerary-card-wrap{
+      background:#fff;border-radius:8px;overflow:hidden;
+      box-shadow:0 4px 24px rgba(0,0,0,.13);
+      min-width:320px;max-width:480px;width:100%;
+      font-family:"Noto Sans KR",Arial,sans-serif;
+    }
+    .itinerary-card-wrap table{
+      border-collapse:collapse;width:100%;font-size:13px;
+    }
+    .itinerary-card-wrap .ic-title{
+      background:#2e7d32;color:#fff;text-align:center;
+      font-weight:900;font-size:15px;letter-spacing:2px;
+      padding:10px 0;
+    }
+    .itinerary-card-wrap .ic-head{
+      background:#2e7d32;color:#fff;text-align:center;
+      font-weight:700;font-size:12px;padding:5px 8px;
+      border:1px solid #1b5e20;
+    }
+    .itinerary-card-wrap .ic-data{
+      background:#fff;text-align:center;
+      font-size:13px;font-weight:500;padding:6px 8px;
+      border:1px solid #c8e6c9;
+    }
+    .itinerary-card-wrap .ic-note{
+      background:#fff;font-size:12px;font-weight:500;
+      padding:8px 10px;border:1px solid #c8e6c9;
+      white-space:pre-wrap;text-align:left;line-height:1.8;
+      min-height:60px;
+    }
+    .itinerary-download-btn{
+      height:40px;padding:0 18px;border-radius:12px;
+      background:linear-gradient(135deg,#2e7d32,#388e3c);
+      color:#fff;border:none;font-size:13px;font-weight:800;
+      cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+    }
+    .itinerary-download-btn:hover{ opacity:.88; }
+    .itin-note-cell{
+      max-width:160px;overflow:hidden;text-overflow:ellipsis;
+      white-space:nowrap;cursor:pointer;color:#4f46e5;font-size:11px;
+    }
+    .itin-note-cell:hover{ text-decoration:underline; }
   </style>
 </head>
 <body>
@@ -1219,6 +1264,47 @@
           </div>
         </div>
 
+        <!-- ── 일정표 관리 ── -->
+        <div class="view hidden" id="view-itinerary">
+          <div class="section-head">
+            <div>
+              <h4>일정표 관리</h4>
+              <p>등록된 교육섭외 일정표를 관리하는 화면이야.</p>
+            </div>
+          </div>
+
+          <div id="itineraryMsgBox" class="msg"></div>
+
+          <!-- 관리자 직원 필터 -->
+          <div class="toolbar" style="flex-wrap:wrap;gap:8px;" id="itineraryFilterBox">
+            <select id="itineraryStaffFilter" style="height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:700;cursor:pointer;" onchange="renderItineraries()">
+              <option value="">전체 보기</option>
+            </select>
+          </div>
+
+          <div class="table-wrap">
+            <table style="font-size:12px;">
+              <thead>
+                <tr>
+                  <th>업체명</th>
+                  <th>주소</th>
+                  <th>업체연락처</th>
+                  <th>키맨</th>
+                  <th>키맨연락처</th>
+                  <th>날짜</th>
+                  <th>시간</th>
+                  <th>참석인원</th>
+                  <th>연령대</th>
+                  <th>섭외자</th>
+                  <th>특이사항</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="itineraryTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
         <div class="view hidden" id="view-settings">
           <div class="section-head">
             <div>
@@ -1355,6 +1441,119 @@
     </div>
   </div>
 
+  <!-- ── 강의 일정표 카드 모달 ── -->
+  <div class="modal-backdrop" id="itineraryCardModal" onclick="if(event.target===this)closeItineraryCard()">
+    <div class="modal-card" style="max-width:520px;">
+      <div class="modal-head">
+        <div><h4>강의 일정표</h4><p>이미지로 다운로드하거나 드래그로 복사할 수 있어.</p></div>
+        <button class="icon-btn" onclick="closeItineraryCard()">✕</button>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <!-- 카드 본체 (html2canvas 캡처 대상) -->
+        <div id="itineraryCardBody" class="itinerary-card-wrap">
+          <table>
+            <tr><td colspan="3" class="ic-title">〈 강의 일정표 〉</td></tr>
+            <tr>
+              <td class="ic-head">섭외자</td>
+              <td class="ic-head" colspan="2">업종</td>
+            </tr>
+            <tr>
+              <td class="ic-data" id="icAssignee"></td>
+              <td class="ic-data" colspan="2" id="icIndustry"></td>
+            </tr>
+            <tr><td colspan="3" class="ic-head">업체명</td></tr>
+            <tr><td colspan="3" class="ic-data" id="icCompany"></td></tr>
+            <tr>
+              <td class="ic-head" colspan="2">방문일자</td>
+              <td class="ic-head">강의시간</td>
+            </tr>
+            <tr>
+              <td class="ic-data" colspan="2" id="icDate"></td>
+              <td class="ic-data" id="icTime"></td>
+            </tr>
+            <tr><td colspan="3" class="ic-head">방문주소</td></tr>
+            <tr><td colspan="3" class="ic-data" id="icAddress"></td></tr>
+            <tr>
+              <td class="ic-head" colspan="2">참석인원</td>
+              <td class="ic-head">연령대</td>
+            </tr>
+            <tr>
+              <td class="ic-data" colspan="2" id="icPeople"></td>
+              <td class="ic-data" id="icAge"></td>
+            </tr>
+            <tr>
+              <td class="ic-head">교육장소</td>
+              <td class="ic-head">강의내용</td>
+              <td class="ic-head">외국인</td>
+            </tr>
+            <tr>
+              <td class="ic-data" id="icPlace"></td>
+              <td class="ic-data" id="icSubject"></td>
+              <td class="ic-data" id="icForeigner"></td>
+            </tr>
+            <tr>
+              <td class="ic-head">담당자</td>
+              <td class="ic-head">사무실 번호</td>
+              <td class="ic-head">핸드폰 번호</td>
+            </tr>
+            <tr>
+              <td class="ic-data" id="icManager"></td>
+              <td class="ic-data" id="icBizPhone"></td>
+              <td class="ic-data" id="icManagerPhone"></td>
+            </tr>
+            <tr>
+              <td class="ic-head" colspan="2">후원내용</td>
+              <td class="ic-head">기타사항</td>
+            </tr>
+            <tr>
+              <td class="ic-data" colspan="2" id="icSupport"></td>
+              <td class="ic-data" id="icEtc"></td>
+            </tr>
+            <tr><td colspan="3" class="ic-head">참고사항</td></tr>
+            <tr><td colspan="3" class="ic-note" id="icNote"></td></tr>
+          </table>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="itinerary-download-btn" onclick="downloadItineraryCard()">⬇ 이미지 다운로드</button>
+          <button class="ghost-btn" onclick="closeItineraryCard()">닫기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 일정표 수정 모달 ── -->
+  <div class="modal-backdrop" id="itineraryEditModal" onclick="if(event.target===this)closeItineraryEditModal()">
+    <div class="modal-card" style="max-width:600px;">
+      <div class="modal-head">
+        <div><h4>일정표 수정</h4><p>일정표 내용을 수정한 뒤 저장해줘.</p></div>
+        <button class="icon-btn" onclick="closeItineraryEditModal()">✕</button>
+      </div>
+      <div class="form-grid" style="padding:20px 24px;">
+        <input id="editItinCompany" placeholder="업체명">
+        <input id="editItinAssignee" placeholder="섭외자">
+        <input id="editItinAddress" class="full" placeholder="주소">
+        <input id="editItinManager" placeholder="키맨 (담당자)">
+        <input id="editItinBizPhone" placeholder="업체연락처">
+        <input id="editItinManagerPhone" placeholder="키맨연락처">
+        <input id="editItinDate" type="date">
+        <input id="editItinTime" placeholder="시간 예: 10:00">
+        <input id="editItinPeople" placeholder="참석인원">
+        <input id="editItinAge" placeholder="연령대">
+        <input id="editItinSubject" placeholder="강의내용 (교육과목)">
+        <input id="editItinIndustry" placeholder="업종">
+        <input id="editItinPlace" placeholder="교육장소 (예: 사무실)">
+        <input id="editItinForeigner" placeholder="외국인">
+        <input id="editItinSupport" class="full" placeholder="후원내용">
+        <input id="editItinEtc" class="full" placeholder="기타사항">
+        <textarea id="editItinNote" class="full" rows="5" placeholder="특이사항 (참고사항)" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:13px;font-family:inherit;resize:vertical;"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding:0 24px 24px;">
+        <button class="ghost-btn" onclick="closeItineraryEditModal()">취소</button>
+        <button class="small-btn" onclick="saveItineraryEdit()">저장</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="calendarModal">
     <div class="modal-card">
       <div class="modal-head">
@@ -1474,6 +1673,9 @@
       { id:301, type:"교육섭외", date:"2026-03-10", time:"10:00", company:"예시사업장A", address:"인천 서구 청마로 66-7", manager:"홍길동", phone:"01011112222", people:"5명", age:"40대", subject:"산업안전교육", industry:"음식점", status:"교육 미이수", ownerNo:"1379", ownerName:"김성우", createdAt:"2026-03-10" },
       { id:302, type:"교육섭외", date:"2026-03-10", time:"14:00", company:"루원케어", address:"서울 서초구 방배로 123", manager:"김민수", phone:"01033334444", people:"3명", age:"30대", subject:"직무교육", industry:"상조", status:"교육 이수", ownerNo:"1218", ownerName:"이상혁", createdAt:"2026-03-10" }
     ];
+
+    // 일정표 관리 데이터 (일정등록 시 자동 생성)
+    let itineraries = [];
 
     function $(id){ return document.getElementById(id); }
 
@@ -1668,6 +1870,7 @@
         ["progress","📈","진행률"],
         ["staff","👥","직원관리"],
         ["lead","🗂","교육섭외 DB"],
+        ["itinerary","📋","일정표 관리"],
         ["settings","⚙️","관리자설정"]
       ] : [
         ["home","🏠","홈"],
@@ -1676,7 +1879,8 @@
         ["aggregate","📌","익일취합"],
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
-        ["lead","🗂","교육섭외 DB"]
+        ["lead","🗂","교육섭외 DB"],
+        ["itinerary","📋","일정표 관리"]
       ];
 
       box.innerHTML = menus.map(m => `<div class="menu-item ${state.currentView===m[0] ? "active" : ""}" data-view="${m[0]}">${m[1]} ${m[2]}</div>`).join("");
@@ -1710,6 +1914,9 @@
 
       if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !admin);
       if(admin) refreshLeadStaffDropdown();
+      // 일정표 관리 직원 필터 - 관리자만 표시
+      if($("itineraryFilterBox")) $("itineraryFilterBox").classList.toggle("hidden", !admin);
+      if(admin) refreshItineraryStaffDropdown();
       onPerformanceTypeChange();
     }
 
@@ -1735,6 +1942,7 @@
         progress:["진행률","당월 / 선택일 진행률 화면이야."],
         staff:["직원관리","직원 정보를 관리하는 화면이야."],
         lead:["교육섭외 DB","교육 사업장 데이터베이스 화면이야."],
+        itinerary:["일정표 관리","등록된 교육섭외 일정표를 관리하는 화면이야."],
         settings:["관리자설정","관리자용 설정 화면이야."]
       };
 
@@ -1984,7 +2192,7 @@
       if(!time) return alert("시간은 꼭 입력해줘.");
       if(!company) return alert("업체는 꼭 입력해줘.");
 
-      schedules.unshift({
+      const newSched = {
         id: Date.now(),
         assignee, type, date, time, company, address, manager, phone, people, age, subject, memo,
         createdBy: currentStaffName(),
@@ -1992,7 +2200,12 @@
         createdAt: todayStr(),
         progressStatus:"",
         progressEtc:""
-      });
+      };
+      schedules.unshift(newSched);
+
+      // 일정표 관리에도 자동 추가 (특이사항 기본값 포함)
+      itineraries.unshift(buildItineraryFromSchedule(newSched));
+      renderItineraries();
 
       renderSchedules();
       loadAggregate();
@@ -2968,6 +3181,216 @@
       setTimeout(() => { box.className = "msg"; box.textContent = ""; }, 3000);
     }
 
+    // ── 일정표 관리 ─────────────────────────────────────────────
+
+    function buildDefaultSpecialNote(){
+      return "▶ooo에서 진행해주시면 됩니다.\n▶총 o명 중, o명 참석하신다고 합니다.\n▶키맨 참석하십니다.\n▶교육시간은 1시간으로 안내했습니다.\n▶특별교육으로 교육명 안내 드렸습니다.";
+    }
+
+    function buildItineraryFromSchedule(sched){
+      return {
+        id:           Date.now() + Math.random(),
+        scheduleId:   sched.id,
+        company:      sched.company || "",
+        address:      sched.address || "",
+        bizPhone:     sched.phone   || "",    // 업체연락처
+        manager:      sched.manager || "",    // 키맨
+        managerPhone: sched.phone   || "",    // 키맨연락처
+        date:         sched.date    || "",
+        time:         sched.time    || "",
+        people:       sched.people  || "",
+        age:          sched.age     || "",
+        assignee:     sched.assignee|| "",
+        subject:      sched.subject || "",
+        industry:     "",
+        educationPlace: "사무실",
+        foreignerCount: "",
+        supportContent: "지역 후원사 안내",
+        etcNote:        "",
+        specialNote:    buildDefaultSpecialNote(),
+        createdByNo:    sched.createdByNo || "",
+        createdAt:      sched.createdAt   || todayStr()
+      };
+    }
+
+    function formatDateKorean(dateStr){
+      if(!dateStr) return "";
+      try{
+        const d = new Date(dateStr + "T00:00:00");
+        const days = ["일","월","화","수","목","금","토"];
+        return `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일 ${days[d.getDay()]}요일`;
+      } catch(e){ return dateStr; }
+    }
+
+    function getVisibleItineraries(){
+      const filter = $("itineraryStaffFilter") ? $("itineraryStaffFilter").value : "";
+      if(isAdminMode()){
+        if(filter) return itineraries.filter(i => i.assignee === filter);
+        return itineraries.slice();
+      }
+      return itineraries.filter(i => i.createdByNo === currentStaffNo() || i.assignee === currentStaffName());
+    }
+
+    function refreshItineraryStaffDropdown(){
+      const sel = $("itineraryStaffFilter");
+      if(!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">전체 보기</option>` +
+        staffs.map(s => `<option value="${escapeHtml(s.name)}" ${cur===s.name?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
+    }
+
+    function renderItineraries(){
+      const body = $("itineraryTableBody");
+      if(!body) return;
+      const rows = getVisibleItineraries().sort((a,b) => b.date.localeCompare(a.date));
+
+      if(!rows.length){
+        body.innerHTML = `<tr><td colspan="12"><div class="empty">등록된 일정표가 없어. 일정등록에서 일정을 추가하면 자동으로 생성돼.</div></td></tr>`;
+        return;
+      }
+
+      body.innerHTML = rows.map(itin => `
+        <tr>
+          <td>${escapeHtml(itin.company)}</td>
+          <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(itin.address)}</td>
+          <td>${escapeHtml(formatPhone(itin.bizPhone))}</td>
+          <td>${escapeHtml(itin.manager)}</td>
+          <td>${escapeHtml(formatPhone(itin.managerPhone))}</td>
+          <td>${escapeHtml(itin.date)}</td>
+          <td>${escapeHtml(itin.time)}</td>
+          <td>${escapeHtml(itin.people)}</td>
+          <td>${escapeHtml(itin.age)}</td>
+          <td>${escapeHtml(itin.assignee)}</td>
+          <td class="itin-note-cell" onclick="openItineraryEditModal('${itin.id}')" title="${escapeHtml(itin.specialNote)}">${escapeHtml(itin.specialNote.split('\n')[0] || '')}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="small-btn" type="button" onclick="openItineraryCard('${itin.id}')">섭외지</button>
+              <button class="ghost-btn" type="button" onclick="openItineraryEditModal('${itin.id}')">수정</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    // ── 강의 일정표 카드 모달 ──
+    let _itineraryCardId = null;
+
+    function openItineraryCard(id){
+      const itin = itineraries.find(x => String(x.id) === String(id));
+      if(!itin) return;
+      _itineraryCardId = id;
+
+      $("icAssignee").textContent   = itin.assignee || "";
+      $("icIndustry").textContent   = itin.industry || "";
+      $("icCompany").textContent    = itin.company  || "";
+      $("icDate").textContent       = formatDateKorean(itin.date);
+      $("icTime").textContent       = itin.time     || "";
+      $("icAddress").textContent    = itin.address  || "";
+      $("icPeople").textContent     = itin.people   || "";
+      $("icAge").textContent        = itin.age      || "";
+      $("icPlace").textContent      = itin.educationPlace || "사무실";
+      $("icSubject").textContent    = itin.subject  || "";
+      $("icForeigner").textContent  = itin.foreignerCount || "";
+      $("icManager").textContent    = itin.manager  || "";
+      $("icBizPhone").textContent   = formatPhone(itin.bizPhone)     || "";
+      $("icManagerPhone").textContent = formatPhone(itin.managerPhone) || "";
+      $("icSupport").textContent    = itin.supportContent || "";
+      $("icEtc").textContent        = itin.etcNote  || "";
+      $("icNote").textContent       = itin.specialNote || "";
+
+      $("itineraryCardModal").classList.add("show");
+    }
+
+    function closeItineraryCard(){
+      $("itineraryCardModal").classList.remove("show");
+      _itineraryCardId = null;
+    }
+
+    function downloadItineraryCard(){
+      const card = $("itineraryCardBody");
+      if(!card) return;
+      if(typeof html2canvas === "undefined") return alert("html2canvas 라이브러리가 로드되지 않았어.");
+      html2canvas(card, { scale: 2, backgroundColor: "#fff", useCORS: true }).then(canvas => {
+        const link = document.createElement("a");
+        const itin = itineraries.find(x => String(x.id) === String(_itineraryCardId));
+        const fname = (itin ? itin.company : "강의일정표") + "_일정표.png";
+        link.download = fname;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      }).catch(err => {
+        alert("이미지 생성 중 오류가 발생했어.\n" + err.message);
+      });
+    }
+
+    // ── 일정표 수정 모달 ──
+    let _itineraryEditId = null;
+
+    function openItineraryEditModal(id){
+      const itin = itineraries.find(x => String(x.id) === String(id));
+      if(!itin) return;
+      _itineraryEditId = id;
+
+      $("editItinCompany").value      = itin.company        || "";
+      $("editItinAssignee").value     = itin.assignee       || "";
+      $("editItinAddress").value      = itin.address        || "";
+      $("editItinManager").value      = itin.manager        || "";
+      $("editItinBizPhone").value     = itin.bizPhone       || "";
+      $("editItinManagerPhone").value = itin.managerPhone   || "";
+      $("editItinDate").value         = itin.date           || "";
+      $("editItinTime").value         = itin.time           || "";
+      $("editItinPeople").value       = itin.people         || "";
+      $("editItinAge").value          = itin.age            || "";
+      $("editItinSubject").value      = itin.subject        || "";
+      $("editItinIndustry").value     = itin.industry       || "";
+      $("editItinPlace").value        = itin.educationPlace || "사무실";
+      $("editItinForeigner").value    = itin.foreignerCount || "";
+      $("editItinSupport").value      = itin.supportContent || "";
+      $("editItinEtc").value          = itin.etcNote        || "";
+      $("editItinNote").value         = itin.specialNote    || "";
+
+      $("itineraryEditModal").classList.add("show");
+    }
+
+    function closeItineraryEditModal(){
+      $("itineraryEditModal").classList.remove("show");
+      _itineraryEditId = null;
+    }
+
+    function saveItineraryEdit(){
+      const itin = itineraries.find(x => String(x.id) === String(_itineraryEditId));
+      if(!itin) return;
+
+      itin.company        = $("editItinCompany").value.trim();
+      itin.assignee       = $("editItinAssignee").value.trim();
+      itin.address        = $("editItinAddress").value.trim();
+      itin.manager        = $("editItinManager").value.trim();
+      itin.bizPhone       = $("editItinBizPhone").value.trim();
+      itin.managerPhone   = $("editItinManagerPhone").value.trim();
+      itin.date           = $("editItinDate").value;
+      itin.time           = $("editItinTime").value.trim();
+      itin.people         = $("editItinPeople").value.trim();
+      itin.age            = $("editItinAge").value.trim();
+      itin.subject        = $("editItinSubject").value.trim();
+      itin.industry       = $("editItinIndustry").value.trim();
+      itin.educationPlace = $("editItinPlace").value.trim() || "사무실";
+      itin.foreignerCount = $("editItinForeigner").value.trim();
+      itin.supportContent = $("editItinSupport").value.trim();
+      itin.etcNote        = $("editItinEtc").value.trim();
+      itin.specialNote    = $("editItinNote").value.trim();
+
+      closeItineraryEditModal();
+      renderItineraries();
+      showItineraryMsg("✅ 일정표 수정 완료!", "");
+    }
+
+    function showItineraryMsg(text, type){
+      let box = $("itineraryMsgBox");
+      if(!box) return;
+      box.textContent = text;
+      box.className = "msg show " + (type || "error");
+      setTimeout(() => { box.className = "msg"; box.textContent = ""; }, 3000);
+    }
+
     function setLeadCat(cat, el){
       document.querySelectorAll(".edu-cat-btn").forEach(b => b.classList.remove("active"));
       if(el) el.classList.add("active");
@@ -3286,6 +3709,7 @@
       renderPerformances();
       renderStaffs();
       renderLeads();
+      renderItineraries();
       loadAggregate();
       loadProgress();
       renderCalendar();
