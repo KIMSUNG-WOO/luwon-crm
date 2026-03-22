@@ -671,55 +671,68 @@
     }
 
     /* ── 일정표 관리 (강의 일정표 카드) ── */
-    /* 강의 일정표 모달 - 패딩 없애서 카드가 절대 안 잘리게 */
-    .itin-modal-card{
-      max-width:620px;width:100%;
-      padding:0 !important;   /* modal-card 기본 padding 제거 */
+    /* ── 강의 일정표 독립 오버레이 (modal-card 미사용) ── */
+    #itineraryCardModal{
+      position:fixed;inset:0;z-index:10000;
+      background:rgba(15,23,42,.55);
+      display:none;overflow-y:auto;
     }
-    .itin-modal-head{
-      display:flex;justify-content:space-between;align-items:flex-start;
-      gap:12px;padding:20px 20px 12px;
+    #itineraryCardModal.show{ display:block; }
+    .itin-overlay-inner{
+      min-height:100%;
+      display:flex;align-items:flex-start;justify-content:center;
+      padding:24px 16px 40px;
     }
-    .itin-card-container{
-      padding:0 16px 20px;
+    .itin-popup{
+      background:#fff;border-radius:20px;
+      box-shadow:0 24px 64px rgba(0,0,0,.22);
+      width:100%;max-width:520px;
+      overflow:hidden;flex-shrink:0;
     }
-    .itin-btn-row{
-      display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
-      padding:14px 16px 20px;
+    .itin-popup-head{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:14px 16px 10px;border-bottom:1px solid #e2e8f0;
     }
+    .itin-popup-head h4{ margin:0;font-size:15px;font-weight:800; }
+    .itin-popup-head p{ margin:3px 0 0;font-size:11px;color:#64748b; }
+    .itin-popup-foot{
+      display:flex;gap:10px;justify-content:center;
+      padding:12px 14px 16px;
+    }
+    /* 카드 본체 */
     .itinerary-card-wrap{
-      background:#fff;
-      width:100%;          /* 모달 너비에 맞게 100% */
+      width:100%;
       font-family:"Malgun Gothic","Noto Sans KR",Arial,sans-serif;
-      border:2px solid #2e7d32;
+      border-top:2px solid #2e7d32;
+      border-bottom:2px solid #2e7d32;
     }
     .itinerary-card-wrap table{
       border-collapse:collapse;width:100%;
-      table-layout:fixed;font-size:13px;
+      table-layout:fixed;
     }
     .itinerary-card-wrap .ic-title{
       background:#2e7d32;color:#fff;text-align:center;
-      font-weight:900;font-size:15px;letter-spacing:3px;
-      padding:11px 0;
+      font-weight:900;font-size:14px;letter-spacing:2px;
+      padding:10px 0;
     }
     .itinerary-card-wrap .ic-head{
       background:#2e7d32;color:#fff;text-align:center;
-      font-weight:700;font-size:12px;padding:6px 4px;
+      font-weight:700;font-size:11px;padding:5px 3px;
       border:1px solid #1b5e20;
     }
     .itinerary-card-wrap .ic-data{
       background:#fff;text-align:center;
-      font-size:13px;font-weight:500;padding:7px 4px;
-      border:1px solid #c8e6c9;word-break:break-all;
+      font-size:12px;font-weight:500;padding:6px 3px;
+      border:1px solid #c8e6c9;word-break:break-word;
     }
     .itinerary-card-wrap .ic-note{
-      background:#fff;font-size:12px;font-weight:500;
-      padding:10px 12px;border:1px solid #c8e6c9;
-      white-space:pre-wrap;text-align:left;line-height:1.9;
-      min-height:70px;
+      background:#fff;font-size:11.5px;font-weight:500;
+      padding:9px 10px;border:1px solid #c8e6c9;
+      white-space:pre-wrap;text-align:left;line-height:1.85;
+      min-height:60px;
     }
     .itinerary-download-btn{
-      height:42px;padding:0 20px;border-radius:12px;
+      height:40px;padding:0 18px;border-radius:12px;
       background:linear-gradient(135deg,#2e7d32,#388e3c);
       color:#fff;border:none;font-size:13px;font-weight:800;
       cursor:pointer;display:inline-flex;align-items:center;gap:6px;
@@ -1458,20 +1471,18 @@
     </div>
   </div>
 
-  <!-- ── 강의 일정표 카드 모달 ── -->
-  <div class="modal-backdrop" id="itineraryCardModal" onclick="if(event.target===this)closeItineraryCard()">
-    <div class="modal-card itin-modal-card">
-      <!-- 헤더: 별도 패딩 적용 -->
-      <div class="itin-modal-head">
-        <div>
-          <h4 style="margin:0 0 2px;font-size:16px;">강의 일정표</h4>
-          <p style="margin:0;font-size:12px;color:#64748b;">이미지로 다운로드하거나 드래그로 복사할 수 있어.</p>
+  <!-- ── 강의 일정표 카드 오버레이 (modal-card 완전 미사용) ── -->
+  <div id="itineraryCardModal" onclick="if(event.target.id==='itineraryCardModal')closeItineraryCard()">
+    <div class="itin-overlay-inner">
+      <div class="itin-popup">
+        <div class="itin-popup-head">
+          <div>
+            <h4>강의 일정표</h4>
+            <p>이미지로 다운로드하거나 드래그로 복사할 수 있어.</p>
+          </div>
+          <button class="icon-btn" onclick="closeItineraryCard()">✕</button>
         </div>
-        <button class="icon-btn" onclick="closeItineraryCard()">✕</button>
-      </div>
 
-      <!-- 카드 본체: 좌우 패딩 최소화 -->
-      <div class="itin-card-container">
         <div id="itineraryCardBody" class="itinerary-card-wrap">
           <table>
             <colgroup>
@@ -1540,12 +1551,11 @@
             <tr><td colspan="3" class="ic-note" id="icNote"></td></tr>
           </table>
         </div>
-      </div>
 
-      <!-- 버튼 -->
-      <div class="itin-btn-row">
-        <button class="itinerary-download-btn" onclick="downloadItineraryCard()">⬇ 이미지 다운로드</button>
-        <button class="ghost-btn" onclick="closeItineraryCard()">닫기</button>
+        <div class="itin-popup-foot">
+          <button class="itinerary-download-btn" onclick="downloadItineraryCard()">⬇ 이미지 다운로드</button>
+          <button class="ghost-btn" onclick="closeItineraryCard()">닫기</button>
+        </div>
       </div>
     </div>
   </div>
