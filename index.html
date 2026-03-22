@@ -1,0 +1,2622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>LUWON CRM</title>
+  <style>
+    :root{
+      --bg:#eef4fb;
+      --bg2:#f7fbff;
+      --panel:#ffffff;
+      --line:#dbe5f0;
+      --text:#142033;
+      --muted:#6b7a90;
+      --primary:#4f46e5;
+      --primary2:#2563eb;
+      --danger:#e11d48;
+      --ok:#059669;
+      --shadow:0 18px 50px rgba(26,44,78,.10);
+    }
+
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;padding:0;min-height:100vh;
+      font-family:Arial,"Noto Sans KR",sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(79,70,229,.07), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(20,184,166,.06), transparent 22%),
+        linear-gradient(180deg, var(--bg2), var(--bg));
+      color:var(--text);
+    }
+
+    body{padding:20px}
+    .hidden{display:none !important}
+
+    .login-page{
+      min-height:calc(100vh - 40px);
+      display:grid;
+      grid-template-columns:1fr 460px;
+      gap:20px;
+    }
+
+    .left-card,.login-card,.sidebar,.topbar,.content-card{
+      background:rgba(255,255,255,.88);
+      backdrop-filter:blur(14px);
+      border:1px solid rgba(255,255,255,.85);
+      box-shadow:var(--shadow);
+      border-radius:32px;
+    }
+
+    .left-card{
+      padding:34px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      min-height:calc(100vh - 40px);
+      background:linear-gradient(135deg, rgba(255,255,255,.95), rgba(245,249,255,.92));
+      position:relative;
+      overflow:hidden;
+    }
+
+    .left-card::before{
+      content:"";
+      position:absolute;
+      right:-80px;
+      top:-80px;
+      width:260px;
+      height:260px;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(79,70,229,.12), transparent 70%);
+    }
+
+    .left-card::after{
+      content:"";
+      position:absolute;
+      left:-70px;
+      bottom:-70px;
+      width:220px;
+      height:220px;
+      border-radius:50%;
+      background:radial-gradient(circle, rgba(20,184,166,.10), transparent 70%);
+    }
+
+    .left-card > *{position:relative; z-index:1}
+
+    .brand{display:flex;align-items:center;gap:16px}
+    .logo-wrap{
+      width:68px;height:68px;border-radius:22px;
+      background:linear-gradient(145deg,#fff,#dfe9f7);
+      box-shadow:
+        inset 0 2px 10px rgba(255,255,255,.9),
+        inset 0 -8px 18px rgba(79,70,229,.10),
+        0 14px 28px rgba(37,99,235,.16);
+      display:flex;align-items:center;justify-content:center;position:relative;
+    }
+
+    .logo-wrap::before{
+      content:"";
+      position:absolute;inset:6px;border-radius:18px;
+      background:linear-gradient(145deg,#7dd3fc,#4f46e5);
+      opacity:.16;
+    }
+
+    .logo{
+      position:relative;
+      font-size:34px;font-weight:800;letter-spacing:-2px;line-height:1;
+      background:linear-gradient(180deg,#6ee7f9,#2563eb 55%,#312e81);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+
+    .brand h1{margin:0;font-size:32px;letter-spacing:-1px}
+    .brand p{margin:6px 0 0;color:var(--muted);font-size:15px}
+
+    .hero{margin-top:10px}
+    .hero .date-time{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+
+    .chip{
+      display:inline-flex;align-items:center;height:38px;padding:0 14px;
+      border-radius:999px;background:#fff;border:1px solid var(--line);
+      color:#314056;font-size:13px;font-weight:700;
+      box-shadow:0 6px 16px rgba(0,0,0,.04);
+    }
+
+    .hero h2{
+      margin:0;font-size:54px;line-height:1.15;letter-spacing:-2px;
+    }
+
+    .hero p{
+      margin:18px 0 0;max-width:720px;color:#506176;font-size:18px;line-height:1.8;
+    }
+
+    .notice-card{
+      margin-top:26px;background:rgba(255,255,255,.82);
+      border:1px solid var(--line);border-radius:28px;padding:24px;
+    }
+
+    .notice-card h3{margin:0 0 16px;font-size:22px}
+    .notice-item{
+      display:flex;justify-content:space-between;gap:14px;
+      padding:14px 0;border-bottom:1px solid #e8eef6;
+    }
+    .notice-item:last-child{border-bottom:0}
+    .notice-item b{display:block;font-size:15px;margin-bottom:6px}
+    .notice-item span{color:var(--muted);font-size:13px;line-height:1.6}
+
+    .pill{
+      display:inline-flex;align-items:center;height:30px;padding:0 10px;
+      border-radius:999px;background:#eff6ff;color:#2563eb;
+      border:1px solid #dbeafe;font-size:12px;font-weight:800;white-space:nowrap;
+    }
+
+    .login-card{
+      padding:30px;display:flex;flex-direction:column;justify-content:center;
+      min-height:calc(100vh - 40px);
+    }
+
+    .login-head{
+      display:flex;justify-content:space-between;align-items:flex-start;
+      gap:12px;margin-bottom:22px;
+    }
+
+    .login-head h2{margin:0;font-size:36px;letter-spacing:-1px}
+    .login-head p{margin:10px 0 0;color:var(--muted);font-size:14px;line-height:1.7}
+
+    .secure{
+      padding:10px 12px;border-radius:14px;background:#eef2ff;color:#4338ca;
+      border:1px solid #c7d2fe;font-size:12px;font-weight:800;white-space:nowrap;
+    }
+
+    .field{margin-bottom:14px}
+    .field label{
+      display:block;margin-bottom:8px;font-size:13px;font-weight:800;color:#334155;
+    }
+
+    .input-wrap{position:relative}
+    .input{
+      width:100%;height:58px;border-radius:18px;border:1px solid var(--line);
+      background:#f8fbff;color:var(--text);padding:0 16px 0 48px;font-size:15px;outline:none;
+    }
+    .input:focus{
+      border-color:#93c5fd;box-shadow:0 0 0 4px rgba(37,99,235,.10);background:#fff;
+    }
+
+    .icon{
+      position:absolute;left:16px;top:50%;transform:translateY(-50%);
+      color:#94a3b8;font-size:16px;pointer-events:none;
+    }
+
+    .sub-row{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+      margin:8px 0 18px;color:var(--muted);font-size:13px;
+    }
+
+    .login-btn{
+      height:58px;border:0;border-radius:18px;
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+      color:#fff;font-size:16px;font-weight:800;cursor:pointer;
+      box-shadow:0 16px 28px rgba(79,70,229,.18);width:100%;
+    }
+
+    .msg{
+      margin-top:14px;padding:14px 16px;border-radius:16px;font-size:13px;line-height:1.6;display:none;
+    }
+    .msg.show{display:block}
+    .msg.error{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}
+
+    .guide{
+      margin-top:18px;border-radius:20px;border:1px dashed #d6e2ef;background:#f8fbff;
+      padding:16px;color:#5b6b81;font-size:12px;line-height:1.7;
+    }
+    .guide b{display:block;color:#1e293b;margin-bottom:6px;font-size:13px}
+
+    .dashboard{
+      display:none;min-height:calc(100vh - 40px);
+      grid-template-columns:280px 1fr;gap:18px;
+    }
+
+    .sidebar{
+      padding:20px;display:flex;flex-direction:column;gap:16px;
+      background:linear-gradient(180deg,#ffffff,#f7fbff);
+    }
+
+    .side-brand{display:flex;align-items:center;gap:12px;padding:6px}
+    .side-brand .logo-wrap{width:50px;height:50px;border-radius:16px}
+    .side-brand .logo{font-size:25px}
+    .side-brand strong{display:block;font-size:18px}
+    .side-brand span{display:block;font-size:12px;color:var(--muted);margin-top:4px}
+
+    .profile{
+      border-radius:22px;padding:16px;background:#f8fbff;border:1px solid var(--line);
+    }
+    .profile .name{font-size:20px;font-weight:800;margin-bottom:8px}
+    .profile .desc{color:var(--muted);font-size:13px;line-height:1.7}
+    .profile .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+
+    .menu{
+      display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:calc(100vh - 340px);padding-right:2px;
+    }
+
+    .menu-item{
+      display:flex;align-items:center;gap:12px;border-radius:18px;padding:14px 16px;
+      background:#fff;border:1px solid #e7eef7;color:#22314a;font-size:14px;font-weight:800;cursor:pointer;
+    }
+    .menu-item:hover{transform:translateX(2px);background:#f8fbff}
+    .menu-item.active{
+      background:linear-gradient(135deg,var(--primary),var(--primary2));
+      color:#fff;border-color:transparent;box-shadow:0 14px 24px rgba(79,70,229,.18);
+    }
+
+    .logout{
+      margin-top:auto;height:52px;border-radius:18px;border:1px solid var(--line);
+      background:#fff;color:#1f2d42;font-size:15px;font-weight:800;cursor:pointer;
+    }
+
+    .main{display:flex;flex-direction:column;gap:18px}
+
+    .topbar{
+      padding:22px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+      background:linear-gradient(135deg,#ffffff,#f7fbff);
+    }
+    .topbar h3{margin:0;font-size:32px;letter-spacing:-1px}
+    .topbar p{margin:8px 0 0;color:var(--muted);font-size:14px}
+    .top-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+    .mode-toggle{
+      display:flex;gap:8px;padding:6px;background:#eef4fb;border:1px solid var(--line);border-radius:16px;
+    }
+    .mode-btn{
+      height:38px !important;border-radius:12px !important;padding:0 12px !important;
+      border:1px solid transparent;background:#fff;color:#22314a;font-size:13px;font-weight:800;cursor:pointer;
+    }
+    .mode-btn.active{
+      background:linear-gradient(135deg,var(--primary),var(--primary2)) !important;
+      color:#fff !important;border-color:transparent !important;
+    }
+
+    .content-card{
+      padding:22px;min-height:620px;background:linear-gradient(180deg,#ffffff,#fbfdff);
+    }
+
+    .section-head{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;
+    }
+    .section-head h4{margin:0;font-size:24px}
+    .section-head p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    .summary-grid{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px;
+    }
+    .summary-card{
+      padding:18px;border-radius:22px;border:1px solid var(--line);background:#f8fbff;
+    }
+    .summary-card .k{font-size:13px;color:#5e7190;font-weight:800;margin-bottom:10px;line-height:1.6}
+    .summary-card .v{font-size:34px;font-weight:800;letter-spacing:-1px}
+    .summary-card .s{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.6}
+
+    .split-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:16px}
+    .panel{
+      padding:18px;border-radius:22px;border:1px solid var(--line);background:#f8fbff;
+    }
+    .panel h5{margin:0 0 8px;font-size:18px}
+    .panel p{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.7}
+
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+    .toolbar input,.toolbar select,.form-grid input,.form-grid textarea,.form-grid select{
+      height:46px;border-radius:14px;border:1px solid var(--line);background:#fff;padding:0 14px;font-size:14px;outline:none;color:#22314a;
+    }
+    .form-grid textarea{min-height:120px;padding:14px;resize:vertical}
+    .toolbar button,.small-btn,.ghost-btn,.danger-btn{
+      height:46px;border-radius:14px;padding:0 16px;font-size:14px;font-weight:800;cursor:pointer;
+    }
+    .small-btn{border:0;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff}
+    .ghost-btn{border:1px solid var(--line);background:#fff;color:#22314a}
+    .danger-btn{border:0;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}
+
+    .table-wrap{
+      border:1px solid var(--line);border-radius:20px;overflow:auto;background:#fff;
+    }
+    table{width:100%;border-collapse:collapse;min-width:760px}
+    th,td{padding:14px 16px;border-bottom:1px solid #edf2f7;text-align:left;font-size:14px;vertical-align:top}
+    th{background:#f8fbff;color:#42546d;font-size:13px;font-weight:800;white-space:nowrap}
+    tr:last-child td{border-bottom:0}
+
+    .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+    .form-grid .full{grid-column:1 / -1}
+
+    .empty{
+      padding:26px;border-radius:20px;border:1px dashed #d6e2ef;background:#f8fbff;color:var(--muted);text-align:center;font-size:14px;
+    }
+
+    .home-notice-list,.stack-list{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+    .home-notice,.stack-item{
+      padding:16px;border-radius:18px;border:1px solid var(--line);background:#f8fbff;
+    }
+    .home-notice b,.stack-item b{display:block;margin-bottom:6px}
+    .home-notice span,.stack-item span{color:var(--muted);font-size:13px;line-height:1.7}
+
+    .tab-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+    .tab-btn{
+      height:42px;border-radius:12px;border:1px solid var(--line);background:#fff;color:#22314a;
+      padding:0 14px;font-size:13px;font-weight:800;cursor:pointer;
+    }
+    .tab-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-color:transparent}
+
+    .status-badge{
+      display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:999px;
+      font-size:12px;font-weight:800;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;white-space:nowrap;
+    }
+    .notice-inline{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+
+    .calendar-head{
+      display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;
+    }
+    .calendar-title{font-size:18px;font-weight:800}
+    .calendar-nav{display:flex;gap:8px}
+    .calendar-nav button{
+      height:38px;border-radius:12px;border:1px solid var(--line);background:#fff;padding:0 12px;cursor:pointer;font-weight:800;
+    }
+    .calendar-grid{
+      display:grid;grid-template-columns:repeat(7,1fr);gap:8px;
+    }
+    .calendar-dow{
+      text-align:center;font-size:12px;font-weight:800;color:#64748b;padding:6px 0;
+    }
+    .calendar-cell{
+      min-height:92px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:8px;cursor:pointer;
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .calendar-cell.other{opacity:.38}
+    .calendar-cell.today{outline:2px solid rgba(79,70,229,.18)}
+    .calendar-cell.selected{border-color:#7c87ff;box-shadow:0 0 0 3px rgba(79,70,229,.08)}
+    .calendar-day{font-size:13px;font-weight:800}
+    .calendar-dots{display:flex;flex-direction:column;gap:4px}
+    .calendar-detail{
+      margin-top:14px;padding:14px;border-radius:16px;background:#fff;border:1px solid var(--line);
+    }
+    .calendar-detail h6{margin:0 0 10px;font-size:14px}
+
+    .calendar-dow.sun,
+    .calendar-day.sun{
+      color:#dc2626;
+    }
+    .calendar-dow.sat,
+    .calendar-day.sat{
+      color:#2563eb;
+    }
+    .calendar-day.holiday{
+      color:#dc2626;
+    }
+    .calendar-count{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:40px;
+      height:22px;
+      padding:0 8px;
+      border-radius:999px;
+      background:#eef2ff;
+      color:#4338ca;
+      font-size:11px;
+      font-weight:800;
+    }
+    .calendar-cell.has-events{
+      background:linear-gradient(180deg,#ffffff,#f7faff);
+    }
+    .calendar-cell.has-events:hover{
+      border-color:#a5b4fc;
+    }
+    .calendar-detail-nateon{
+      font-size:13px;
+      line-height:1.7;
+      white-space:pre-line;
+      color:#334155;
+    }
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,23,42,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      padding:24px;
+    }
+    .modal-backdrop.show{
+      display:flex;
+    }
+    .modal-card{
+      width:min(1180px, 100%);
+      max-height:88vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:28px;
+      border:1px solid var(--line);
+      box-shadow:0 30px 70px rgba(15,23,42,.22);
+      padding:22px;
+    }
+    .modal-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .modal-head h4{
+      margin:0;
+      font-size:24px;
+    }
+    .modal-head p{
+      margin:8px 0 0;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.7;
+    }
+    .modal-close{
+      height:42px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background:#fff;
+      padding:0 14px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .modal-layout{
+      display:grid;
+      grid-template-columns:1.05fr .9fr;
+      gap:14px;
+      align-items:start;
+    }
+
+    .modal-left-panel,
+    .modal-right-panel{
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:#f8fbff;
+      padding:14px;
+    }
+
+    .modal-group{
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:#f8fbff;
+      padding:14px;
+      margin-bottom:14px;
+    }
+    .modal-group:last-child{
+      margin-bottom:0;
+    }
+    .modal-group-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:12px;
+    }
+    .modal-group-title strong{
+      font-size:16px;
+    }
+    .modal-entry{
+      border:1px solid #e5edf7;
+      border-radius:16px;
+      background:#fff;
+      padding:12px;
+      margin-bottom:10px;
+    }
+    .modal-entry:last-child{
+      margin-bottom:0;
+    }
+    .modal-entry-status{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    .modal-entry-status select,
+    .modal-entry-status input{
+      width:100%;
+      min-height:42px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:13px;
+      outline:none;
+      background:#fff;
+    }
+    .modal-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .manual-editor-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .manual-editor-title h5{
+      margin:0;
+      font-size:17px;
+    }
+    .manual-editor-title span{
+      color:var(--muted);
+      font-size:12px;
+    }
+    .manual-editor-help{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.7;
+      margin-bottom:10px;
+    }
+    .manual-editor-text{
+      width:100%;
+      min-height:405px;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#fff;
+      padding:14px;
+      font-size:13px;
+      resize:vertical;
+      line-height:1.7;
+      white-space:pre-line;
+    }
+    .manual-editor-bottom{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      margin-top:12px;
+      flex-wrap:wrap;
+    }
+
+    @media (max-width:1320px){
+      .summary-grid{grid-template-columns:repeat(2,1fr)}
+      .split-grid{grid-template-columns:1fr}
+    }
+    @media (max-width:1180px){
+      .login-page{grid-template-columns:1fr}
+      .dashboard{grid-template-columns:1fr}
+      .menu{max-height:none}
+      .modal-layout{grid-template-columns:1fr}
+    }
+    @media (max-width:760px){
+      body{padding:12px}
+      .left-card,.login-card,.sidebar,.topbar,.content-card{border-radius:24px}
+      .left-card,.login-card{min-height:auto}
+      .hero h2{font-size:36px}
+      .brand h1{font-size:25px}
+      .form-grid,.summary-grid{grid-template-columns:1fr}
+      .topbar h3{font-size:25px}
+      .split-grid{grid-template-columns:1fr}
+      .modal-entry-status{grid-template-columns:1fr}
+    }
+    .edu-pass{
+      display:inline-flex;align-items:center;height:28px;padding:0 10px;
+      border-radius:999px;font-size:12px;font-weight:800;
+      background:#dcfce7;color:#059669;border:1px solid #86efac;white-space:nowrap;
+    }
+    .edu-fail{
+      display:inline-flex;align-items:center;height:28px;padding:0 10px;
+      border-radius:999px;font-size:12px;font-weight:800;
+      background:#fff1f2;color:#e11d48;border:1px solid #fecdd3;white-space:nowrap;
+    }
+    .edu-cat-row{
+      display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;
+    }
+    .edu-cat-btn{
+      height:40px;border-radius:12px;border:1px solid var(--line);
+      background:#fff;color:#22314a;padding:0 14px;font-size:13px;font-weight:800;cursor:pointer;
+    }
+    .edu-cat-btn.active{
+      background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;border-color:transparent;
+    }
+    .edu-org-tag{
+      height:40px;border-radius:12px;border:1px solid #fed7aa;
+      background:#fff7ed;color:#92400e;padding:0 14px;font-size:12px;font-weight:700;
+      display:inline-flex;align-items:center;white-space:nowrap;
+    }
+    .lead-status-row{
+      display:flex;align-items:center;gap:10px;padding:6px 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <section class="login-page" id="loginPage">
+    <div class="left-card">
+      <div>
+        <div class="brand">
+          <div class="logo-wrap"><div class="logo">L</div></div>
+          <div>
+            <h1>LUWON CRM</h1>
+            <p>루원지점 TM 운영 전산 시스템</p>
+          </div>
+        </div>
+
+        <div class="hero">
+          <div class="date-time">
+            <div class="chip" id="todayText">날짜</div>
+            <div class="chip" id="clockText">시간</div>
+          </div>
+
+          <h2>깔끔하고 빠르게 쓰는<br>루원 전산 시스템</h2>
+
+          <p>
+            직원이 복잡하지 않게 바로 적응할 수 있도록,
+            로그인부터 공지, 일정, 실적, 직원관리, 교육섭외 DB, 진행률까지
+            한 흐름으로 사용할 수 있게 정리한 루원 CRM 화면입니다.
+          </p>
+        </div>
+      </div>
+
+      <div class="notice-card">
+        <h3>최근 공지</h3>
+        <div class="notice-item">
+          <div>
+            <b>3월 운영 공지</b>
+            <span>출근 후 일정 등록 누락 없이 진행해주세요.</span>
+          </div>
+          <div class="pill">오늘</div>
+        </div>
+        <div class="notice-item">
+          <div>
+            <b>실적 입력 기준 안내</b>
+            <span>월 마감 전 누락된 계약 건은 반드시 다시 확인해주세요.</span>
+          </div>
+          <div class="pill">업데이트</div>
+        </div>
+        <div class="notice-item">
+          <div>
+            <b>모바일 접속 안내</b>
+            <span>휴대폰에서도 동일한 주소로 로그인 가능합니다.</span>
+          </div>
+          <div class="pill">안내</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-card">
+      <div class="login-head">
+        <div>
+          <h2>전산 로그인</h2>
+          <p>사번과 비밀번호를 입력해 루원 CRM 전산에 로그인하세요.</p>
+        </div>
+        <div class="secure">보안 로그인</div>
+      </div>
+
+      <div class="field">
+        <label for="staffId">사번</label>
+        <div class="input-wrap">
+          <span class="icon">👤</span>
+          <input class="input" id="staffId" placeholder="사번을 입력하세요">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password">비밀번호</label>
+        <div class="input-wrap">
+          <span class="icon">🔒</span>
+          <input class="input" id="password" type="password" placeholder="비밀번호를 입력하세요">
+        </div>
+      </div>
+
+      <div class="sub-row">
+        <span>LUWON CRM 직원 전용</span>
+        <span>도메인: luwon.pro</span>
+      </div>
+
+      <button class="login-btn" onclick="login()">로그인</button>
+      <div class="msg" id="msg"></div>
+
+      <div class="guide">
+        <b>테스트 계정</b>
+        관리자: 0408 / 0408<br>
+        직원: 1218 / 1218
+      </div>
+    </div>
+  </section>
+
+  <section class="dashboard" id="dashboard">
+    <aside class="sidebar">
+      <div class="side-brand">
+        <div class="logo-wrap"><div class="logo">L</div></div>
+        <div>
+          <strong>LUWON CRM</strong>
+          <span>TM 운영 전산</span>
+        </div>
+      </div>
+
+      <div class="profile">
+        <div class="name" id="profileName">김성우님</div>
+        <div class="desc" id="profileDesc">루원지점 전산에 로그인되었습니다.</div>
+        <div class="chips">
+          <span class="chip" id="roleChip">관리자</span>
+          <span class="chip" id="modeChip">관리자 모드</span>
+          <span class="chip" id="empChip">사번 1379</span>
+        </div>
+      </div>
+
+      <div class="menu" id="menuBox"></div>
+      <button class="logout" onclick="logout()">로그아웃</button>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h3 id="pageTitle">홈</h3>
+          <p id="pageDesc">루원 CRM 전산 기본 화면입니다.</p>
+        </div>
+
+        <div class="top-actions">
+          <div class="mode-toggle hidden" id="modeToggle">
+            <button class="mode-btn active" id="staffModeBtn" onclick="switchMode('staff')">직원 모드</button>
+            <button class="mode-btn" id="adminModeBtn" onclick="switchMode('admin')">관리자 모드</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-card">
+
+        <div class="view" id="view-home">
+          <div class="section-head">
+            <div>
+              <h4 id="homeSectionTitle">직원 홈</h4>
+              <p id="homeSectionDesc">본인 기준 정보만 확인할 수 있어.</p>
+            </div>
+            <button class="small-btn" id="homeSummaryBtn" onclick="runHomeSummary()">조회</button>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="k" id="homeCardLabel1">내 오늘 등록 일정</div>
+              <div class="v" id="homeValue1">0</div>
+              <div class="s" id="homeCardDesc1">내가 오늘 등록한 일정 수</div>
+            </div>
+            <div class="summary-card">
+              <div class="k" id="homeCardLabel2">내 오늘 콜량</div>
+              <div class="v" id="homeValue2">0</div>
+              <div class="s" id="homeCardDesc2">교육섭외 DB 등록 건수</div>
+            </div>
+            <div class="summary-card">
+              <div class="k" id="homeCardLabel3">내 익일 일정</div>
+              <div class="v" id="homeValue3">0</div>
+              <div class="s" id="homeCardDesc3">내일 나가는 일정 수</div>
+            </div>
+            <div class="summary-card">
+              <div class="k" id="homeCardLabel4">내 이번달 등록 일정</div>
+              <div class="v" id="homeValue4">0</div>
+              <div class="s" id="homeCardDesc4">이번달 등록 누적</div>
+            </div>
+          </div>
+
+          <div class="split-grid">
+            <div class="panel">
+              <h5>최근 공지</h5>
+              <p>관리자는 수정/삭제 가능하고 직원은 읽기 전용이야.</p>
+              <div class="home-notice-list" id="homeNoticeList"></div>
+            </div>
+
+            <div class="panel">
+              <div class="calendar-head">
+                <div class="calendar-title" id="calendarTitle">2026년 3월</div>
+                <div class="calendar-nav">
+                  <button type="button" id="calendarPrevBtn" onclick="moveCalendar(-1)">저번달(2월)</button>
+                  <button type="button" onclick="goTodayCalendar()">오늘</button>
+                  <button type="button" id="calendarNextBtn" onclick="moveCalendar(1)">다음달(4월)</button>
+                </div>
+              </div>
+
+              <div class="calendar-grid" id="calendarGrid"></div>
+
+              <div class="calendar-detail" id="calendarDetail">
+                <h6>선택한 날짜 일정</h6>
+                <div class="empty">날짜를 선택하면 일정이 보여.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="view hidden" id="view-notice">
+          <div class="section-head">
+            <div>
+              <h4>공지사항</h4>
+              <p>관리자는 공지 등록/수정/삭제 가능, 직원은 읽기만 가능.</p>
+            </div>
+          </div>
+
+          <div id="noticeFormBox" class="hidden">
+            <div class="form-grid">
+              <input id="noticeTitle" placeholder="공지 제목">
+              <input id="noticeTag" placeholder="태그 예: 오늘 / 안내 / 업데이트">
+              <textarea id="noticeBody" class="full" placeholder="공지 내용을 입력하세요"></textarea>
+            </div>
+
+            <div class="toolbar">
+              <button class="small-btn" onclick="saveNotice()">공지 저장</button>
+              <button class="ghost-btn" type="button" onclick="resetNoticeForm()">초기화</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>제목</th>
+                  <th>내용</th>
+                  <th>태그</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="noticeTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="view hidden" id="view-schedule">
+          <div class="section-head">
+            <div>
+              <h4 id="scheduleTitle">일정등록</h4>
+              <p id="scheduleDesc">갑섭외 일정 입력, 풀 양식 복사, 네이트온 간단 양식 복사를 할 수 있어.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <input id="scheduleAssignee" placeholder="섭외자" readonly>
+            <input id="scheduleDate" type="date">
+
+            <input id="scheduleTime" placeholder="시간 예: 1000 / 1700 / 09:30">
+            <input id="scheduleCompany" placeholder="업체">
+
+            <input id="scheduleManager" placeholder="키맨">
+            <input id="schedulePhone" placeholder="번호">
+
+            <input id="scheduleAddress" class="full" placeholder="주소">
+            <input id="schedulePeople" placeholder="인원">
+
+            <input id="scheduleGap" placeholder="갑사">
+            <input id="scheduleBank" placeholder="은행">
+
+            <textarea id="scheduleMemo" class="full" placeholder="특이사항"></textarea>
+            <textarea id="scheduleNateonPreview" class="full" readonly placeholder="네이트온 양식"></textarea>
+          </div>
+
+          <div class="toolbar">
+            <button class="small-btn" onclick="addSchedule()">일정 추가</button>
+            <button class="ghost-btn" type="button" onclick="copyNateonPreview()">네이트온 양식 복사</button>
+          </div>
+
+          <div class="table-wrap" style="margin-top:16px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>섭외자</th>
+                  <th>날짜</th>
+                  <th>시간</th>
+                  <th>업체</th>
+                  <th>키맨</th>
+                  <th>번호</th>
+                  <th>인원</th>
+                  <th>갑사</th>
+                  <th>특이사항</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="scheduleTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="view hidden" id="view-aggregate">
+          <div class="section-head">
+            <div>
+              <h4 id="aggregateTitle">익일취합</h4>
+              <p id="aggregateDesc">선택한 날짜의 다음날 일정을 취합해서 보여줘.</p>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <input id="aggDate" type="date">
+            <select id="aggScope">
+              <option value="mine">내 일정 기준</option>
+              <option value="all">전체 일정 기준</option>
+            </select>
+            <button class="small-btn" onclick="loadAggregate()">조회</button>
+          </div>
+
+          <div class="stack-list" id="aggregateSummary"></div>
+
+          <div class="table-wrap" style="margin-top:16px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>섭외자</th>
+                  <th>익일 날짜</th>
+                  <th>간단 내용</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="aggregateTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="view hidden" id="view-performance-save">
+          <div class="section-head">
+            <div>
+              <h4 id="perfSaveTitle">실적저장</h4>
+              <p id="perfSaveDesc">직원모드에서는 직원명 자동 고정, 관리자모드에서는 직원 선택 가능.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <select id="perfSaveStaffSelect" class="hidden"></select>
+            <input id="perfSaveStaff" placeholder="직원명" readonly>
+
+            <select id="perfSaveType" onchange="onPerformanceTypeChange()">
+              <option value="상조">상조</option>
+              <option value="건식">건식</option>
+              <option value="보험">보험</option>
+            </select>
+
+            <input id="perfSaveValue" placeholder="구좌">
+            <textarea id="perfSaveMemo" class="full" placeholder="메모"></textarea>
+          </div>
+
+          <div class="toolbar">
+            <button class="small-btn" onclick="addPerformance()">실적 저장</button>
+          </div>
+
+          <div class="notice-inline">
+            <span class="status-badge">상조 입력칸 예시: 구좌</span>
+            <span class="status-badge">건식 입력칸 예시: 박스</span>
+            <span class="status-badge">보험 입력칸 예시: 금액(원)</span>
+          </div>
+        </div>
+
+        <div class="view hidden" id="view-performance-report">
+          <div class="section-head">
+            <div>
+              <h4 id="performanceTitle">실적조회</h4>
+              <p id="performanceDesc">직원은 본인 실적, 관리자는 전체 실적 중심으로 조회 가능.</p>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <input id="perfReportStart" type="date">
+            <input id="perfReportEnd" type="date">
+            <select id="perfReportScope">
+              <option value="mine">내 실적</option>
+              <option value="all">전체 실적</option>
+            </select>
+            <button class="small-btn" onclick="renderPerformances()">조회</button>
+          </div>
+
+          <div class="summary-grid" style="margin-top:6px;">
+            <div class="summary-card">
+              <div class="k">조회 건수</div>
+              <div class="v" id="perfReportCount">0</div>
+              <div class="s">조건 기준 실적 건수</div>
+            </div>
+            <div class="summary-card">
+              <div class="k">총 금액</div>
+              <div class="v" id="perfReportAmount">0</div>
+              <div class="s">조회 조건 합계</div>
+            </div>
+            <div class="summary-card">
+              <div class="k">총 수익</div>
+              <div class="v" id="perfReportTake">0</div>
+              <div class="s">직원 수익 합계</div>
+            </div>
+            <div class="summary-card">
+              <div class="k">상품 종류 수</div>
+              <div class="v" id="perfReportKinds">0</div>
+              <div class="s">조회 상품 종류</div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>날짜</th>
+                  <th>직원명</th>
+                  <th>상품항목</th>
+                  <th>건수/금액</th>
+                  <th>수익</th>
+                  <th>메모</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody id="performanceTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="view hidden" id="view-progress">
+          <div class="section-head">
+            <div>
+              <h4 id="progressTitle">진행률</h4>
+              <p id="progressDesc">당월 / 선택일 진행률을 보여줘.</p>
+            </div>
+          </div>
+
+          <div class="tab-row">
+            <button class="tab-btn active" id="progressTabMonth" onclick="setProgressTab('month')">당월</button>
+            <button class="tab-btn" id="progressTabDay" onclick="setProgressTab('day')">선택일</button>
+          </div>
+
+          <div class="toolbar">
+            <input id="progressDate" type="date">
+            <button class="small-btn" onclick="loadProgress()">진행률 조회</button>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="k">등록 일정 수</div>
+              <div class="v" id="progressCount">0</div>
+              <div class="s">현재 탭 기준 일정 수</div>
+            </div>
+            <div class="summary-card">
+              <div class="k">콜량</div>
+              <div class="v" id="progressCalls">0</div>
+              <div class="s">교육섭외 DB 기준</div>
+            </div>
+            <div class="summary-card">
+              <div class="k">실적 건수</div>
+              <div class="v" id="progressPerf">0</div>
+              <div class="s">현재 조건 기준 실적 수</div>
+            </div>
+            <div class="summary-card">
+              <div class="k">진행률</div>
+              <div class="v" id="progressRate">0%</div>
+              <div class="s">테스트용 계산값</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="view hidden" id="view-staff">
+          <div class="section-head">
+            <div>
+              <h4>직원관리</h4>
+              <p>관리자만 접근 가능.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <input id="staffName" placeholder="직원명">
+            <input id="staffNo" placeholder="사번">
+            <select id="staffRole">
+              <option value="staff">직원</option>
+              <option value="admin">관리자</option>
+            </select>
+            <input id="staffBranch" placeholder="지점명">
+          </div>
+
+          <div class="toolbar">
+            <button class="small-btn" onclick="addStaff()">직원 추가</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>이름</th>
+                  <th>사번</th>
+                  <th>권한</th>
+                  <th>지점</th>
+                </tr>
+              </thead>
+              <tbody id="staffTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="view hidden" id="view-lead">
+          <div class="section-head">
+            <div>
+              <h4 id="leadTitle">교육섭외 DB</h4>
+              <p id="leadDesc">교육 사업장 데이터베이스를 관리하는 화면이야.</p>
+            </div>
+          </div>
+
+          <div class="edu-cat-row">
+            <button class="edu-cat-btn active" onclick="setLeadCat('lead',this)">📋 교육섭외 DB</button>
+            <button class="edu-cat-btn" onclick="setLeadCat('online',this)">🖥 온라인교육확인</button>
+            <span class="edu-org-tag">산업안전교육협회 &nbsp;·&nbsp; 한국나눔안전 &nbsp;·&nbsp; 대한안전교육협회</span>
+          </div>
+
+          <div class="form-grid">
+            <input id="leadStaff" placeholder="섭외자" readonly>
+            <input id="leadDate" type="date">
+            <input id="leadCompany" placeholder="업체 / 사업장">
+            <input id="leadAddress" placeholder="주소">
+            <input id="leadManager" placeholder="키맨 (담당자)">
+            <input id="leadPhone" placeholder="연락처" oninput="onLeadPhoneInput()">
+            <input id="leadPeople" placeholder="인원">
+            <input id="leadIndustry" placeholder="업종" oninput="onLeadIndustryInput()">
+            <div class="lead-status-row">
+              <span style="font-size:13px;color:#64748b;font-weight:700;">교육 이수 여부</span>
+              <span id="leadStatusPreview" style="display:none;"></span>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <button class="small-btn" onclick="addLead()">추가</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>사업장</th>
+                  <th>주소</th>
+                  <th>키맨(담당자)</th>
+                  <th>연락처</th>
+                  <th>인원</th>
+                  <th>업종</th>
+                  <th>교육 이수 확인 여부</th>
+                </tr>
+              </thead>
+              <tbody id="leadTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="view hidden" id="view-settings">
+          <div class="section-head">
+            <div>
+              <h4>관리자설정</h4>
+              <p>관리자 설정 화면이야.</p>
+            </div>
+          </div>
+
+          <div class="tab-row">
+            <button class="tab-btn active" id="settingsTabStaff" onclick="setSettingsTab('staff')">직원 / 사번</button>
+            <button class="tab-btn" id="settingsTabPay" onclick="setSettingsTab('pay')">단가 / 수익</button>
+            <button class="tab-btn" id="settingsTabSystem" onclick="setSettingsTab('system')">시스템</button>
+          </div>
+
+          <div id="settingsPaneStaff">
+            <div class="panel">
+              <h5>직원 / 사번 관리</h5>
+              <p>실제 연동 시 _settings 시트와 연결하면 돼.</p>
+            </div>
+          </div>
+
+          <div id="settingsPanePay" class="hidden">
+            <div class="panel">
+              <h5>단가 / 수익 설정</h5>
+              <p>상조, 건식, 보험 기준값을 나중에 연결하면 돼.</p>
+            </div>
+          </div>
+
+          <div id="settingsPaneSystem" class="hidden">
+            <div class="panel">
+              <h5>시스템 관리</h5>
+              <p>초기화, 로그 확인 등을 나중에 연결하면 돼.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </section>
+
+  <div class="modal-backdrop" id="calendarModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h4 id="calendarModalTitle">일정 상세</h4>
+          <p id="calendarModalDesc">선택한 날짜의 일정을 시간순/섭외자별로 볼 수 있어.</p>
+        </div>
+        <button class="modal-close" type="button" onclick="closeCalendarModal()">닫기</button>
+      </div>
+
+      <div class="modal-layout">
+        <div class="modal-left-panel">
+          <div id="calendarModalBody"></div>
+        </div>
+
+        <div class="modal-right-panel">
+          <div class="manual-editor-title">
+            <h5 id="manualEditorTitle">수기 일정 등록</h5>
+            <span id="manualEditorDateLabel">선택 날짜 기준 저장</span>
+          </div>
+
+          <div class="manual-editor-help">
+            아래 칸에 갑섭외 텍스트를 그대로 붙여넣고 저장하면,
+            현재 더블클릭한 날짜에 일정으로 등록돼.<br>
+            수정 버튼을 누르면 기존 일정 내용이 여기로 들어와서 수정 후 다시 저장할 수 있어.
+          </div>
+
+          <textarea id="manualScheduleText" class="manual-editor-text" placeholder="예시
+섭외자 :
+날짜 :
+시간 :
+업체 :
+주소 :
+키맨 :
+번호 :
+인원 :
+갑사:
+은행 :
+특이사항 : "></textarea>
+
+          <div class="manual-editor-bottom">
+            <button class="ghost-btn" type="button" onclick="resetManualScheduleEditor()">초기화</button>
+            <button class="small-btn" type="button" onclick="saveManualScheduleFromModal()">수기일정 저장</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const HOLIDAYS_2026 = new Set([
+      "2026-01-01",
+      "2026-02-16",
+      "2026-02-17",
+      "2026-02-18",
+      "2026-03-02",
+      "2026-05-05",
+      "2026-05-25",
+      "2026-06-03",
+      "2026-08-17",
+      "2026-09-24",
+      "2026-09-25",
+      "2026-09-26",
+      "2026-10-05",
+      "2026-10-09",
+      "2026-12-25"
+    ]);
+
+    const state = {
+      currentUser: null,
+      currentMode: "staff",
+      currentView: "home",
+      progressTab: "month",
+      settingsTab: "staff",
+      editingNoticeId: null,
+      calendarYear: new Date().getFullYear(),
+      calendarMonth: new Date().getMonth(),
+      selectedCalendarDate: null,
+      modalDate: null,
+      manualEditId: null
+    };
+
+    const authUsers = [
+      { staffNo:"0408", password:"0408", name:"김성우", role:"admin", branch:"루원지점" },
+      { staffNo:"1218", password:"1218", name:"이상혁", role:"staff", branch:"루원지점" }
+    ];
+
+    let notices = [
+      { id:1, title:"3월 운영 공지", body:"출근 후 일정 등록 누락 없이 진행해주세요.", tag:"오늘" },
+      { id:2, title:"실적 입력 기준 안내", body:"월 마감 전 누락된 계약 건은 반드시 다시 확인해주세요.", tag:"업데이트" },
+      { id:3, title:"모바일 접속 안내", body:"휴대폰에서도 동일한 주소로 로그인 가능합니다.", tag:"안내" }
+    ];
+
+    let staffs = [
+      { name:"김성우", no:"1379", role:"admin", branch:"루원지점" },
+      { name:"이상혁", no:"1218", role:"staff", branch:"루원지점" }
+    ];
+
+    let schedules = [
+      { id:101, assignee:"김성우", date:"2026-03-11", time:"14:00", company:"예시상조", manager:"홍길동", phone:"01011112222", address:"인천 서구 청마로 66-7", people:"2명", gap:"갑사A", bank:"국민", memo:"재상담", createdBy:"김성우", createdByNo:"1379", createdAt:"2026-03-10", progressStatus:"", progressEtc:"" },
+      { id:102, assignee:"이상혁", date:"2026-03-11", time:"16:00", company:"루원케어", manager:"김민수", phone:"01033334444", address:"서울 서초구 방배로 123 4층", people:"3명", gap:"갑사B", bank:"신한", memo:"상담 예정", createdBy:"이상혁", createdByNo:"1218", createdAt:"2026-03-10", progressStatus:"", progressEtc:"" }
+    ];
+
+    let performances = [
+      { id:201, staff:"김성우", type:"상조", value:"3", amount:300000, take:210000, memo:"관리자 입력", date:"2026-03-10", createdByNo:"1379" },
+      { id:202, staff:"이상혁", type:"건식", value:"2", amount:80000, take:60000, memo:"직원 입력", date:"2026-03-10", createdByNo:"1218" }
+    ];
+
+    let leads = [
+      { id:301, company:"예시사업장A", address:"인천 서구 청마로 66-7", manager:"홍길동", phone:"01011112222", people:"5명", industry:"음식점", status:"교육 미이수", ownerNo:"1379", ownerName:"김성우", createdAt:"2026-03-10" },
+      { id:302, company:"루원케어", address:"서울 서초구 방배로 123", manager:"김민수", phone:"01033334444", people:"3명", industry:"상조", status:"교육 이수", ownerNo:"1218", ownerName:"이상혁", createdAt:"2026-03-10" }
+    ];
+
+    function $(id){ return document.getElementById(id); }
+
+    function todayStr() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+    }
+
+    function tomorrowStr(baseDateStr) {
+      const now = baseDateStr ? new Date(baseDateStr + "T00:00:00") : new Date();
+      now.setDate(now.getDate() + 1);
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+    }
+
+    function monthPrefix() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+    }
+
+    function renderClock(){
+      const now = new Date();
+      $("todayText").textContent = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일`;
+      $("clockText").textContent = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
+    }
+    setInterval(renderClock, 1000);
+    renderClock();
+
+    function showMsg(text, type){
+      const msg = $("msg");
+      msg.className = "msg show " + type;
+      msg.textContent = text;
+    }
+
+    function clearMsg(){
+      const msg = $("msg");
+      msg.className = "msg";
+      msg.textContent = "";
+    }
+
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function money(n){ return Number(n || 0).toLocaleString(); }
+    function normalizeText(v){ return String(v || "").trim(); }
+    function normalizePhone(v){ return String(v || "").replace(/\D/g, ""); }
+
+    function formatPhone(v){
+      const d = normalizePhone(v);
+      if (!d) return "";
+      if (d.length === 11) return `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`;
+      if (d.length === 10 && d.startsWith("02")) return `${d.slice(0,2)}-${d.slice(2,6)}-${d.slice(6)}`;
+      if (d.length === 10) return `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
+      if (d.length === 9 && d.startsWith("02")) return `${d.slice(0,2)}-${d.slice(2,5)}-${d.slice(5)}`;
+      return String(v || "").trim();
+    }
+
+    function normalizeManualTime(v){
+      const raw = String(v || "").trim();
+      if (!raw) return "";
+      if (/^\d{1,2}:\d{2}$/.test(raw)) {
+        const [hh, mm] = raw.split(":");
+        return `${String(Math.min(23, Number(hh))).padStart(2,"0")}:${String(Math.min(59, Number(mm))).padStart(2,"0")}`;
+      }
+      const digits = raw.replace(/\D/g, "");
+      if (digits.length === 3) return `${String(Number(digits.slice(0,1))).padStart(2,"0")}:${digits.slice(1)}`;
+      if (digits.length === 4) return `${digits.slice(0,2)}:${digits.slice(2)}`;
+      return raw;
+    }
+
+    function shortDateMMDD(dateStr){
+      if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr || "";
+      return `${dateStr.slice(5,7)}-${dateStr.slice(8,10)}`;
+    }
+
+    function simplifyAddress(address){
+      const src = normalizeText(address);
+      if (!src) return "";
+      return src.split(/\s+/).filter(Boolean).slice(0,3).join(" ");
+    }
+
+    function isTomorrowDate(dateStr){
+      return dateStr === tomorrowStr();
+    }
+
+    function safeCopy(text){
+      if (!text) return alert("복사할 내용이 없어.");
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => alert("복사 완료")).catch(() => fallbackCopy(text));
+        return;
+      }
+      fallbackCopy(text);
+    }
+
+    function fallbackCopy(text){
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try { document.execCommand("copy"); alert("복사 완료"); } catch(e){ alert("복사 실패"); }
+      document.body.removeChild(ta);
+    }
+
+    function login(){
+      const staffNo = $("staffId").value.trim();
+      const password = $("password").value.trim();
+
+      if(!staffNo) return showMsg("사번을 입력해줘.", "error");
+      if(!password) return showMsg("비밀번호를 입력해줘.", "error");
+
+      const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+      if(!user) return showMsg("사번 또는 비밀번호가 틀렸습니다.", "error");
+
+      state.currentUser = user;
+      state.currentMode = user.role === "admin" ? "admin" : "staff";
+      clearMsg();
+
+      $("loginPage").style.display = "none";
+      $("dashboard").style.display = "grid";
+
+      hydrateUserUI();
+      renderAll();
+      setView("home");
+    }
+
+    function logout(){
+      state.currentUser = null;
+      state.currentMode = "staff";
+      state.currentView = "home";
+      $("dashboard").style.display = "none";
+      $("loginPage").style.display = "grid";
+      $("staffId").value = "";
+      $("password").value = "";
+      clearMsg();
+    }
+
+    function hydrateUserUI(){
+      const user = state.currentUser;
+      if(!user) return;
+
+      $("profileName").textContent = `${user.name}님`;
+      $("profileDesc").textContent = user.role === "admin"
+        ? "관리와 실무를 함께 사용할 수 있는 계정입니다."
+        : "본인 정보만 확인 가능한 직원 계정입니다.";
+
+      $("roleChip").textContent = user.role === "admin" ? "관리자" : "직원";
+      $("modeChip").textContent = state.currentMode === "admin" ? "관리자 모드" : "직원 모드";
+      $("empChip").textContent = `사번 ${user.staffNo}`;
+
+      $("modeToggle").classList.toggle("hidden", user.role !== "admin");
+      $("staffModeBtn").classList.toggle("active", state.currentMode === "staff");
+      $("adminModeBtn").classList.toggle("active", state.currentMode === "admin");
+
+      renderMenu();
+      applyRoleUI();
+    }
+
+    function switchMode(mode){
+      if(!state.currentUser || state.currentUser.role !== "admin") return;
+      state.currentMode = mode;
+      hydrateUserUI();
+      setView("home");
+    }
+
+    function isAdminMode(){
+      return state.currentUser && state.currentUser.role === "admin" && state.currentMode === "admin";
+    }
+
+    function currentStaffNo(){ return state.currentUser ? state.currentUser.staffNo : ""; }
+    function currentStaffName(){ return state.currentUser ? state.currentUser.name : ""; }
+
+    function renderMenu(){
+      const box = $("menuBox");
+      const isAdmin = isAdminMode();
+
+      const menus = isAdmin ? [
+        ["home","🏠","홈"],
+        ["notice","📢","공지사항"],
+        ["schedule","🗓","일정등록"],
+        ["aggregate","📌","익일취합"],
+        ["performance-save","💾","실적저장"],
+        ["performance-report","📊","실적조회"],
+        ["progress","📈","진행률"],
+        ["staff","👥","직원관리"],
+        ["lead","🗂","교육섭외 DB"],
+        ["settings","⚙️","관리자설정"]
+      ] : [
+        ["home","🏠","홈"],
+        ["notice","📢","공지사항"],
+        ["schedule","🗓","일정등록"],
+        ["aggregate","📌","익일취합"],
+        ["performance-save","💾","실적저장"],
+        ["performance-report","📊","실적조회"],
+        ["lead","🗂","교육섭외 DB"]
+      ];
+
+      box.innerHTML = menus.map(m => `<div class="menu-item ${state.currentView===m[0] ? "active" : ""}" data-view="${m[0]}">${m[1]} ${m[2]}</div>`).join("");
+
+      box.querySelectorAll(".menu-item").forEach(item => {
+        item.addEventListener("click", () => setView(item.dataset.view));
+      });
+    }
+
+    function applyRoleUI(){
+      const admin = isAdminMode();
+
+      $("noticeFormBox").classList.toggle("hidden", !admin);
+
+      $("scheduleAssignee").value = currentStaffName();
+
+      $("perfSaveStaff").value = currentStaffName();
+      $("perfSaveStaffSelect").classList.toggle("hidden", !admin);
+      $("perfSaveStaff").classList.toggle("hidden", admin);
+
+      if (admin) {
+        $("perfSaveStaffSelect").innerHTML = staffs.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join("");
+        $("perfSaveStaffSelect").value = currentStaffName();
+      }
+
+      $("perfReportScope").querySelector('option[value="all"]').disabled = !admin;
+      if(!admin) $("perfReportScope").value = "mine";
+
+      $("aggScope").querySelector('option[value="all"]').disabled = !admin;
+      if(!admin) $("aggScope").value = "mine";
+
+      if($("leadStaff")) $("leadStaff").value = currentStaffName();
+      if($("leadDate")) $("leadDate").value = todayStr();
+      onPerformanceTypeChange();
+    }
+
+    function setView(view){
+      if(view === "staff" && !isAdminMode()) return;
+      if(view === "settings" && !isAdminMode()) return;
+      if(view === "progress" && !isAdminMode()) return;
+
+      state.currentView = view;
+      renderMenu();
+
+      document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
+      const target = $("view-" + view);
+      if(target) target.classList.remove("hidden");
+
+      const titles = {
+        home:["홈", isAdminMode() ? "관리자 홈 화면입니다." : "직원 홈 화면입니다."],
+        notice:["공지사항","공지 등록과 확인 화면이야."],
+        schedule:["일정등록","갑섭외 입력 구조를 포함한 일정등록 화면이야."],
+        aggregate:["익일취합","선택한 날짜의 다음날 일정을 취합하는 화면이야."],
+        "performance-save":["실적저장","실적 입력 화면이야."],
+        "performance-report":["실적조회","실적 조회 화면이야."],
+        progress:["진행률","당월 / 선택일 진행률 화면이야."],
+        staff:["직원관리","직원 정보를 관리하는 화면이야."],
+        lead:["교육섭외 DB","교육 사업장 데이터베이스 화면이야."],
+        settings:["관리자설정","관리자용 설정 화면이야."]
+      };
+
+      $("pageTitle").textContent = titles[view][0];
+      $("pageDesc").textContent = titles[view][1];
+
+      applyRoleUI();
+      renderAll();
+    }
+
+    function runHomeSummary(){
+      if(isAdminMode()) runAdminSummary();
+      else runMySummary();
+    }
+
+    function runAdminSummary(){
+      const today = todayStr();
+      const tomorrow = tomorrowStr();
+      const month = monthPrefix();
+
+      $("homeValue1").textContent = schedules.filter(s => s.createdAt === today).length;
+      $("homeValue2").textContent = leads.length;
+      $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
+      $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month)).length;
+    }
+
+    function runMySummary(){
+      const today = todayStr();
+      const tomorrow = tomorrowStr();
+      const month = monthPrefix();
+      const no = currentStaffNo();
+
+      $("homeValue1").textContent = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
+      $("homeValue2").textContent = leads.filter(l => l.ownerNo === no).length;
+      $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
+      $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month) && s.createdByNo === no).length;
+    }
+
+    function getVisibleSchedules(){
+      return isAdminMode() ? schedules.slice() : schedules.filter(s => s.createdByNo === currentStaffNo());
+    }
+
+    function getVisiblePerformances(){
+      return isAdminMode() ? performances.slice() : performances.filter(p => p.createdByNo === currentStaffNo() || p.staff === currentStaffName());
+    }
+
+    function getVisibleLeads(){
+      return isAdminMode() ? leads : leads.filter(l => l.ownerNo === currentStaffNo());
+    }
+
+    function renderNotices(){
+      const body = $("noticeTableBody");
+      const home = $("homeNoticeList");
+      body.innerHTML = "";
+      home.innerHTML = "";
+
+      if(notices.length === 0){
+        body.innerHTML = `<tr><td colspan="4"><div class="empty">등록된 공지가 없어.</div></td></tr>`;
+        home.innerHTML = `<div class="empty">등록된 공지가 없어.</div>`;
+        return;
+      }
+
+      notices.forEach(n => {
+        body.innerHTML += `
+          <tr>
+            <td>${escapeHtml(n.title)}</td>
+            <td>${escapeHtml(n.body)}</td>
+            <td>${escapeHtml(n.tag)}</td>
+            <td>
+              ${isAdminMode() ? `
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button class="ghost-btn" type="button" onclick="editNotice(${n.id})">수정</button>
+                  <button class="danger-btn" type="button" onclick="deleteNotice(${n.id})">삭제</button>
+                </div>
+              ` : "-"}
+            </td>
+          </tr>
+        `;
+
+        home.innerHTML += `
+          <div class="home-notice">
+            <b>${escapeHtml(n.title)}</b>
+            <span>${escapeHtml(n.body)} · ${escapeHtml(n.tag)}</span>
+          </div>
+        `;
+      });
+    }
+
+    function saveNotice(){
+      if(!isAdminMode()) return;
+
+      const title = $("noticeTitle").value.trim();
+      const tag = $("noticeTag").value.trim() || "공지";
+      const body = $("noticeBody").value.trim();
+
+      if(!title || !body) return alert("공지 제목과 내용을 입력해줘.");
+
+      if(state.editingNoticeId){
+        const n = notices.find(x => x.id === state.editingNoticeId);
+        if(n){
+          n.title = title;
+          n.tag = tag;
+          n.body = body;
+        }
+      }else{
+        notices.unshift({ id: Date.now(), title, tag, body });
+      }
+
+      resetNoticeForm();
+      renderNotices();
+      alert("공지 저장 완료");
+    }
+
+    function editNotice(id){
+      const n = notices.find(x => x.id === id);
+      if(!n) return;
+      state.editingNoticeId = id;
+      $("noticeTitle").value = n.title;
+      $("noticeTag").value = n.tag;
+      $("noticeBody").value = n.body;
+    }
+
+    function deleteNotice(id){
+      const ok = confirm("이 공지를 삭제할까?");
+      if(!ok) return;
+      notices = notices.filter(x => x.id !== id);
+      if(state.editingNoticeId === id) resetNoticeForm();
+      renderNotices();
+    }
+
+    function resetNoticeForm(){
+      state.editingNoticeId = null;
+      $("noticeTitle").value = "";
+      $("noticeTag").value = "";
+      $("noticeBody").value = "";
+    }
+
+    function buildFullCopyText(row){
+      return [
+        `섭외자 : ${row.assignee || ""}`,
+        `날짜 : ${row.date || ""}`,
+        `시간 : ${row.time || ""}`,
+        `업체 : ${row.company || ""}`,
+        `주소 : ${row.address || ""}`,
+        `키맨 : ${row.manager || ""}`,
+        `번호 : ${formatPhone(row.phone || "")}`,
+        `인원 : ${row.people || ""}`,
+        `갑사: ${row.gap || ""}`,
+        `은행 : ${row.bank || ""}`,
+        `특이사항 : ${row.memo || ""}`
+      ].join("\n");
+    }
+
+    function buildNateonPreviewText(payload){
+      const assigneeFinal = payload.assignee ? `${payload.assignee}${isTomorrowDate(payload.date) ? "(익일)" : ""}` : "";
+      return [
+        normalizeText(payload.company),
+        normalizeText(payload.people),
+        shortDateMMDD(payload.date),
+        normalizeManualTime(payload.time),
+        simplifyAddress(payload.address),
+        assigneeFinal
+      ].filter(Boolean).join("/");
+    }
+
+    function buildCalendarNateonLine(row){
+      return [
+        row.company || "",
+        row.people || "",
+        shortDateMMDD(row.date),
+        row.time || "",
+        simplifyAddress(row.address || ""),
+        row.assignee || ""
+      ].filter(Boolean).join("/");
+    }
+
+    function parseScheduleTextToMap(txt){
+      const map = {};
+      txt.split(/\n+/).forEach(line => {
+        const clean = line.trim();
+        if(!clean) return;
+        const idx = clean.indexOf(":");
+        if(idx < 0) return;
+        const key = clean.slice(0, idx).trim();
+        const value = clean.slice(idx + 1).trim();
+        map[key] = value;
+      });
+      return map;
+    }
+
+    function scheduleMapToText(row){
+      return buildFullCopyText(row);
+    }
+
+    function updateNateonPreview(){
+      $("scheduleNateonPreview").value = buildNateonPreviewText({
+        assignee: $("scheduleAssignee").value || currentStaffName(),
+        date: $("scheduleDate").value || "",
+        time: $("scheduleTime").value || "",
+        company: $("scheduleCompany").value || "",
+        address: $("scheduleAddress").value || "",
+        people: $("schedulePeople").value || ""
+      });
+    }
+
+    function bindSchedulePreviewEvents(){
+      ["scheduleDate","scheduleTime","scheduleCompany","scheduleAddress","schedulePeople"].forEach(id => {
+        $(id).addEventListener("input", updateNateonPreview);
+      });
+      $("scheduleTime").addEventListener("blur", () => {
+        $("scheduleTime").value = normalizeManualTime($("scheduleTime").value);
+        updateNateonPreview();
+      });
+    }
+
+    function addSchedule(){
+      if(!state.currentUser) return;
+
+      const assignee = currentStaffName();
+      const date = normalizeText($("scheduleDate").value);
+      const time = normalizeManualTime($("scheduleTime").value);
+      const company = normalizeText($("scheduleCompany").value);
+      const manager = normalizeText($("scheduleManager").value);
+      const phone = normalizePhone($("schedulePhone").value);
+      const address = normalizeText($("scheduleAddress").value);
+      const people = normalizeText($("schedulePeople").value);
+      const gap = normalizeText($("scheduleGap").value);
+      const bank = normalizeText($("scheduleBank").value);
+      const memo = normalizeText($("scheduleMemo").value);
+
+      if(!date) return alert("날짜는 꼭 입력해줘.");
+      if(!time) return alert("시간은 꼭 입력해줘.");
+      if(!company) return alert("업체는 꼭 입력해줘.");
+
+      schedules.unshift({
+        id: Date.now(),
+        assignee, date, time, company, manager, phone, address, people, gap, bank, memo,
+        createdBy: currentStaffName(),
+        createdByNo: currentStaffNo(),
+        createdAt: todayStr(),
+        progressStatus:"",
+        progressEtc:""
+      });
+
+      renderSchedules();
+      loadAggregate();
+      renderCalendar();
+      runHomeSummary();
+
+      safeCopy(buildFullCopyText(schedules[0]));
+
+      ["scheduleDate","scheduleTime","scheduleCompany","scheduleManager","schedulePhone","scheduleAddress","schedulePeople","scheduleGap","scheduleBank","scheduleMemo"].forEach(id => { $(id).value = ""; });
+      $("scheduleDate").value = tomorrowStr();
+      $("scheduleAssignee").value = currentStaffName();
+      updateNateonPreview();
+    }
+
+    function copyNateonPreview(){
+      const value = $("scheduleNateonPreview").value.trim();
+      if(!value) return alert("복사할 네이트온 양식이 없어.");
+      safeCopy(value);
+    }
+
+    function renderSchedules(){
+      const body = $("scheduleTableBody");
+      const rows = getVisibleSchedules().sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`, "ko"));
+      body.innerHTML = "";
+
+      if(!rows.length){
+        body.innerHTML = `<tr><td colspan="10"><div class="empty">등록된 일정이 없어.</div></td></tr>`;
+        return;
+      }
+
+      rows.forEach(row => {
+        body.innerHTML += `
+          <tr>
+            <td>${escapeHtml(row.assignee)}</td>
+            <td>${escapeHtml(row.date)}</td>
+            <td>${escapeHtml(row.time)}</td>
+            <td>${escapeHtml(row.company)}</td>
+            <td>${escapeHtml(row.manager)}</td>
+            <td>${escapeHtml(formatPhone(row.phone))}</td>
+            <td>${escapeHtml(row.people)}</td>
+            <td>${escapeHtml(row.gap)}</td>
+            <td>${escapeHtml(row.memo)}</td>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button class="ghost-btn" type="button" onclick="copyScheduleFullText(${row.id})">복사</button>
+                <button class="danger-btn" type="button" onclick="deleteScheduleById(${row.id})">삭제</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function copyScheduleFullText(id){
+      const row = schedules.find(x => x.id === id);
+      if(!row) return alert("일정을 찾을 수 없어.");
+      safeCopy(buildFullCopyText(row));
+    }
+
+    function deleteScheduleById(id){
+      const ok = confirm("이 일정을 삭제할까?");
+      if(!ok) return;
+      schedules = schedules.filter(x => x.id !== id);
+      renderSchedules();
+      loadAggregate();
+      renderCalendar();
+      runHomeSummary();
+    }
+
+    function groupByAssignee(rows){
+      return rows.reduce((acc, row) => {
+        if(!acc[row.assignee]) acc[row.assignee] = [];
+        acc[row.assignee].push(row);
+        return acc;
+      }, {});
+    }
+
+    function loadAggregate(){
+      const baseDate = $("aggDate").value || todayStr();
+      const nextDate = tomorrowStr(baseDate);
+      const scope = $("aggScope").value || "mine";
+      const summaryEl = $("aggregateSummary");
+      const body = $("aggregateTableBody");
+
+      const rows = schedules.filter(row => {
+        if(row.date !== nextDate) return false;
+        if(scope === "all" && isAdminMode()) return true;
+        return row.createdByNo === currentStaffNo();
+      }).sort((a,b) => `${a.assignee} ${a.time}`.localeCompare(`${b.assignee} ${b.time}`, "ko"));
+
+      summaryEl.innerHTML = "";
+      body.innerHTML = "";
+
+      if(!rows.length){
+        summaryEl.innerHTML = `<div class="empty">${escapeHtml(baseDate)} 기준 익일(${escapeHtml(nextDate)}) 일정이 없어.</div>`;
+        body.innerHTML = `<tr><td colspan="4"><div class="empty">조회된 일정이 없어.</div></td></tr>`;
+        return;
+      }
+
+      const grouped = groupByAssignee(rows);
+      const names = Object.keys(grouped);
+
+      summaryEl.innerHTML = `
+        <div class="stack-item">
+          <b>${escapeHtml(baseDate)} 기준 익일취합</b>
+          <span>익일 날짜: ${escapeHtml(nextDate)} · 총 ${rows.length}건 · 섭외자 ${names.length}명</span>
+        </div>
+      `;
+
+      body.innerHTML = names.map(name => {
+        const list = grouped[name];
+        const simple = list.map(row => `${row.time} / ${row.company} / ${row.manager || "-"} / ${formatPhone(row.phone) || "-"}`).join("<br>");
+        return `
+          <tr>
+            <td>${escapeHtml(name)}</td>
+            <td>${escapeHtml(nextDate)}</td>
+            <td>${simple}</td>
+            <td><button class="small-btn" type="button" onclick='copyAggregateGroup(${JSON.stringify(name)}, ${JSON.stringify(nextDate)})'>복사</button></td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function copyAggregateGroup(assignee, nextDate){
+      const rows = schedules.filter(row => row.assignee === assignee && row.date === nextDate);
+      if(!rows.length) return alert("복사할 일정이 없어.");
+      safeCopy(rows.map(buildFullCopyText).join("\n\n"));
+    }
+
+    function performanceUnit(type){
+      if(type === "상조") return "구좌";
+      if(type === "건식") return "박스";
+      return "금액(원)";
+    }
+
+    function onPerformanceTypeChange(){
+      const type = $("perfSaveType").value;
+      $("perfSaveValue").value = "";
+      $("perfSaveValue").placeholder = performanceUnit(type);
+
+      if(type === "보험"){
+        $("perfSaveValue").oninput = function(){
+          const cleaned = String(this.value || "").replace(/[^\d]/g, "");
+          this.value = cleaned ? Number(cleaned).toLocaleString() : "";
+        };
+      }else{
+        $("perfSaveValue").oninput = null;
+      }
+    }
+
+    function addPerformance(){
+      if(!state.currentUser) return;
+
+      const type = $("perfSaveType").value;
+      let rawValue = $("perfSaveValue").value.trim();
+      const memo = $("perfSaveMemo").value.trim();
+      const staffName = isAdminMode() ? $("perfSaveStaffSelect").value : currentStaffName();
+
+      if(type === "보험"){
+        rawValue = rawValue.replace(/[^\d]/g, "");
+        if(!rawValue) return alert("보험 금액을 입력해줘.");
+        $("perfSaveValue").value = Number(rawValue).toLocaleString();
+      }else{
+        if(!rawValue) return alert("값을 입력해줘.");
+      }
+
+      const amount = type === "보험" ? Number(rawValue) : 0;
+      const take = type === "상조" ? Number(rawValue) * 70000
+                 : type === "건식" ? Number(rawValue) * 30000
+                 : Math.round(amount * 0.7);
+
+      performances.unshift({
+        id: Date.now(),
+        staff: staffName,
+        type,
+        value: type === "보험" ? money(amount) : rawValue,
+        amount,
+        take,
+        memo,
+        date: todayStr(),
+        createdByNo: currentStaffNo()
+      });
+
+      $("perfSaveValue").value = "";
+      $("perfSaveMemo").value = "";
+
+      renderPerformances();
+      loadProgress();
+      alert("실적 저장 완료");
+    }
+
+    function renderPerformances(){
+      const body = $("performanceTableBody");
+      const start = $("perfReportStart").value;
+      const end = $("perfReportEnd").value;
+      const scope = $("perfReportScope").value;
+
+      const rows = performances.filter(p => {
+        if(scope !== "all" || !isAdminMode()){
+          if(!(p.createdByNo === currentStaffNo() || p.staff === currentStaffName())) return false;
+        }
+        if(start && p.date < start) return false;
+        if(end && p.date > end) return false;
+        return true;
+      });
+
+      body.innerHTML = "";
+
+      if(!rows.length){
+        body.innerHTML = `<tr><td colspan="7"><div class="empty">조회된 실적이 없어.</div></td></tr>`;
+      } else {
+        rows.forEach(p => {
+          const editable = isAdminMode();
+          body.innerHTML += `
+            <tr>
+              <td>${escapeHtml(p.date)}</td>
+              <td>${editable ? `<input id="perf-staff-${p.id}" value="${escapeHtml(p.staff)}">` : escapeHtml(p.staff)}</td>
+              <td>${editable ? `
+                <select id="perf-type-${p.id}">
+                  <option value="상조" ${p.type==="상조"?"selected":""}>상조</option>
+                  <option value="건식" ${p.type==="건식"?"selected":""}>건식</option>
+                  <option value="보험" ${p.type==="보험"?"selected":""}>보험</option>
+                </select>
+              ` : escapeHtml(p.type)}</td>
+              <td>${editable ? `<input id="perf-value-${p.id}" value="${escapeHtml(p.value)}">` : escapeHtml(p.value)}</td>
+              <td>${money(p.take)}</td>
+              <td>${editable ? `<input id="perf-memo-${p.id}" value="${escapeHtml(p.memo)}">` : escapeHtml(p.memo)}</td>
+              <td>
+                ${editable ? `
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="small-btn" type="button" onclick="savePerformanceRow(${p.id})">저장</button>
+                    <button class="danger-btn" type="button" onclick="deletePerformanceRow(${p.id})">삭제</button>
+                  </div>
+                ` : "-"}
+              </td>
+            </tr>
+          `;
+        });
+      }
+
+      $("perfReportCount").textContent = rows.length;
+      $("perfReportAmount").textContent = money(rows.reduce((s,r)=>s+Number(r.amount||0),0));
+      $("perfReportTake").textContent = money(rows.reduce((s,r)=>s+Number(r.take||0),0));
+      $("perfReportKinds").textContent = new Set(rows.map(r=>r.type)).size;
+    }
+
+    function savePerformanceRow(id){
+      const row = performances.find(x => x.id === id);
+      if(!row) return;
+      row.staff = $(`perf-staff-${id}`).value.trim();
+      row.type = $(`perf-type-${id}`).value;
+      row.value = $(`perf-value-${id}`).value.trim();
+      row.memo = $(`perf-memo-${id}`).value.trim();
+
+      if(row.type === "보험"){
+        const amt = Number(String(row.value).replace(/[^\d]/g,""));
+        row.amount = amt;
+        row.value = amt ? amt.toLocaleString() : "";
+        row.take = Math.round(amt * 0.7);
+      }else{
+        row.amount = 0;
+        row.take = row.type === "상조" ? Number(row.value || 0) * 70000 : Number(row.value || 0) * 30000;
+      }
+
+      renderPerformances();
+      alert("실적 수정 저장 완료");
+    }
+
+    function deletePerformanceRow(id){
+      const ok = confirm("이 실적을 삭제할까?");
+      if(!ok) return;
+      performances = performances.filter(x => x.id !== id);
+      renderPerformances();
+    }
+
+    function setProgressTab(tab){
+      state.progressTab = tab;
+      $("progressTabMonth").classList.toggle("active", tab === "month");
+      $("progressTabDay").classList.toggle("active", tab === "day");
+      loadProgress();
+    }
+
+    function loadProgress(){
+      const tab = state.progressTab;
+      const selectedDate = $("progressDate").value || todayStr();
+
+      const scheduleRows = getVisibleSchedules().filter(s => {
+        if(tab === "month") return String(s.createdAt || "").startsWith(monthPrefix());
+        return s.createdAt === selectedDate || s.date === selectedDate;
+      });
+
+      const perfRows = getVisiblePerformances().filter(p => {
+        if(tab === "month") return String(p.date || "").startsWith(monthPrefix());
+        return p.date === selectedDate;
+      });
+
+      const leadRows = getVisibleLeads().filter(l => {
+        if(tab === "month") return String(l.createdAt || "").startsWith(monthPrefix()) && normalizeText(l.company || "");
+        return l.createdAt === selectedDate && normalizeText(l.company || "");
+      });
+
+      const scheduleCount = scheduleRows.length;
+      const calls = leadRows.length;
+      const perfCount = perfRows.length;
+      const rate = scheduleCount ? Math.min(100, Math.round((perfCount / scheduleCount) * 100)) : 0;
+
+      $("progressCount").textContent = scheduleCount;
+      $("progressCalls").textContent = calls;
+      $("progressPerf").textContent = perfCount;
+      $("progressRate").textContent = `${rate}%`;
+    }
+
+    function renderStaffs(){
+      const body = $("staffTableBody");
+      body.innerHTML = "";
+
+      if(!isAdminMode()){
+        body.innerHTML = `<tr><td colspan="4"><div class="empty">직원관리는 관리자 모드에서만 볼 수 있어.</div></td></tr>`;
+        return;
+      }
+
+      if(staffs.length === 0){
+        body.innerHTML = `<tr><td colspan="4"><div class="empty">등록된 직원이 없어.</div></td></tr>`;
+        return;
+      }
+
+      staffs.forEach(s => {
+        body.innerHTML += `
+          <tr>
+            <td>${escapeHtml(s.name)}</td>
+            <td>${escapeHtml(s.no)}</td>
+            <td>${escapeHtml(s.role === "admin" ? "관리자" : "직원")}</td>
+            <td>${escapeHtml(s.branch)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function addStaff(){
+      if(!isAdminMode()) return alert("직원관리는 관리자 모드에서만 가능해.");
+
+      const name = $("staffName").value.trim();
+      const no = $("staffNo").value.trim();
+      const role = $("staffRole").value;
+      const branch = $("staffBranch").value.trim() || "루원지점";
+
+      if(!name || !no) return alert("직원명과 사번은 꼭 입력해줘.");
+
+      staffs.unshift({ name, no, role, branch });
+      $("staffName").value = "";
+      $("staffNo").value = "";
+      $("staffBranch").value = "";
+      renderStaffs();
+      applyRoleUI();
+      alert("직원 추가 완료");
+    }
+
+    function renderLeads(){
+      const body = $("leadTableBody");
+      const rows = getVisibleLeads();
+      body.innerHTML = "";
+
+      if(!rows.length){
+        body.innerHTML = `<tr><td colspan="7"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
+        return;
+      }
+
+      rows.forEach(l => {
+        const sc = l.status === "교육 이수" ? "edu-pass" : l.status === "교육 미이수" ? "edu-fail" : "";
+        body.innerHTML += `
+          <tr>
+            <td>${escapeHtml(l.company || "")}</td>
+            <td>${escapeHtml(l.address || "")}</td>
+            <td>${escapeHtml(l.manager || "")}</td>
+            <td>${escapeHtml(formatPhone(l.phone))}</td>
+            <td>${escapeHtml(l.people || "")}</td>
+            <td>${escapeHtml(l.industry || "")}</td>
+            <td>${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function addLead(){
+      if(!state.currentUser) return;
+
+      const company  = $("leadCompany").value.trim();
+      const address  = $("leadAddress").value.trim();
+      const manager  = $("leadManager").value.trim();
+      const phone    = normalizePhone($("leadPhone").value.trim());
+      const people   = $("leadPeople").value.trim();
+      const industry = $("leadIndustry").value.trim();
+      const status   = checkEducationStatus(industry);
+
+      if(!company) return alert("업체/사업장명은 꼭 입력해줘.");
+
+      leads.unshift({
+        id: Date.now(),
+        company, address, manager, phone, people, industry, status,
+        ownerNo: currentStaffNo(),
+        ownerName: currentStaffName(),
+        createdAt: todayStr()
+      });
+
+      $("leadCompany").value = "";
+      $("leadAddress").value = "";
+      $("leadManager").value = "";
+      $("leadPhone").value = "";
+      $("leadPeople").value = "";
+      $("leadIndustry").value = "";
+      const prev = $("leadStatusPreview");
+      if(prev) prev.style.display = "none";
+
+      renderLeads();
+      runHomeSummary();
+      loadProgress();
+      alert("교육섭외 DB 추가 완료");
+    }
+
+    function checkEducationStatus(industry){
+      const v = normalizeText(industry);
+      if(!v) return "";
+      const FAIL = [
+        "주유소","충전소","음식점","정비소","공업사",
+        "과일","청과","마트","재래시장",
+        "카페","pc방",
+        "에셋","신탁","대부","금융","보험",
+        "농협","수협",
+        "학교","법률","언론사","요양소","폐기물","인력사무소"
+      ];
+      const lower = v.toLowerCase();
+      for(const kw of FAIL){
+        if(lower.includes(kw.toLowerCase())) return "교육 미이수";
+      }
+      return "교육 이수";
+    }
+
+    function onLeadIndustryInput(){
+      const industry = $("leadIndustry").value.trim();
+      const prev = $("leadStatusPreview");
+      if(!prev) return;
+      if(!industry){ prev.style.display = "none"; return; }
+      const s = checkEducationStatus(industry);
+      prev.textContent = s;
+      prev.className = s === "교육 이수" ? "edu-pass" : "edu-fail";
+      prev.style.display = "";
+    }
+
+    function onLeadPhoneInput(){
+      const el = $("leadPhone");
+      const raw = normalizePhone(el.value);
+      if(raw.length === 11) el.value = `${raw.slice(0,3)}-${raw.slice(3,7)}-${raw.slice(7)}`;
+    }
+
+    function setLeadCat(cat, el){
+      document.querySelectorAll(".edu-cat-btn").forEach(b => b.classList.remove("active"));
+      if(el) el.classList.add("active");
+    }
+
+    function isHolidayDate(dateStr){
+      return HOLIDAYS_2026.has(dateStr);
+    }
+
+    function getMonthLabel(year, monthIndex){
+      return `${year}년 ${monthIndex + 1}월`;
+    }
+
+    function getPrevMonthLabel(year, monthIndex){
+      const d = new Date(year, monthIndex - 1, 1);
+      return `${d.getMonth() + 1}월`;
+    }
+
+    function getNextMonthLabel(year, monthIndex){
+      const d = new Date(year, monthIndex + 1, 1);
+      return `${d.getMonth() + 1}월`;
+    }
+
+    function getCalendarSchedulesForDate(dateStr){
+      return getVisibleSchedules()
+        .filter(s => s.date === dateStr)
+        .sort((a,b) => `${a.time} ${a.assignee}`.localeCompare(`${b.time} ${b.assignee}`, "ko"));
+    }
+
+    function renderCalendar(){
+      const grid = $("calendarGrid");
+      const detail = $("calendarDetail");
+      const year = state.calendarYear;
+      const month = state.calendarMonth;
+      const today = todayStr();
+
+      $("calendarTitle").textContent = getMonthLabel(year, month);
+      $("calendarPrevBtn").textContent = `저번달(${getPrevMonthLabel(year, month)})`;
+      $("calendarNextBtn").textContent = `다음달(${getNextMonthLabel(year, month)})`;
+
+      const first = new Date(year, month, 1);
+      const startDay = first.getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+      const prevLast = new Date(year, month, 0).getDate();
+
+      let cells = [];
+      const dows = ["일","월","화","수","목","금","토"];
+
+      dows.forEach((d, idx) => {
+        cells.push(`<div class="calendar-dow ${idx===0 ? "sun" : idx===6 ? "sat" : ""}">${d}</div>`);
+      });
+
+      for(let i=0;i<startDay;i++){
+        const day = prevLast - startDay + i + 1;
+        cells.push(`<div class="calendar-cell other"><div class="calendar-day">${day}</div></div>`);
+      }
+
+      for(let d=1; d<=lastDate; d++){
+        const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        const events = getCalendarSchedulesForDate(dateStr);
+        const isToday = dateStr === today;
+        const isSelected = state.selectedCalendarDate === dateStr;
+        const dow = new Date(dateStr + "T00:00:00").getDay();
+        const isSun = dow === 0;
+        const isSat = dow === 6;
+        const holiday = isHolidayDate(dateStr);
+
+        cells.push(`
+          <div class="calendar-cell ${isToday ? "today" : ""} ${isSelected ? "selected" : ""} ${events.length ? "has-events" : ""}"
+               onclick="selectCalendarDate('${dateStr}')"
+               ondblclick="openCalendarModal('${dateStr}')">
+            <div class="calendar-day ${holiday || isSun ? "holiday" : ""} ${isSat ? "sat" : ""}">
+              ${d}
+            </div>
+            <div class="calendar-dots">
+              ${events.length ? `<div class="calendar-count">${events.length}건</div>` : ""}
+            </div>
+          </div>
+        `);
+      }
+
+      const remain = 42 - (startDay + lastDate);
+      for(let i=1;i<=remain;i++){
+        cells.push(`<div class="calendar-cell other"><div class="calendar-day">${i}</div></div>`);
+      }
+
+      grid.innerHTML = cells.join("");
+
+      const selected = state.selectedCalendarDate || today;
+      const dayEvents = getCalendarSchedulesForDate(selected);
+
+      detail.innerHTML = `
+        <h6>${selected} 일정</h6>
+        ${
+          dayEvents.length
+            ? `<div class="calendar-detail-nateon">${dayEvents.map(buildCalendarNateonLine).join("\n")}</div>`
+            : `<div class="empty">선택한 날짜 일정이 없어.</div>`
+        }
+      `;
+    }
+
+    function moveCalendar(delta){
+      state.calendarMonth += delta;
+      if(state.calendarMonth < 0){ state.calendarMonth = 11; state.calendarYear -= 1; }
+      if(state.calendarMonth > 11){ state.calendarMonth = 0; state.calendarYear += 1; }
+      renderCalendar();
+    }
+
+    function goTodayCalendar(){
+      const now = new Date();
+      state.calendarYear = now.getFullYear();
+      state.calendarMonth = now.getMonth();
+      state.selectedCalendarDate = todayStr();
+      renderCalendar();
+    }
+
+    function selectCalendarDate(dateStr){
+      state.selectedCalendarDate = dateStr;
+      renderCalendar();
+    }
+
+    function getStatusOptions(selected){
+      const list = ["", "진행", "진불", "계약", "보류", "기타"];
+      return list.map(v => `<option value="${v}" ${v===selected ? "selected" : ""}>${v || "선택"}</option>`).join("");
+    }
+
+    function resetManualScheduleEditor(){
+      state.manualEditId = null;
+      $("manualScheduleText").value = "";
+      $("manualEditorTitle").textContent = "수기 일정 등록";
+    }
+
+    function loadManualEditorFromSchedule(id){
+      const row = schedules.find(x => x.id === id);
+      if(!row) return;
+      state.manualEditId = id;
+      $("manualEditorTitle").textContent = "수기 일정 수정";
+      $("manualScheduleText").value = scheduleMapToText(row);
+    }
+
+    function openCalendarModal(dateStr){
+      const rows = getCalendarSchedulesForDate(dateStr);
+      state.selectedCalendarDate = dateStr;
+      state.modalDate = dateStr;
+      renderCalendar();
+
+      $("calendarModalTitle").textContent = `${dateStr} 일정 상세`;
+      $("calendarModalDesc").textContent = isAdminMode()
+        ? "전직원 일정이 섭외자별로 정렬돼 있어."
+        : "내 일정이 시간순/상태별로 보이게 돼 있어.";
+      $("manualEditorDateLabel").textContent = `${dateStr} 날짜로 저장됨`;
+      resetManualScheduleEditor();
+
+      const body = $("calendarModalBody");
+
+      if(!rows.length){
+        body.innerHTML = `<div class="empty">해당 날짜 일정이 없어. 오른쪽 칸에서 수기로 등록하면 돼.</div>`;
+        $("calendarModal").classList.add("show");
+        return;
+      }
+
+      const grouped = groupByAssignee(rows);
+
+      body.innerHTML = Object.keys(grouped).map(name => {
+        const list = grouped[name];
+
+        return `
+          <div class="modal-group">
+            <div class="modal-group-title">
+              <strong>${escapeHtml(name)} (${list.length}건)</strong>
+              <button class="ghost-btn" type="button" onclick='copyCalendarGroupText(${JSON.stringify(name)}, ${JSON.stringify(dateStr)})'>전체 복사</button>
+            </div>
+
+            ${list.map(row => `
+              <div class="modal-entry">
+                <div style="font-weight:800;margin-bottom:8px;">${escapeHtml(row.time)} / ${escapeHtml(row.company)}</div>
+                <div style="white-space:pre-line;line-height:1.7;font-size:13px;color:#334155;">${escapeHtml(buildFullCopyText(row))}</div>
+
+                <div class="modal-entry-status">
+                  <select id="status-${row.id}" onchange="toggleEtcInput(${row.id})">
+                    ${getStatusOptions(row.progressStatus || "")}
+                  </select>
+                  <input id="etc-${row.id}" placeholder="기타 사유" value="${escapeHtml(row.progressEtc || "")}" ${row.progressStatus === "기타" ? "" : "disabled"}>
+                </div>
+
+                <div class="modal-actions">
+                  <button class="small-btn" type="button" onclick="saveCalendarEntry(${row.id})">저장</button>
+                  <button class="ghost-btn" type="button" onclick="copyScheduleFullText(${row.id})">복사</button>
+                  <button class="danger-btn" type="button" onclick="deleteScheduleById(${row.id}); reopenCalendarModalAfterDelete('${dateStr}')">삭제</button>
+                  <button class="ghost-btn" type="button" onclick="loadManualEditorFromSchedule(${row.id})">수정</button>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }).join("");
+
+      $("calendarModal").classList.add("show");
+    }
+
+    function closeCalendarModal(){
+      $("calendarModal").classList.remove("show");
+      state.modalDate = null;
+      state.manualEditId = null;
+    }
+
+    function reopenCalendarModalAfterDelete(dateStr){
+      setTimeout(() => {
+        openCalendarModal(dateStr);
+      }, 50);
+    }
+
+    function toggleEtcInput(id){
+      const status = $(`status-${id}`).value;
+      const etc = $(`etc-${id}`);
+      if(!etc) return;
+      etc.disabled = status !== "기타";
+      if(status !== "기타") etc.value = "";
+    }
+
+    function saveCalendarEntry(id){
+      const row = schedules.find(x => x.id === id);
+      if(!row) return;
+
+      row.progressStatus = $(`status-${id}`).value;
+      row.progressEtc = $(`etc-${id}`).value.trim();
+
+      renderSchedules();
+      renderCalendar();
+      loadAggregate();
+      alert("일정 저장 완료");
+    }
+
+    function copyCalendarGroupText(assignee, dateStr){
+      const rows = getCalendarSchedulesForDate(dateStr).filter(x => x.assignee === assignee);
+      if(!rows.length) return alert("복사할 일정이 없어.");
+      safeCopy(rows.map(buildFullCopyText).join("\n\n"));
+    }
+
+    function saveManualScheduleFromModal(){
+      const txt = $("manualScheduleText").value.trim();
+      if(!txt) return alert("수기 일정 내용을 입력해줘.");
+      if(!state.modalDate) return alert("선택된 날짜가 없어.");
+
+      const map = parseScheduleTextToMap(txt);
+      const time = normalizeManualTime(map["시간"] || "");
+      const company = normalizeText(map["업체"] || "");
+      if(!time || !company) return alert("시간과 업체는 꼭 있어야 해.");
+
+      const targetDate = state.modalDate;
+      const assignee = normalizeText(map["섭외자"] || currentStaffName());
+      const rowData = {
+        assignee,
+        date: targetDate,
+        time,
+        company,
+        address: normalizeText(map["주소"] || ""),
+        manager: normalizeText(map["키맨"] || ""),
+        phone: normalizePhone(map["번호"] || ""),
+        people: normalizeText(map["인원"] || ""),
+        gap: normalizeText(map["갑사"] || ""),
+        bank: normalizeText(map["은행"] || ""),
+        memo: normalizeText(map["특이사항"] || "")
+      };
+
+      if(state.manualEditId){
+        const row = schedules.find(x => x.id === state.manualEditId);
+        if(row){
+          row.assignee = rowData.assignee;
+          row.date = rowData.date;
+          row.time = rowData.time;
+          row.company = rowData.company;
+          row.address = rowData.address;
+          row.manager = rowData.manager;
+          row.phone = rowData.phone;
+          row.people = rowData.people;
+          row.gap = rowData.gap;
+          row.bank = rowData.bank;
+          row.memo = rowData.memo;
+        }
+      }else{
+        schedules.unshift({
+          id: Date.now(),
+          ...rowData,
+          createdBy: currentStaffName(),
+          createdByNo: currentStaffNo(),
+          createdAt: todayStr(),
+          progressStatus:"",
+          progressEtc:""
+        });
+      }
+
+      renderSchedules();
+      renderCalendar();
+      loadAggregate();
+      runHomeSummary();
+      openCalendarModal(targetDate);
+      alert(state.manualEditId ? "수기 일정 수정 완료" : "수기 일정 등록 완료");
+    }
+
+    function setSettingsTab(tab){
+      state.settingsTab = tab;
+      $("settingsTabStaff").classList.toggle("active", tab === "staff");
+      $("settingsTabPay").classList.toggle("active", tab === "pay");
+      $("settingsTabSystem").classList.toggle("active", tab === "system");
+
+      $("settingsPaneStaff").classList.toggle("hidden", tab !== "staff");
+      $("settingsPanePay").classList.toggle("hidden", tab !== "pay");
+      $("settingsPaneSystem").classList.toggle("hidden", tab !== "system");
+    }
+
+    function renderAll(){
+      renderNotices();
+      renderSchedules();
+      renderPerformances();
+      renderStaffs();
+      renderLeads();
+      loadAggregate();
+      loadProgress();
+      renderCalendar();
+      applyRoleUI();
+      if(state.currentUser) runHomeSummary();
+      updateNateonPreview();
+    }
+
+    $("staffId").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
+    $("password").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
+
+    renderNotices();
+    $("progressDate").value = todayStr();
+    $("perfReportStart").value = monthPrefix() + "-01";
+    $("perfReportEnd").value = todayStr();
+    $("aggDate").value = todayStr();
+    $("scheduleDate").value = tomorrowStr();
+    bindSchedulePreviewEvents();
+    updateNateonPreview();
+    onPerformanceTypeChange();
+
+    $("calendarModal").addEventListener("click", (e) => {
+      if(e.target.id === "calendarModal") closeCalendarModal();
+    });
+  </script>
+</body>
+</html>
