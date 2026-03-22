@@ -4143,22 +4143,31 @@
 
       const finalId = newId || au.staffNo;
       const finalPw = newPw || au.password;
+      const targetName = au.name; // 이름으로 연결
 
       if(newId && newId !== au.staffNo && authUsers.find(u => u.staffNo === newId))
         return alert("이미 사용 중인 아이디야.");
 
-      // staffs 동기화
-      const s = staffs.find(x => x.no === au.staffNo);
-      if(s) s.no = finalId;
+      // ① 같은 이름의 authUsers 전부 업데이트 (관리자+직원 동일 이름이면 둘 다)
+      authUsers.forEach(u => {
+        if(u.name === targetName){
+          const oldNo = u.staffNo;
+          u.staffNo  = finalId;
+          u.password = finalPw;
+          // paySettings 키 이동
+          if(oldNo !== finalId && paySettings[oldNo]){
+            paySettings[finalId] = paySettings[oldNo];
+            delete paySettings[oldNo];
+          }
+        }
+      });
 
-      // paySettings 키 이동
-      if(newId && newId !== au.staffNo && paySettings[au.staffNo]){
-        paySettings[finalId] = paySettings[au.staffNo];
-        delete paySettings[au.staffNo];
-      }
-
-      au.staffNo  = finalId;
-      au.password = finalPw;
+      // ② staffs에서 같은 이름 찾아 사번 동기화 (이름 기준 - 사번이 달라도 매칭)
+      staffs.forEach(s => {
+        if(s.name === targetName){
+          s.no = finalId;
+        }
+      });
 
       $("adminAcctCurPw").value = "";
       $("adminAcctNewId").value = "";
@@ -4166,7 +4175,8 @@
       renderSettingsStaff();
       renderStaffs();
       refreshLeadStaffDropdown();
-      alert(`✅ 계정이 변경됐어.\n아이디: ${finalId}`);
+      refreshPayStaffDropdown();
+      alert(`✅ [${targetName}] 계정이 변경됐어.\n사번(아이디): ${finalId}`);
     }
 
     // ══════════════════════════════════════════════════
