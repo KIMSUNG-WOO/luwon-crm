@@ -625,6 +625,10 @@
       background:#fff1f2;color:#e11d48;border:1px solid #fecdd3;cursor:pointer;
     }
     .tbl-del-btn:hover{ background:#ffe4e6; }
+    .addr-link{
+      color:#2563eb;text-decoration:none;font-size:inherit;
+    }
+    .addr-link:hover{ text-decoration:underline; }
     .edu-cat-row{
       display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center;
     }
@@ -1172,7 +1176,8 @@
                 <tr>
                   <th>사업장</th>
                   <th>주소</th>
-                  <th>키맨(담당자)</th>
+                  <th>키맨</th>
+                  <th>대표자명</th>
                   <th>연락처</th>
                   <th>인원</th>
                   <th>업종</th>
@@ -1236,7 +1241,8 @@
       <div class="form-grid" style="padding:20px 24px;">
         <input id="editLeadCompany" placeholder="업체 / 사업장">
         <input id="editLeadManager" placeholder="키맨 (담당자)">
-        <input id="editLeadPhone" placeholder="연락처" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        <input id="editLeadRepName" placeholder="대표자명">
+        <input id="editLeadPhone" placeholder="연락처">
         <input id="editLeadPeople" placeholder="인원">
         <input id="editLeadAge" placeholder="연령대 예: 40대">
         <input id="editLeadSubject" placeholder="교육과목">
@@ -2246,13 +2252,19 @@
       if(th) th.classList.toggle("hidden", !admin);
 
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="${admin ? 9 : 8}"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="${admin ? 10 : 9}"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
         return;
       }
 
       rows.forEach(l => {
         const sc = l.status === "교육 이수" ? "edu-pass" : l.status === "교육 미이수" ? "edu-fail" : "";
-        const phone = formatPhone(l.phone || "");
+        const phone = l.phone || "";
+
+        // 주소 → 네이버 지도 링크
+        const addrText = escapeHtml(l.address || "");
+        const addrCell = l.address
+          ? `<a href="https://map.naver.com/p/search/${encodeURIComponent(l.address)}" target="_blank" class="addr-link" title="네이버 지도에서 보기">${addrText} 🗺</a>`
+          : "";
 
         // 교육 이수 여부: 관리자는 클릭 토글, 직원은 텍스트만
         const statusCell = admin
@@ -2269,8 +2281,9 @@
         body.innerHTML += `
           <tr>
             <td>${escapeHtml(l.company || "")}</td>
-            <td>${escapeHtml(l.address || "")}</td>
+            <td>${addrCell}</td>
             <td>${escapeHtml(l.manager || "")}</td>
+            <td>${escapeHtml(l.repName || "")}</td>
             <td>${escapeHtml(phone)}</td>
             <td>${escapeHtml(l.people || "")}</td>
             <td>${escapeHtml(l.industry || "")}</td>
@@ -2338,12 +2351,13 @@
       _editLeadId = id;
       $("editLeadCompany").value  = l.company  || "";
       $("editLeadManager").value  = l.manager  || "";
-      $("editLeadPhone").value    = l.phone     || "";
-      $("editLeadPeople").value   = l.people    || "";
-      $("editLeadAge").value      = l.age       || "";
-      $("editLeadSubject").value  = l.subject   || "";
-      $("editLeadIndustry").value = l.industry  || "";
-      $("editLeadAddress").value  = l.address   || "";
+      $("editLeadRepName").value  = l.repName  || "";
+      $("editLeadPhone").value    = l.phone    || "";
+      $("editLeadPeople").value   = l.people   || "";
+      $("editLeadAge").value      = l.age      || "";
+      $("editLeadSubject").value  = l.subject  || "";
+      $("editLeadIndustry").value = l.industry || "";
+      $("editLeadAddress").value  = l.address  || "";
       $("leadEditModal").classList.remove("hidden");
     }
 
@@ -2359,7 +2373,8 @@
 
       l.company  = $("editLeadCompany").value.trim();
       l.manager  = $("editLeadManager").value.trim();
-      l.phone    = normalizePhone($("editLeadPhone").value.trim());
+      l.repName  = $("editLeadRepName").value.trim();
+      l.phone    = $("editLeadPhone").value.trim();
       l.people   = $("editLeadPeople").value.trim();
       l.age      = $("editLeadAge").value.trim();
       l.subject  = $("editLeadSubject").value.trim();
@@ -2375,6 +2390,7 @@
         const { error } = await sbClient.from("education_db").update({
           company:   l.company,
           manager:   l.manager,
+          rep_name:  l.repName,
           phone:     l.phone,
           people:    l.people,
           age_group: l.age,
@@ -2448,6 +2464,7 @@
             company:   row.company || "",
             address:   row.address || "",
             manager:   row.manager || "",
+            repName:   row.rep_name || "",
             phone:     row.phone || "",
             people:    row.people || "",
             age:       row.age_group || "",
@@ -2474,11 +2491,10 @@
           .from("education_db")
           .insert([{
             type:       row.type || "교육섭외",
-            date:       row.date || null,
-            time:       row.time || null,
             company:    row.company || "",
             address:    row.address || "",
             manager:    row.manager || "",
+            rep_name:   row.repName || "",
             phone:      row.phone || "",
             people:     row.people || "",
             age_group:  row.age || "",
@@ -2498,11 +2514,10 @@
       try{
         const inserts = rows.map(row => ({
           type:       row.type || "교육섭외",
-          date:       row.date || null,
-          time:       row.time || null,
           company:    row.company || "",
           address:    row.address || "",
           manager:    row.manager || "",
+          rep_name:   row.repName || "",
           phone:      row.phone || "",
           people:     row.people || "",
           age_group:  row.age || "",
@@ -2526,7 +2541,9 @@
       "사업장":"company","업체":"company","회사":"company","업체명":"company","사업장명":"company",
       "주소":"address","소재지":"address",
       "키맨":"manager","담당자":"manager","키맨(담당자)":"manager",
-      "연락처":"phone","번호":"phone","전화":"phone","전화번호":"phone",
+      "대표자명":"repName","대표자":"repName","대표":"repName",
+      "연락처":"phone","연락처1":"phone","연락처 1":"phone","번호":"phone","전화":"phone","전화번호":"phone",
+      "연락처2":"phone","연락처 2":"phone",   // 연락처2가 뒤에 있어서 덮어씀 (우선순위 높음)
       "인원":"people","인원수":"people",
       "연령대":"age","나이":"age",
       "교육과목":"subject","과목":"subject","교육명":"subject",
@@ -2559,10 +2576,11 @@
 
           if(!rows.length) return alert("엑셀에 데이터가 없어.");
 
-          let added = 0;
-          rows.forEach(row => {
+          // 엑셀 행을 순서대로 수집 (2행이 테이블 첫줄)
+          const newItems = [];
+          rows.forEach((row, idx) => {
             const item = {};
-            // 컬럼명 자동 매칭
+            // 컬럼명 자동 매칭 (연락처2가 연락처1을 덮어씀)
             Object.keys(row).forEach(col => {
               const key = EXCEL_COL_MAP[col.trim()] || null;
               if(key) item[key] = String(row[col] || "").trim();
@@ -2571,24 +2589,30 @@
             if(!item.company) return; // 사업장명 없으면 스킵
 
             // 자동 처리
-            item.phone    = normalizePhone(item.phone || "");
+            item.phone    = item.phone || "";  // 정규화 없이 원본 유지
             item.status   = checkEducationStatus(item.industry || "");
+            item.repName  = item.repName || "";
             item.ownerNo  = targetStaffNo;
             item.ownerName= targetStaffName;
             item.createdAt= todayStr();
-            item.id       = Date.now() + added;
+            item.id       = Date.now() + idx;
             item.type     = item.type || "교육섭외";
 
-            leads.unshift(item);
-            added++;
+            newItems.push(item);
           });
+
+          const added = newItems.length;
+          if(!added) return alert("유효한 데이터가 없어 (사업장명 필수).");
+
+          // 엑셀 2행이 테이블 맨 위 → 기존 데이터 위에 정방향으로 삽입
+          leads.unshift(...newItems);
 
           // 파일 입력 초기화
           input.value = "";
           renderLeads();
           runHomeSummary();
           loadProgress();
-          syncAfterUpload(leads.slice(0, added));
+          syncAfterUpload(newItems);
           alert(`✅ 엑셀 업로드 완료!\n${added}건 누적 추가됐어.`);
         } catch(err){
           alert("엑셀 파일을 읽는 중 오류가 발생했어.\n" + err.message);
