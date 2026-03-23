@@ -988,7 +988,7 @@
           <div class="section-head">
             <div>
               <h4 id="homeSectionTitle">직원 홈</h4>
-              <p id="homeSectionDesc">본인 기준 정보만 확인할 수 있어.</p>
+              <p id="homeSectionDesc">본인 기준 정보만 확인할 수 있습니다.</p>
             </div>
             <button class="small-btn" id="homeSummaryBtn" onclick="runHomeSummary()">조회</button>
           </div>
@@ -1019,7 +1019,7 @@
           <div class="split-grid">
             <div class="panel">
               <h5>최근 공지</h5>
-              <p>관리자는 수정/삭제 가능하고 직원은 읽기 전용이야.</p>
+              <p>관리자는 수정/삭제 가능하고 직원은 읽기 전용입니다.</p>
               <div class="home-notice-list" id="homeNoticeList"></div>
             </div>
 
@@ -1027,9 +1027,9 @@
               <div class="calendar-head">
                 <div class="calendar-title" id="calendarTitle">2026년 3월</div>
                 <div class="calendar-nav">
-                  <button type="button" id="calendarPrevBtn" onclick="moveCalendar(-1)">저번달(2월)</button>
-                  <button type="button" onclick="goTodayCalendar()">오늘</button>
-                  <button type="button" id="calendarNextBtn" onclick="moveCalendar(1)">다음달(4월)</button>
+                  <button type="button" id="calendarPrevBtn" onclick="moveCalendar(-1)">(2월)</button>
+                  <button type="button" onclick="goTodayCalendar()">(3월)</button>
+                  <button type="button" id="calendarNextBtn" onclick="moveCalendar(1)">(4월)</button>
                 </div>
               </div>
 
@@ -1037,7 +1037,7 @@
 
               <div class="calendar-detail" id="calendarDetail">
                 <h6>선택한 날짜 일정</h6>
-                <div class="empty">날짜를 선택하면 일정이 보여.</div>
+                <div class="empty">날짜를 선택하면 일정이 보입니다.</div>
               </div>
             </div>
           </div>
@@ -1083,7 +1083,7 @@
           <div class="section-head">
             <div>
               <h4 id="scheduleTitle">일정등록</h4>
-              <p id="scheduleDesc">교육섭외 일정 입력, 풀 양식 복사, 네이트온 간단 양식 복사를 할 수 있어.</p>
+              <p id="scheduleDesc">교육섭외 일정 입력, 풀 양식 복사, 네이트온 간단 양식 복사를 할 수 있습니다.</p>
             </div>
           </div>
 
@@ -1360,7 +1360,7 @@
           <div class="edu-cat-row">
             <button class="edu-cat-btn active" onclick="setLeadCat('lead',this)">📋 교육섭외 DB</button>
             <button class="edu-cat-btn" onclick="setLeadCat('online',this)">🖥 온라인교육확인</button>
-            <span class="edu-org-tag">산업안전교육협회 &nbsp;·&nbsp; 한국나눔안전 &nbsp;·&nbsp; 대한안전교육협회</span>
+            <span class="edu-org-tag">산업안전교육협회 &nbsp;·&nbsp; 한국나눔안전교육원 &nbsp;·&nbsp; 대한안전교육협회</span>
           </div>
 
           <div id="leadMsgBox" class="msg"></div>
@@ -1768,7 +1768,7 @@
       <div class="itin-popup-head">
         <div>
           <h4>강의 일정표</h4>
-          <p>이미지로 다운로드하거나 드래그로 복사할 수 있어.</p>
+          <p>이미지로 다운로드 하세요!.</p>
         </div>
         <button class="icon-btn" onclick="closeItineraryCard()">✕</button>
       </div>
@@ -1922,8 +1922,8 @@
 
           <div class="manual-editor-help">
             아래 칸에 갑섭외 텍스트를 그대로 붙여넣고 저장하면,
-            현재 더블클릭한 날짜에 일정으로 등록돼.<br>
-            수정 버튼을 누르면 기존 일정 내용이 여기로 들어와서 수정 후 다시 저장할 수 있어.
+            현재 더블클릭한 날짜에 일정으로 등록됩니다.<br>
+            수정 버튼을 누르면 기존 일정 내용이 여기로 들어와서 수정 후 다시 저장할 수 있습니다.
           </div>
 
           <textarea id="manualScheduleText" class="manual-editor-text" placeholder="예시
@@ -2346,16 +2346,16 @@
 
       const titles = {
         home:["홈", isAdminMode() ? "관리자 홈 화면입니다." : "직원 홈 화면입니다."],
-        notice:["공지사항","공지 등록과 확인 화면이야."],
-        schedule:["일정등록","갑섭외 입력 구조를 포함한 일정등록 화면이야."],
-        aggregate:["익일취합","선택한 날짜의 다음날 일정을 취합하는 화면이야."],
-        "performance-save":["실적저장","실적 입력 화면이야."],
-        "performance-report":["실적조회","실적 조회 화면이야."],
-        progress:["진행률","당월 / 선택일 진행률 화면이야."],
-        staff:["직원관리","직원 정보를 관리하는 화면이야."],
-        lead:["교육섭외 DB","교육 사업장 데이터베이스 화면이야."],
-        itinerary:["일정표 관리","등록된 교육섭외 일정표를 관리하는 화면이야."],
-        settings:["관리자설정","관리자용 설정 화면이야."]
+        notice:["공지사항","공지 등록과 확인 화면입니다."],
+        schedule:["일정등록","교육섭외 입력 구조를 포함한 일정등록 화면입니다."],
+        aggregate:["익일취합","선택한 날짜의 다음날 일정을 취합하는 화면입니다."],
+        "performance-save":["실적저장","실적 입력 화면입니다."],
+        "performance-report":["실적조회","실적 조회 화면입니다."],
+        progress:["진행률","당월 / 선택일 진행률 화면입니다."],
+        staff:["직원관리","직원 정보를 관리하는 화면입니다."],
+        lead:["교육섭외 DB","교육 사업장 데이터베이스 화면입니다."],
+        itinerary:["일정표 관리","등록된 교육섭외 일정표를 관리하는 화면입니다."],
+        settings:["관리자설정","관리자용 설정 화면입니다."]
       };
 
       $("pageTitle").textContent = titles[view][0];
@@ -2446,8 +2446,8 @@
       home.innerHTML = "";
 
       if(notices.length === 0){
-        body.innerHTML = `<tr><td colspan="4"><div class="empty">등록된 공지가 없어.</div></td></tr>`;
-        home.innerHTML = `<div class="empty">등록된 공지가 없어.</div>`;
+        body.innerHTML = `<tr><td colspan="4"><div class="empty">등록된 공지가 없습니다.</div></td></tr>`;
+        home.innerHTML = `<div class="empty">등록된 공지가 없습니다.</div>`;
         return;
       }
 
@@ -2484,7 +2484,7 @@
       const tag = $("noticeTag").value.trim() || "공지";
       const body = $("noticeBody").value.trim();
 
-      if(!title || !body) return alert("공지 제목과 내용을 입력해줘.");
+      if(!title || !body) return alert("공지 제목과 내용을 입력해주세요.");
 
       if(state.editingNoticeId){
         const n = notices.find(x => x.id === state.editingNoticeId);
@@ -2512,7 +2512,7 @@
     }
 
     function deleteNotice(id){
-      const ok = confirm("이 공지를 삭제할까?");
+      const ok = confirm("이 공지를 삭제할까요?");
       if(!ok) return;
       notices = notices.filter(x => x.id !== id);
       if(state.editingNoticeId === id) resetNoticeForm();
@@ -2622,9 +2622,9 @@
       const subject = normalizeText($("scheduleSubject").value);
       const memo    = normalizeText($("scheduleMemo").value);
 
-      if(!date) return alert("날짜는 꼭 입력해줘.");
-      if(!time) return alert("시간은 꼭 입력해줘.");
-      if(!company) return alert("업체는 꼭 입력해줘.");
+      if(!date) return alert("날짜는 꼭 입력해주세요.");
+      if(!time) return alert("시간은 꼭 입력해주세요.");
+      if(!company) return alert("업체는 꼭 입력해주세요.");
 
       const newSched = {
         id: Date.now(),
@@ -2657,7 +2657,7 @@
 
     function copyNateonPreview(){
       const value = $("scheduleNateonPreview").value.trim();
-      if(!value) return alert("복사할 네이트온 양식이 없어.");
+      if(!value) return alert("복사할 네이트온 양식이 없습니다.");
       safeCopy(value);
     }
 
@@ -2667,7 +2667,7 @@
       body.innerHTML = "";
 
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="12"><div class="empty">등록된 일정이 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="12"><div class="empty">등록된 일정이 없습니다.</div></td></tr>`;
         return;
       }
 
@@ -2698,12 +2698,12 @@
 
     function copyScheduleFullText(id){
       const row = schedules.find(x => x.id === id);
-      if(!row) return alert("일정을 찾을 수 없어.");
+      if(!row) return alert("일정을 찾을 수 없습니다.");
       safeCopy(buildFullCopyText(row));
     }
 
     function deleteScheduleById(id){
-      const ok = confirm("이 일정을 삭제할까?\n(연결된 일정표도 함께 삭제돼.)");
+      const ok = confirm("이 일정을 삭제할까요?\n(연결된 일정표도 함께 삭제됩니다.)");
       if(!ok) return;
       schedules   = schedules.filter(x => x.id !== id);
       // 일정표 관리에서도 연동 삭제 (scheduleId로 연결)
@@ -2740,8 +2740,8 @@
       body.innerHTML = "";
 
       if(!rows.length){
-        summaryEl.innerHTML = `<div class="empty">${escapeHtml(baseDate)} 기준 익일(${escapeHtml(nextDate)}) 일정이 없어.</div>`;
-        body.innerHTML = `<tr><td colspan="4"><div class="empty">조회된 일정이 없어.</div></td></tr>`;
+        summaryEl.innerHTML = `<div class="empty">${escapeHtml(baseDate)} 기준 익일(${escapeHtml(nextDate)}) 일정이 없습니다.</div>`;
+        body.innerHTML = `<tr><td colspan="4"><div class="empty">조회된 일정이 없습니다.</div></td></tr>`;
         return;
       }
 
@@ -2771,7 +2771,7 @@
 
     function copyAggregateGroup(assignee, nextDate){
       const rows = schedules.filter(row => row.assignee === assignee && row.date === nextDate);
-      if(!rows.length) return alert("복사할 일정이 없어.");
+      if(!rows.length) return alert("복사할 일정이 없습니다.");
       safeCopy(rows.map(buildFullCopyText).join("\n\n"));
     }
 
@@ -2806,10 +2806,10 @@
 
       if(type === "보험"){
         rawValue = rawValue.replace(/[^\d]/g, "");
-        if(!rawValue) return alert("보험 금액을 입력해줘.");
+        if(!rawValue) return alert("보험 금액을 입력해주세요.");
         $("perfSaveValue").value = Number(rawValue).toLocaleString();
       }else{
-        if(!rawValue) return alert("값을 입력해줘.");
+        if(!rawValue) return alert("값을 입력해주세요.");
       }
 
       const amount = type === "보험" ? Number(rawValue) : 0;
@@ -2989,7 +2989,7 @@
     }
 
     function deletePerformanceRow(id){
-      const ok = confirm("이 실적을 삭제할까?");
+      const ok = confirm("이 실적을 삭제할까요?");
       if(!ok) return;
       performances = performances.filter(x => x.id !== id);
       renderPerformances();
@@ -3037,12 +3037,12 @@
       body.innerHTML = "";
 
       if(!isAdminMode()){
-        body.innerHTML = `<tr><td colspan="5"><div class="empty">직원관리는 관리자 모드에서만 볼 수 있어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="5"><div class="empty">직원관리는 관리자 모드에서만 볼 수 있습니다.</div></td></tr>`;
         return;
       }
 
       if(staffs.length === 0){
-        body.innerHTML = `<tr><td colspan="5"><div class="empty">등록된 직원이 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="5"><div class="empty">등록된 직원이 없습니다.</div></td></tr>`;
         return;
       }
 
@@ -3071,14 +3071,14 @@
     }
 
     function addStaff(){
-      if(!isAdminMode()) return alert("직원관리는 관리자 모드에서만 가능해.");
+      if(!isAdminMode()) return alert("직원관리는 관리자 모드에서만 가능합니다.");
 
       const name = $("staffName").value.trim();
       const no = $("staffNo").value.trim();
       const role = $("staffRole").value;
       const branch = $("staffBranch").value.trim() || "루원지점";
 
-      if(!name || !no) return alert("직원명과 사번은 꼭 입력해줘.");
+      if(!name || !no) return alert("직원명과 사번은 꼭 입력해주세요.");
 
       staffs.unshift({ name, no, rank: "대리", role, branch });
       // authUsers에도 추가 (직원 로그인 가능하도록)
@@ -3112,7 +3112,7 @@
       if($("btnDeleteSel")) $("btnDeleteSel").classList.toggle("hidden", !admin);
 
       if(!rows.length){
-        body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없어.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없습니다.</div></td></tr>`;
         return;
       }
 
@@ -3188,7 +3188,7 @@
       const industry = $("leadIndustry").value.trim();
       const status   = checkEducationStatus(industry);
 
-      if(!company) return showLeadMsg("업체/사업장명은 꼭 입력해줘.", "error");
+      if(!company) return showLeadMsg("업체/사업장명은 꼭 입력해주세요.", "error");
 
       leads.unshift({
         id: Date.now(),
@@ -3292,7 +3292,7 @@
         showLeadMsg("✅ 수정 완료!", "");
       } catch(err){
         console.warn("수정 오류:", err.message);
-        showLeadMsg("수정 저장 중 오류가 발생했어.", "error");
+        showLeadMsg("수정 저장 중 오류가 발생했습니다.", "error");
       }
     }
 
@@ -3874,7 +3874,7 @@
 
     function deleteItinerary(id){
       if(!isAdminMode()) return;
-      if(!confirm("이 일정표를 삭제할까? 복구 불가!")) return;
+      if(!confirm("이 일정표를 삭제할까요? 복구 불가!")) return;
       itineraries = itineraries.filter(x => String(x.id) !== String(id));
       renderItineraries();
     }
@@ -3917,7 +3917,7 @@
     function downloadItineraryCard(){
       const card = $("itineraryCardBody");
       if(!card) return;
-      if(typeof html2canvas === "undefined") return alert("html2canvas 라이브러리가 로드되지 않았어.");
+      if(typeof html2canvas === "undefined") return alert("html2canvas 라이브러리가 로드되지 않았습니다.");
 
       // 다운로드용: 카드를 520px 고정 너비로 캡처 후 복원
       const origWidth = card.style.width;
@@ -3940,7 +3940,7 @@
         .catch(err => {
           card.style.width = origWidth;
           card.style.minWidth = origMinWidth;
-          alert("이미지 생성 중 오류가 발생했어.\n" + err.message);
+          alert("이미지 생성 중 오류가 발생했습니다.\n" + err.message);
         });
     }
 
@@ -4111,7 +4111,7 @@
         ${
           dayEvents.length
             ? `<div class="calendar-detail-nateon">${dayEvents.map(buildCalendarNateonLine).join("\n")}</div>`
-            : `<div class="empty">선택한 날짜 일정이 없어.</div>`
+            : `<div class="empty">선택한 날짜 일정이 없습니다.</div>`
         }
       `;
     }
@@ -4502,14 +4502,14 @@
     }
 
     function addSettingsStaff(){
-      if(!isAdminMode()) return alert("관리자 모드에서만 가능해.");
+      if(!isAdminMode()) return alert("관리자 모드에서만 가능합니다.");
       const name   = $("setStaffName").value.trim();
       const no     = $("setStaffNo").value.trim();
       const rank   = $("setStaffRank")?.value || "대리";
       const role   = $("setStaffRole").value;
       const branch = $("setStaffBranch").value.trim() || "루원지점";
-      if(!name || !no) return alert("직원명과 사번을 입력해줘.");
-      if(staffs.find(s => s.no === no)) return alert("이미 등록된 사번이야.");
+      if(!name || !no) return alert("직원명과 사번을 입력해세요.");
+      if(staffs.find(s => s.no === no)) return alert("이미 등록된 사번입니다.");
       staffs.unshift({ name, no, rank, role, branch });
       authUsers.unshift({ staffNo: no, password: no, name, role, branch });
       staffRanks[no] = rank;
@@ -4527,7 +4527,7 @@
       if(!isAdminMode()) return;
       const s = staffs.find(x => x.no === no);
       if(!s) return;
-      if(!confirm(`[${s.name}] 직원을 삭제할까?\n해당 직원으로 로그인할 수 없게 돼.`)) return;
+      if(!confirm(`[${s.name}] 직원을 삭제할까요?\n해당 직원으로 로그인할 수 없게 됩니다.`)) return;
       staffs    = staffs.filter(x => x.no !== no);
       authUsers = authUsers.filter(x => x.staffNo !== no);
       delete paySettings[no]; // 단가 설정도 제거
@@ -4567,16 +4567,16 @@
       if(!curPw) return alert("현재 비밀번호를 입력해줘.");
 
       const au = authUsers.find(u => u.staffNo === no);
-      if(!au) return alert("관리자 계정을 찾을 수 없어.");
-      if(au.password !== curPw) return alert("현재 비밀번호가 틀렸어.");
-      if(!newId && !newPw) return alert("새 아이디 또는 새 비밀번호를 입력해줘.");
+      if(!au) return alert("관리자 계정을 찾을 수 없습니다.");
+      if(au.password !== curPw) return alert("현재 비밀번호가 틀렸습니다.");
+      if(!newId && !newPw) return alert("새 아이디 또는 새 비밀번호를 입력해주세요.");
 
       const finalId = newId || au.staffNo;
       const finalPw = newPw || au.password;
       const targetName = au.name; // 이름으로 연결
 
       if(newId && newId !== au.staffNo && authUsers.find(u => u.staffNo === newId))
-        return alert("이미 사용 중인 아이디야.");
+        return alert("이미 사용 중인 아이디 입니다.");
 
       // ① 같은 이름의 authUsers 전부 업데이트 (관리자+직원 동일 이름이면 둘 다)
       authUsers.forEach(u => {
@@ -4763,11 +4763,11 @@
       if(!isAdminMode()) return false;
       const input = $(inputId);
       const val   = input ? input.value.trim() : "";
-      if(!val){ alert("관리자 번호를 입력해줘."); return false; }
+      if(!val){ alert("관리자 번호를 입력해주세요."); return false; }
       const adminNo = state.currentUser?.staffNo || "";
       const adminPw = state.currentUser?.password || "";
       if(val !== adminNo && val !== adminPw){
-        alert("관리자 번호가 틀렸어."); return false;
+        alert("관리자 번호가 틀렸습니다."); return false;
       }
       if(input) input.value = "";
       return true;
@@ -4775,7 +4775,7 @@
 
     function systemResetSchedules(){
       if(!_checkAdminPass("sysPassSchedules")) return;
-      if(!confirm("모든 일정 데이터를 삭제할까? 복구 불가!")) return;
+      if(!confirm("모든 일정 데이터를 삭제할까요? 복구 불가!")) return;
       schedules   = [];
       itineraries = [];
       renderSchedules();
@@ -4784,25 +4784,25 @@
       loadAggregate();
       runHomeSummary();
       renderSystemInfo();
-      alert("✅ 일정 데이터가 삭제됐어.");
+      alert("✅ 일정 데이터가 삭제됐습니다.");
     }
 
     function systemResetItineraries(){
       if(!_checkAdminPass("sysPassItineraries")) return;
-      if(!confirm("모든 일정표 데이터를 삭제할까? 복구 불가!")) return;
+      if(!confirm("모든 일정표 데이터를 삭제할까요? 복구 불가!")) return;
       itineraries = [];
       renderItineraries();
       renderSystemInfo();
-      alert("✅ 일정표 데이터가 삭제됐어.");
+      alert("✅ 일정표 데이터가 삭제됐습니다!.");
     }
 
     function systemResetLeads(){
       if(!_checkAdminPass("sysPassLeads")) return;
-      if(!confirm("교육섭외 DB 전체를 삭제할까? 복구 불가!")) return;
+      if(!confirm("교육섭외 DB 전체를 삭제할까요? 복구 불가!")) return;
       leads = [];
       renderLeads();
       renderSystemInfo();
-      alert("✅ 교육섭외 DB가 삭제됐어.");
+      alert("✅ 교육섭외 DB가 삭제됐습니다!.");
     }
   </script>
 </body>
