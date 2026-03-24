@@ -1517,7 +1517,7 @@
                   <th>인원</th>
                   <th>업종</th>
                   <th>섭외자</th>
-                  <th>교육이수여부</th>
+                  <th>점검제외 체크</th>
                   <th>결과값</th>
                   <th>메모</th>
                   <th id="leadActionTh" class="hidden"></th>
@@ -1596,6 +1596,7 @@
           <div class="tab-row">
             <button class="tab-btn active" id="settingsTabStaff" onclick="setSettingsTab('staff')">직원 / 사번</button>
             <button class="tab-btn" id="settingsTabPay" onclick="setSettingsTab('pay')">단가 / 수익</button>
+            <button class="tab-btn" id="settingsTabInspection" onclick="setSettingsTab('inspection')">점검제외 관리</button>
             <button class="tab-btn" id="settingsTabSystem" onclick="setSettingsTab('system')">시스템</button>
           </div>
 
@@ -1745,6 +1746,55 @@
           </div>
 
           <!-- ── 시스템 탭 ── -->
+          <!-- ── 점검제외 관리 탭 ── -->
+          <div id="settingsPaneInspection" class="hidden">
+            <div class="panel" style="margin-bottom:16px;">
+              <h5 style="margin:0 0 6px;font-size:15px;">점검제외 사업장 규칙 추가</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">사업장명을 등록하고 처리 방식을 설정하세요. <b>허용</b>으로 설정된 사업장은 직원이 점검제외처리 버튼 클릭 시 팝업 없이 바로 처리됩니다. <b>불가</b>로 설정되거나 미등록 사업장은 "산업안전 보건법 라 항목 누락건으로 점검제외 처리 불가" 팝업이 표시됩니다.</p>
+              <div class="form-grid">
+                <input id="inspRuleCompany" placeholder="사업장명 (예: 예시사업장A)">
+                <select id="inspRuleType" style="height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;">
+                  <option value="allowed">✅ 점검제외 허용 (직원·관리자 처리 가능)</option>
+                  <option value="blocked">🚫 처리 불가 팝업 (누락건)</option>
+                </select>
+              </div>
+              <div style="text-align:right;margin-top:12px;">
+                <button class="small-btn" onclick="addInspectionRule()">+ 규칙 추가</button>
+              </div>
+            </div>
+            <div class="panel" style="margin-bottom:16px;">
+              <h5 style="margin:0 0 14px;font-size:15px;">점검제외 규칙 목록</h5>
+              <p style="margin:0 0 12px;font-size:12px;color:var(--muted);">• <b style="color:#059669;">허용</b>: 직원·관리자 모두 팝업 없이 점검제외 처리 가능 &nbsp;|&nbsp; <b style="color:#dc2626;">불가</b>: "산업안전 보건법 라 항목 누락건으로 점검제외 처리 불가" 팝업 표시</p>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>사업장명</th><th>처리 방식</th><th>관리</th></tr></thead>
+                  <tbody id="inspRuleTableBody"><tr><td colspan="3"><div class="empty">등록된 규칙이 없습니다.</div></td></tr></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 온라인 교육 가능 사업장 관리 -->
+            <div class="panel" style="margin-bottom:16px;border:2px solid #bfdbfe;background:#f0f7ff;">
+              <h5 style="margin:0 0 6px;font-size:15px;color:#1d4ed8;">🖥 온라인 교육 가능 사업장 관리</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:#1e40af;">등록된 사업장은 직원이 체크 후 온라인교육확인 버튼 클릭 시 "온라인 교육 처리 가능" 메시지를 받습니다. 미등록 사업장은 "2025년12월19일 이후 교육누락건은 온라인교육 불가" 팝업이 표시됩니다.</p>
+              <div class="form-grid">
+                <input id="onlineEduCompany" placeholder="사업장명 (예: 루원케어)">
+              </div>
+              <div style="text-align:right;margin-top:12px;">
+                <button class="small-btn" style="background:#1d4ed8;" onclick="addOnlineEduRule()">+ 온라인교육 허용 추가</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h5 style="margin:0 0 14px;font-size:15px;">온라인 교육 허용 사업장 목록</h5>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>사업장명</th><th>관리</th></tr></thead>
+                  <tbody id="onlineEduTableBody"><tr><td colspan="2"><div class="empty">등록된 사업장이 없습니다.</div></td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <div id="settingsPaneSystem" class="hidden">
             <div class="panel" style="margin-bottom:16px;">
               <h5 style="margin:0 0 14px;font-size:15px;">데이터 현황</h5>
@@ -1862,9 +1912,9 @@
         <input id="editLeadSubject" placeholder="교육과목">
         <input id="editLeadIndustry" placeholder="업종">
         <div style="display:flex;flex-direction:column;gap:4px;">
-          <span style="font-size:12px;color:#64748b;font-weight:700;">교육 이수 여부</span>
+          <span style="font-size:12px;color:#64748b;font-weight:700;">점검제외 체크</span>
           <select id="editLeadStatus" style="height:46px;padding:0 12px;border-radius:14px;border:1px solid var(--line);font-size:14px;font-weight:700;">
-            <option value="교육 미이수">교육 미이수</option>
+            <option value="점검제외처리">점검제외처리</option>
             <option value="교육 이수">교육 이수</option>
           </select>
         </div>
@@ -1876,6 +1926,8 @@
             <option value="결번">결번</option>
             <option value="확인후연락">확인후연락</option>
             <option value="일정픽스">일정픽스</option>
+            <option value="교육 이수 완료">교육 이수 완료</option>
+            <option value="기타">기타</option>
           </select>
         </div>
         <textarea id="editLeadMemo" class="full" rows="3" placeholder="메모" style="border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
@@ -2157,9 +2209,17 @@
     ];
 
     let leads = [
-      { id:301, type:"교육섭외", date:"2026-03-10", time:"10:00", company:"예시사업장A", address:"인천 서구 청마로 66-7", manager:"홍길동", phone:"01011112222", people:"5명", age:"40대", subject:"산업안전교육", industry:"음식점", status:"교육 미이수", ownerNo:"0408", ownerName:"김성우", createdAt:"2026-03-10" },
+      { id:301, type:"교육섭외", date:"2026-03-10", time:"10:00", company:"예시사업장A", address:"인천 서구 청마로 66-7", manager:"홍길동", phone:"01011112222", people:"5명", age:"40대", subject:"산업안전교육", industry:"음식점", status:"점검제외처리", ownerNo:"0408", ownerName:"김성우", createdAt:"2026-03-10" },
       { id:302, type:"교육섭외", date:"2026-03-10", time:"14:00", company:"루원케어", address:"서울 서초구 방배로 123", manager:"김민수", phone:"01033334444", people:"3명", age:"30대", subject:"직무교육", industry:"상조", status:"교육 이수", ownerNo:"1218", ownerName:"이상혁", createdAt:"2026-03-10" }
     ];
+
+    // 점검제외 규칙: 사업장명 기준으로 허용/불가 설정 (관리자 전용)
+    // { id, company, type: "allowed"|"blocked" }
+    let inspectionRules = [];
+
+    // 온라인 교육 가능 사업장 목록 (관리자 전용) – 등록된 사업장은 팝업 없이 온라인 교육 처리 가능
+    // { id, company }
+    let onlineEduRules = [];
 
     // 일정표 관리 데이터 (일정등록 시 자동 생성)
     let itineraries = [];
@@ -2180,8 +2240,8 @@
     function saveAppData(){
       try{
         localStorage.setItem(APP_DATA_KEY, JSON.stringify({
-          staffs, authUsers, paySettings, staffRanks,
-          performances, leads, schedules, itineraries, notices
+          staffs, authUsers, paySettings, staffRanks, adminRates,
+          performances, leads, schedules, itineraries, notices, inspectionRules, onlineEduRules
         }));
       }catch(e){}
     }
@@ -2191,15 +2251,18 @@
         const raw = localStorage.getItem(APP_DATA_KEY);
         if(!raw) return;
         const d = JSON.parse(raw);
-        if(d.staffs      && Array.isArray(d.staffs))       staffs       = d.staffs;
-        if(d.authUsers   && Array.isArray(d.authUsers))    authUsers    = d.authUsers;
-        if(d.paySettings && typeof d.paySettings==="object") paySettings = d.paySettings;
-        if(d.staffRanks  && typeof d.staffRanks==="object") staffRanks  = d.staffRanks;
-        if(d.performances&& Array.isArray(d.performances)) performances = d.performances;
-        if(d.leads       && Array.isArray(d.leads))        leads        = d.leads;
-        if(d.schedules   && Array.isArray(d.schedules))    schedules    = d.schedules;
-        if(d.itineraries && Array.isArray(d.itineraries))  itineraries  = d.itineraries;
-        if(d.notices     && Array.isArray(d.notices))      notices      = d.notices;
+        if(d.staffs          && Array.isArray(d.staffs))         staffs          = d.staffs;
+        if(d.authUsers       && Array.isArray(d.authUsers))      authUsers       = d.authUsers;
+        if(d.paySettings     && typeof d.paySettings==="object") paySettings     = d.paySettings;
+        if(d.staffRanks      && typeof d.staffRanks==="object")  staffRanks      = d.staffRanks;
+        if(d.adminRates      && typeof d.adminRates==="object")  Object.assign(adminRates, d.adminRates);
+        if(d.performances    && Array.isArray(d.performances))   performances    = d.performances;
+        if(d.leads           && Array.isArray(d.leads))          leads           = d.leads;
+        if(d.schedules       && Array.isArray(d.schedules))      schedules       = d.schedules;
+        if(d.itineraries     && Array.isArray(d.itineraries))    itineraries     = d.itineraries;
+        if(d.notices         && Array.isArray(d.notices))        notices         = d.notices;
+        if(d.inspectionRules && Array.isArray(d.inspectionRules)) inspectionRules = d.inspectionRules;
+        if(d.onlineEduRules  && Array.isArray(d.onlineEduRules))  onlineEduRules  = d.onlineEduRules;
       }catch(e){}
     }
 
@@ -3268,31 +3331,37 @@
       const th = $("leadActionTh");
       if(th) th.classList.toggle("hidden", !admin);
 
-      // 관리자: 체크박스 열 / 전체삭제·선택삭제 버튼 토글
+      // 체크박스 열: 관리자·직원 모두 표시 / 삭제 버튼은 관리자만
       const chkTh = $("leadChkTh");
-      if(chkTh) chkTh.classList.toggle("hidden", !admin);
+      if(chkTh) chkTh.classList.remove("hidden");
       if($("btnDeleteAll")) $("btnDeleteAll").classList.toggle("hidden", !admin);
       if($("btnDeleteSel")) $("btnDeleteSel").classList.toggle("hidden", !admin);
 
       if(!rows.length){
         body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없습니다.</div></td></tr>`;
+        // 체크박스 열은 항상 포함이므로 colspan 일치
         return;
       }
 
-      const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "일정픽스", "기타"];
+      const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "일정픽스", "교육 이수 완료", "기타"];
 
       rows.forEach(l => {
-        const sc = l.status === "교육 이수" ? "edu-pass" : l.status === "교육 미이수" ? "edu-fail" : "";
+        const sc = l.status === "교육 이수" ? "edu-pass" : l.status === "점검제외처리" ? "edu-fail" : "";
         const phone = l.phone || "";
         const addrIdx = leads.indexOf(l);
         const addrCell = l.address
           ? `<span class="addr-link" onclick="openNaverMap(${addrIdx})">${escapeHtml(l.address)}</span>`
           : "";
 
-        // 교육 이수 여부
+        // 점검제외 체크
+        const allowed = isCompanyAllowed(l.company);
         const statusCell = admin
           ? `<button class="edu-toggle-btn ${sc}" onclick="toggleLeadStatus(${l.id})">${escapeHtml(l.status || "미지정")}</button>`
-          : `${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}`;
+          : l.status === "점검제외처리"
+            ? allowed
+              ? `<button class="edu-toggle-btn edu-fail" onclick="staffToggleLeadStatus(${l.id})" title="점검제외 처리">${escapeHtml(l.status)}</button>`
+              : `<button class="edu-toggle-btn edu-fail" onclick="showInspectionBlocked()">${escapeHtml(l.status)}</button>`
+            : `${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}`;
 
         // 결과값 드롭다운
         const resultOpts = RESULT_OPTIONS.map(o =>
@@ -3309,7 +3378,7 @@
         const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})" title="${hasMemo?escapeHtml(l.memo):'메모 없음'}">${hasMemo?"📝 메모":"메모"}</button></td>`;
 
         // 관리자 수정/삭제
-        const chkCell = admin ? `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>` : "";
+        const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>`;
         const actionCell = admin
           ? `<td style="white-space:nowrap;">
                <button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button>
@@ -3402,7 +3471,7 @@
       $("editLeadAge").value       = l.age       || "";
       $("editLeadSubject").value   = l.subject   || "";
       $("editLeadIndustry").value  = l.industry  || "";
-      $("editLeadStatus").value    = l.status    || "교육 미이수";
+      $("editLeadStatus").value    = l.status    || "점검제외처리";
       $("editLeadResult").value    = l.result    || "";
       $("editLeadMemo").value      = l.memo      || "";
       $("leadEditModal").classList.add("show");
@@ -3483,7 +3552,25 @@
       if(!isAdminMode()) return;
       const l = leads.find(x => x.id === id);
       if(!l) return;
-      l.status = l.status === "교육 이수" ? "교육 미이수" : "교육 이수";
+
+      if(l.status === "점검제외처리"){
+        // 점검제외처리 → 교육 이수 (되돌리기는 항상 허용)
+        l.status = "교육 이수";
+      } else {
+        // 교육 이수 → 점검제외처리 : 규칙 확인
+        const companyName = (l.company || "").trim();
+        const rule = inspectionRules.find(r => {
+          const rc = (r.company || "").trim();
+          return rc && companyName && (companyName.includes(rc) || rc.includes(companyName));
+        });
+        if(rule && rule.type === "allowed"){
+          l.status = "점검제외처리";
+        } else {
+          alert("산업안전 보건법 라 항목 누락건으로 점검제외 처리 불가");
+          return;
+        }
+      }
+
       renderLeads();
       saveAppData();
 
@@ -3494,6 +3581,35 @@
       } catch(err){
         console.warn("상태 변경 오류:", err.message);
       }
+    }
+
+    function showInspectionBlocked(){
+      alert("산업안전 보건법 라 항목 누락건으로 점검제외 처리 불가");
+    }
+
+    // 사업장명이 관리자 허용 목록에 있는지 확인
+    function isCompanyAllowed(company){
+      const name = (company || "").trim();
+      if(!name) return false;
+      return inspectionRules.some(r => {
+        if(r.type !== "allowed") return false;
+        const rc = (r.company || "").trim();
+        return rc && (name === rc || name.includes(rc) || rc.includes(name));
+      });
+    }
+
+    // 직원이 허용된 사업장 점검제외처리 클릭 시 (팝업 없이 실제 처리)
+    async function staffToggleLeadStatus(id){
+      const l = leads.find(x => x.id === id);
+      if(!l) return;
+      if(!isCompanyAllowed(l.company)){ showInspectionBlocked(); return; }
+      l.status = l.status === "점검제외처리" ? "교육 이수" : "점검제외처리";
+      renderLeads();
+      saveAppData();
+      try{
+        const { error } = await sbClient.from("education_db").update({ status: l.status }).eq("id", l.id);
+        if(error) throw error;
+      } catch(err){ console.warn("상태 변경 오류:", err.message); }
     }
 
     // ── Supabase 함수 ─────────────────────────────────────────
@@ -3653,7 +3769,7 @@
 
             // 자동 처리
             item.phone    = item.phone || "";  // 정규화 없이 원본 유지
-            item.status   = "교육 미이수";
+            item.status   = "점검제외처리";
             item.repName  = item.repName || "";
             item.ownerNo  = targetStaffNo;
             item.ownerName= targetStaffName;
@@ -3828,7 +3944,7 @@
       ];
       const lower = v.toLowerCase();
       for(const kw of FAIL){
-        if(lower.includes(kw.toLowerCase())) return "교육 미이수";
+        if(lower.includes(kw.toLowerCase())) return "점검제외처리";
       }
       return "교육 이수";
     }
@@ -4187,6 +4303,41 @@
     function setLeadCat(cat, el){
       document.querySelectorAll(".edu-cat-btn").forEach(b => b.classList.remove("active"));
       if(el) el.classList.add("active");
+
+      if(cat === "online"){
+        const checked = [...document.querySelectorAll(".lead-chk:checked")];
+        if(!checked.length){
+          alert("온라인 교육 확인할 사업장을 먼저 체크해 주세요.");
+          // 탭 버튼 활성 상태 되돌리기
+          document.querySelectorAll(".edu-cat-btn").forEach(b => b.classList.remove("active"));
+          document.querySelector(".edu-cat-btn")?.classList.add("active");
+          return;
+        }
+        const checkedIds = checked.map(c => Number(c.dataset.id));
+        const checkedLeads = leads.filter(l => checkedIds.includes(l.id));
+
+        const onlineAllowed = checkedLeads.filter(l => isOnlineEduAllowed(l.company));
+        const onlineBlocked = checkedLeads.filter(l => !isOnlineEduAllowed(l.company));
+
+        if(onlineBlocked.length > 0){
+          const names = onlineBlocked.map(l => l.company).join(", ");
+          alert(`2025년12월19일 이후 교육누락건은 온라인교육 불가\n\n해당 사업장: ${names}`);
+        }
+        if(onlineAllowed.length > 0){
+          const names = onlineAllowed.map(l => l.company).join(", ");
+          alert(`✅ 온라인 교육 처리 가능 사업장\n\n${names}`);
+        }
+      }
+    }
+
+    // 사업장이 온라인 교육 허용 목록에 있는지 확인
+    function isOnlineEduAllowed(company){
+      const name = (company || "").trim();
+      if(!name) return false;
+      return onlineEduRules.some(r => {
+        const rc = (r.company || "").trim();
+        return rc && (name === rc || name.includes(rc) || rc.includes(name));
+      });
     }
 
     function isHolidayDate(dateStr){
@@ -4489,15 +4640,127 @@
       state.settingsTab = tab;
       $("settingsTabStaff").classList.toggle("active", tab === "staff");
       $("settingsTabPay").classList.toggle("active", tab === "pay");
+      $("settingsTabInspection").classList.toggle("active", tab === "inspection");
       $("settingsTabSystem").classList.toggle("active", tab === "system");
 
       $("settingsPaneStaff").classList.toggle("hidden", tab !== "staff");
       $("settingsPanePay").classList.toggle("hidden", tab !== "pay");
+      $("settingsPaneInspection").classList.toggle("hidden", tab !== "inspection");
       $("settingsPaneSystem").classList.toggle("hidden", tab !== "system");
 
-      if(tab === "staff")  renderSettingsStaff();
-      if(tab === "pay")    renderPaySummary();
-      if(tab === "system") renderSystemInfo();
+      if(tab === "staff")      renderSettingsStaff();
+      if(tab === "pay")        renderPaySummary();
+      if(tab === "inspection"){ renderInspectionRules(); renderOnlineEduRules(); }
+      if(tab === "system")     renderSystemInfo();
+    }
+
+    // ══════════════════════════════════════════════════
+    // 점검제외 관리 (관리자 전용)
+    // ══════════════════════════════════════════════════
+
+    function renderInspectionRules(){
+      const tbody = $("inspRuleTableBody");
+      if(!tbody) return;
+      if(!inspectionRules.length){
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty">등록된 규칙이 없습니다.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = inspectionRules.map(r => {
+        const typeLabel = r.type === "allowed"
+          ? `<span style="color:#059669;font-weight:700;background:#dcfce7;padding:3px 10px;border-radius:20px;font-size:12px;">✅ 허용</span>`
+          : `<span style="color:#dc2626;font-weight:700;background:#fef2f2;padding:3px 10px;border-radius:20px;font-size:12px;">🚫 처리 불가</span>`;
+        return `<tr>
+          <td id="inspRuleComp_${r.id}">${escapeHtml(r.company)}</td>
+          <td id="inspRuleType_${r.id}">${typeLabel}</td>
+          <td>
+            <button class="small-btn" style="font-size:11px;padding:4px 10px;margin-right:4px;" onclick="editInspectionRule(${r.id})">수정</button>
+            <button class="danger-btn" style="font-size:11px;padding:4px 10px;" onclick="deleteInspectionRule(${r.id})">삭제</button>
+          </td>
+        </tr>`;
+      }).join("");
+    }
+
+    function addInspectionRule(){
+      if(!isAdminMode()) return;
+      const company = ($("inspRuleCompany").value || "").trim();
+      const type    = $("inspRuleType").value;
+      if(!company) return alert("사업장명을 입력해 주세요.");
+      if(inspectionRules.find(r => r.company === company))
+        return alert("이미 등록된 사업장입니다.\n수정하려면 기존 항목의 [수정] 버튼을 이용해 주세요.");
+      inspectionRules.push({ id: Date.now(), company, type });
+      $("inspRuleCompany").value = "";
+      $("inspRuleType").value = "allowed";
+      saveAppData();
+      renderInspectionRules();
+      alert(`✅ 규칙이 추가되었습니다.\n사업장: ${company} / ${type === "allowed" ? "점검제외 허용" : "처리 불가(누락건)"}`);
+    }
+
+    function editInspectionRule(id){
+      if(!isAdminMode()) return;
+      const rule = inspectionRules.find(r => r.id === id);
+      if(!rule) return;
+      const newCompany = prompt("사업장명을 수정하세요:", rule.company);
+      if(newCompany === null) return; // 취소
+      const newType = confirm("처리 방식을 선택하세요.\n\n[확인] = ✅ 점검제외 허용\n[취소] = 🚫 처리 불가(누락건)")
+        ? "allowed" : "blocked";
+      rule.company = newCompany.trim() || rule.company;
+      rule.type    = newType;
+      saveAppData();
+      renderInspectionRules();
+    }
+
+    function deleteInspectionRule(id){
+      if(!isAdminMode()) return;
+      const rule = inspectionRules.find(r => r.id === id);
+      if(!rule) return;
+      if(!confirm(`[${rule.company}] 규칙을 삭제할까요?`)) return;
+      inspectionRules = inspectionRules.filter(r => r.id !== id);
+      saveAppData();
+      renderInspectionRules();
+    }
+
+    // ══════════════════════════════════════════════════
+    // 온라인 교육 가능 사업장 관리 (관리자 전용)
+    // ══════════════════════════════════════════════════
+
+    function renderOnlineEduRules(){
+      const tbody = $("onlineEduTableBody");
+      if(!tbody) return;
+      if(!onlineEduRules.length){
+        tbody.innerHTML = `<tr><td colspan="2"><div class="empty">등록된 사업장이 없습니다.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = onlineEduRules.map(r => `
+        <tr>
+          <td>${escapeHtml(r.company)}</td>
+          <td>
+            <button class="danger-btn" style="font-size:11px;padding:4px 10px;" onclick="deleteOnlineEduRule(${r.id})">삭제</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function addOnlineEduRule(){
+      if(!isAdminMode()) return;
+      const company = ($("onlineEduCompany").value || "").trim();
+      if(!company) return alert("사업장명을 입력해 주세요.");
+      if(onlineEduRules.find(r => r.company === company))
+        return alert("이미 등록된 사업장입니다.");
+      onlineEduRules.push({ id: Date.now(), company });
+      $("onlineEduCompany").value = "";
+      saveAppData();
+      renderOnlineEduRules();
+      alert(`✅ [${company}] 온라인 교육 허용 사업장으로 등록되었습니다.`);
+    }
+
+    function deleteOnlineEduRule(id){
+      if(!isAdminMode()) return;
+      const rule = onlineEduRules.find(r => r.id === id);
+      if(!rule) return;
+      if(!confirm(`[${rule.company}] 온라인 교육 허용을 해제할까요?`)) return;
+      onlineEduRules = onlineEduRules.filter(r => r.id !== id);
+      saveAppData();
+      renderOnlineEduRules();
     }
 
     function renderAll(){
@@ -4779,6 +5042,7 @@
       renderStaffs();
       refreshLeadStaffDropdown();
       refreshPayStaffDropdown();
+      saveAppData();
       alert(`✅ [${targetName}] 계정이 변경되었습니다.\n사번(아이디): ${finalId}`);
     }
 
