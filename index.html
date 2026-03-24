@@ -2300,17 +2300,34 @@
       }catch(e){}
     }
 
-    // ─── Supabase 직원 계정 동기화 ───
+    // ─── Supabase 직원 계정 동기화 (로컬 ↔ Supabase 병합) ───
     async function loadStaffFromSupabase(){
       try{
         const { data, error } = await sbClient.from("staff_accounts").select("*");
         if(error) throw error;
-        if(!data || !data.length) return;
-        // 서버 데이터로 staffs / authUsers / staffRanks 완전히 덮어쓰기
-        staffs    = data.map(r => ({ name:r.name, no:r.staff_no, role:r.role, branch:r.branch, rank:r.rank }));
-        authUsers = data.map(r => ({ staffNo:r.staff_no, password:r.password, name:r.name, role:r.role, branch:r.branch }));
-        data.forEach(r => { staffRanks[r.staff_no] = r.rank; });
-        saveAppData(); // 로컬에도 캐시
+
+        const sbNos = new Set((data||[]).map(r => r.staff_no));
+
+        // 1. 로컬에만 있는 직원 → Supabase에 업로드 (최초 1회 마이그레이션)
+        for(const u of authUsers){
+          if(!sbNos.has(u.staffNo)){
+            const s = staffs.find(x => x.no === u.staffNo);
+            await upsertStaffToSupabase(u.staffNo, u.password, u.name, u.role, u.branch, s?.rank || "대리");
+          }
+        }
+
+        // 2. Supabase 데이터 + 로컬 전용 데이터 병합 (어느 쪽도 잃지 않음)
+        const merged = [...(data||[])];
+        authUsers.filter(u => !sbNos.has(u.staffNo)).forEach(u => {
+          const s = staffs.find(x => x.no === u.staffNo);
+          merged.push({ staff_no:u.staffNo, password:u.password, name:u.name, role:u.role, branch:u.branch, rank:s?.rank||"대리" });
+        });
+
+        if(!merged.length) return;
+        staffs    = merged.map(r => ({ name:r.name, no:r.staff_no, role:r.role, branch:r.branch, rank:r.rank }));
+        authUsers = merged.map(r => ({ staffNo:r.staff_no, password:r.password, name:r.name, role:r.role, branch:r.branch }));
+        merged.forEach(r => { staffRanks[r.staff_no] = r.rank || "대리"; });
+        saveAppData(); // 병합 결과 로컬에 캐시
       }catch(e){ console.warn("직원 목록 로드 오류:", e.message); }
     }
 
@@ -2333,8 +2350,8 @@
 
     // ─── 앱 초기화 (Supabase 직원 로드 → 세션 복원) ───
     async function initApp(){
-      loadAppData();                  // 1. localStorage 캐시 먼저 적용
-      await loadStaffFromSupabase();  // 2. Supabase 최신 직원 데이터로 덮어쓰기
+      try{ loadAppData(); }catch(e){}          // 1. localStorage 캐시
+      try{ await loadStaffFromSupabase(); }catch(e){ console.warn("Supabase 초기화 실패, 로컬 데이터로 진행:", e); }  // 2. Supabase 병합 (실패해도 로컬로 진행)
       try{
         const saved = localStorage.getItem("luwon_auth");
         if(!saved) return;
@@ -2350,7 +2367,6 @@
         setView("home");
         loadData();
       }catch(e){ try{ localStorage.removeItem("luwon_auth"); }catch(_){} }
-    }
     }
 
     function $(id){ return document.getElementById(id); }
