@@ -3816,10 +3816,13 @@
 
     async function insertData(row){
       try{
+        // id 필드 제외 — GENERATED ALWAYS IDENTITY 컬럼이므로 Supabase가 자동 할당
         const { error } = await sbClient
           .from("education_db")
           .insert([{
             type:       row.type || "교육섭외",
+            date:       row.date || "",
+            time:       row.time || "",
             company:    row.company || "",
             address:    row.address || "",
             manager:    row.manager || "",
@@ -3834,6 +3837,8 @@
             staff_name: row.ownerName || ""
           }]);
         if(error) throw error;
+        // 단건 추가 후 Supabase ID로 동기화
+        await loadData();
       } catch(err){
         console.warn("Supabase insertData 오류:", err.message);
       }
@@ -3841,9 +3846,11 @@
 
     async function syncAfterUpload(rows){
       try{
+        // id 필드 제외 — GENERATED ALWAYS IDENTITY 컬럼이므로 Supabase가 자동 할당
         const inserts = rows.map(row => ({
-          id:         row.id,         // 로컬 id 그대로 사용 → loadData 중복 방지
           type:       row.type || "교육섭외",
+          date:       row.date || "",
+          time:       row.time || "",
           company:    row.company || "",
           address:    row.address || "",
           manager:    row.manager || "",
@@ -3859,6 +3866,8 @@
         }));
         const { error } = await sbClient.from("education_db").insert(inserts);
         if(error) throw error;
+        // 업로드 후 Supabase 실제 ID로 leads 동기화 → 이후 삭제 정상 동작
+        await loadData();
       } catch(err){
         console.warn("Supabase syncAfterUpload 오류:", err.message);
       }
@@ -3900,7 +3909,7 @@
       const targetStaffNo = targetAuthUser ? targetAuthUser.staffNo : targetStaffName;
 
       const reader = new FileReader();
-      reader.onload = function(e){
+      reader.onload = async function(e){
         try{
           const data = new Uint8Array(e.target.result);
           const wb = XLSX.read(data, { type:"array" });
@@ -3909,11 +3918,10 @@
 
           if(!rows.length) return alert("엑셀에 데이터가 없습니다.");
 
-          // 엑셀 행을 순서대로 수집 (2행이 테이블 첫줄)
+          // 엑셀 행을 순서대로 수집
           const newItems = [];
-          rows.forEach((row, idx) => {
+          rows.forEach((row) => {
             const item = {};
-            // 컬럼명 자동 매칭 (연락처2가 연락처1을 덮어씀)
             Object.keys(row).forEach(col => {
               const key = EXCEL_COL_MAP[col.trim()] || null;
               if(key) item[key] = String(row[col] || "").trim();
@@ -3921,15 +3929,14 @@
 
             if(!item.company) return; // 사업장명 없으면 스킵
 
-            // 자동 처리
-            item.phone    = item.phone || "";  // 정규화 없이 원본 유지
+            item.phone    = item.phone || "";
             item.status   = "점검제외처리";
             item.repName  = item.repName || "";
             item.ownerNo  = targetStaffNo;
             item.ownerName= targetStaffName;
             item.createdAt= todayStr();
-            item.id       = Date.now() + idx;
             item.type     = item.type || "교육섭외";
+            // id 미설정 — Supabase IDENTITY 컬럼이 자동 할당
 
             newItems.push(item);
           });
@@ -3937,17 +3944,11 @@
           const added = newItems.length;
           if(!added) return alert("유효한 데이터가 없습니다 (사업장명 필수).");
 
-          // 엑셀 2행이 테이블 맨 위 → 기존 데이터 위에 정방향으로 삽입
-          leads.unshift(...newItems);
-          saveAppData(); // 업로드 즉시 로컬 저장
-
-          // 파일 입력 초기화
           input.value = "";
-          renderLeads();
-          runHomeSummary();
-          loadProgress();
-          syncAfterUpload(newItems);
-          alert(`✅ 엑셀 업로드 완료!\n${added}건 추가되었습니다.`);
+
+          // Supabase에 업로드 → 내부에서 loadData() 호출로 실제 ID 동기화
+          await syncAfterUpload(newItems);
+          alert(`✅ 엑셀 업로드 완료!\n${added}건이 추가되었습니다.`);
         } catch(err){
           alert("엑셀 파일을 읽는 중 오류가 발생했습니다.\n" + err.message);
         }
