@@ -693,123 +693,133 @@
     /* ── MOBILE (≤ 768px) ── */
     @media(max-width:768px){
 
-      /* 대시보드 레이아웃 - 블록으로 전환 */
-      .dashboard{
-        display:block!important;
-        padding-top:56px;
-      }
+      /* ① 레이아웃 */
+      .dashboard{ display:block!important; padding-top:56px; }
+      .topbar{ display:none; }
+      .top-actions{ display:none; }
+      .main{ padding:10px; gap:8px; min-height:calc(100vh - 56px); overflow-x:hidden; }
+      .content-card{ padding:12px; border-radius:12px; }
 
-      /* 사이드바 → 슬라이드 드로어 */
+      /* ② 사이드바 → 슬라이드 드로어 */
       .sidebar{
-        position:fixed!important;
-        top:0; left:0; bottom:0;
-        width:288px;
-        height:100vh!important;
-        z-index:1002;
+        position:fixed!important; top:0; left:0; bottom:0;
+        width:280px; height:100vh!important; z-index:1002;
         transform:translateX(-100%);
         transition:transform .28s cubic-bezier(.4,0,.2,1);
-        overflow-y:auto;
-        flex-shrink:0;
+        overflow-y:auto; flex-shrink:0;
       }
-      .sidebar.mob-open{
-        transform:translateX(0);
-        box-shadow:8px 0 40px rgba(0,0,0,.45);
-      }
+      .sidebar.mob-open{ transform:translateX(0); box-shadow:8px 0 40px rgba(0,0,0,.45); }
+      .sidebar .mode-toggle{ display:flex!important; margin-top:8px; margin-bottom:4px; }
 
-      /* 딤 오버레이 */
+      /* ③ 딤 오버레이 */
       .mob-overlay{
-        display:block!important;
-        position:fixed; inset:0;
-        background:rgba(0,0,0,.55);
-        z-index:1001;
-        opacity:0; pointer-events:none;
-        transition:opacity .28s;
+        display:block!important; position:fixed; inset:0;
+        background:rgba(0,0,0,.55); z-index:1001;
+        opacity:0; pointer-events:none; transition:opacity .28s;
       }
-      .mob-overlay.active{
-        opacity:1; pointer-events:auto;
-      }
+      .mob-overlay.active{ opacity:1; pointer-events:auto; }
 
-      /* 모바일 상단 헤더 */
+      /* ④ 모바일 상단 헤더 */
       .mob-header{
-        display:flex!important;
-        position:fixed; top:0; left:0; right:0; height:56px;
-        background:#080e1c;
-        border-bottom:1px solid rgba(255,255,255,.08);
-        z-index:1000;
-        align-items:center;
-        padding:0 16px;
-        gap:12px;
+        display:flex!important; position:fixed; top:0; left:0; right:0; height:56px;
+        background:#080e1c; border-bottom:1px solid rgba(255,255,255,.08);
+        z-index:1000; align-items:center; padding:0 14px; gap:10px;
       }
       .mob-logo-wrap{
-        width:32px; height:32px; border-radius:9px;
+        width:30px; height:30px; border-radius:8px;
         background:linear-gradient(135deg,#3b82f6,#6366f1);
         display:flex; align-items:center; justify-content:center;
-        font-size:15px; font-weight:900; color:#fff; flex-shrink:0;
+        font-size:14px; font-weight:900; color:#fff; flex-shrink:0;
       }
-      .mob-brand-name{
-        font-size:14px; font-weight:800; color:#f1f5f9; letter-spacing:-.3px;
-      }
+      .mob-brand-name{ font-size:13px; font-weight:800; color:#f1f5f9; letter-spacing:-.3px; }
       .mob-page-title{
-        flex:1; font-size:13px; font-weight:700; color:#94a3b8;
+        flex:1; font-size:12px; font-weight:700; color:#94a3b8;
         overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
       }
       .mob-menu-btn{
         width:40px; height:40px; border-radius:10px;
-        background:rgba(255,255,255,.07);
-        border:1px solid rgba(255,255,255,.1);
+        background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
         display:flex; align-items:center; justify-content:center;
-        cursor:pointer; flex-shrink:0; flex-direction:column; gap:5px;
-        padding:0;
+        cursor:pointer; flex-shrink:0; flex-direction:column; gap:5px; padding:0;
       }
-      .mob-menu-btn span{
-        display:block; width:18px; height:2px;
-        background:#94a3b8; border-radius:2px;
-        transition:all .2s;
-      }
+      .mob-menu-btn span{ display:block; width:18px; height:2px; background:#94a3b8; border-radius:2px; transition:all .2s; }
       .mob-menu-btn.open span:nth-child(1){ transform:translateY(7px) rotate(45deg); }
       .mob-menu-btn.open span:nth-child(2){ opacity:0; }
       .mob-menu-btn.open span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
 
-      /* 상단 탑바 숨김 (모바일 헤더가 대신) */
-      .topbar{ display:none; }
+      /* ⑤ 섹션 헤더 */
+      .section-head{ flex-wrap:wrap; gap:8px; }
+      .section-head h4{ font-size:15px; }
+      .section-head p{ font-size:11px; }
 
-      /* 메인 영역 */
-      .main{
-        padding:12px; gap:10px;
-        min-height:calc(100vh - 56px);
-      }
-      .content-card{ padding:14px; border-radius:14px; }
+      /* ⑥ 홈 요약 카드 — 2×2 */
+      .summary-grid{ grid-template-columns:repeat(2,1fr); gap:8px; }
+      .summary-card{ padding:12px 10px; }
+      .summary-card .k{ font-size:10px; }
+      .summary-card .v{ font-size:22px; }
+      .summary-card .s{ font-size:10px; }
 
-      /* 각종 그리드 단일 컬럼 */
-      .form-grid, .summary-grid{ grid-template-columns:1fr; }
-      .split-grid{ grid-template-columns:1fr; }
+      /* ⑦ 캘린더 */
+      .calendar-grid{ gap:2px; }
+      .calendar-cell{ min-height:44px; padding:4px 3px; border-radius:6px; border-width:1px; }
+      .calendar-dow{ font-size:9px; padding:3px 0; }
+      .calendar-day{ font-size:10px; }
+      .calendar-count{ font-size:9px; min-width:22px; height:15px; padding:0 3px; }
+      .calendar-detail{ padding:10px; margin-top:8px; }
+      .calendar-detail h6{ font-size:12px; }
+      .calendar-detail-nateon{ font-size:11px; }
+
+      /* ⑧ split-grid → 단일 컬럼 (캘린더+디테일 세로 배치) */
+      .split-grid{ grid-template-columns:1fr; gap:8px; }
+
+      /* ⑨ 폼/툴바 */
+      .form-grid{ grid-template-columns:1fr; gap:8px; }
+      .form-grid .full{ grid-column:1; }
+      .toolbar{ gap:6px; flex-wrap:wrap; }
+      .toolbar input,.toolbar select{ height:40px; font-size:13px; }
+      .toolbar button,.small-btn,.ghost-btn,.danger-btn{ height:40px; font-size:12px; padding:0 12px; }
+      .btn-add-sched{ height:38px; font-size:12px; padding:0 12px; }
+      .tab-row{ gap:4px; flex-wrap:wrap; }
+      .tab-btn{ height:36px; font-size:12px; padding:0 12px; }
+
+      /* ⑩ edu 카테고리 행 */
+      .edu-cat-row{ flex-wrap:wrap; gap:6px; }
+      .edu-cat-btn{ height:36px; font-size:12px; padding:0 12px; }
+      .edu-org-tag{ font-size:11px; }
+
+      /* ⑪ 테이블 — 가로 스크롤 허용, 폰트 축소 */
+      .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:10px; }
+      table{ min-width:480px; font-size:11px; }
+      th,td{ padding:7px 8px!important; }
+
+      /* ⑫ 모달 */
       .modal-entry-status{ grid-template-columns:1fr; }
+      .modal-layout{ grid-template-columns:1fr; }
+      .modal-group-title{ flex-wrap:wrap; gap:6px; }
+
+      /* ⑬ 일정표/캘린더 관리 */
       .itin-top-area{ flex-direction:column; }
       .itin-cal-wrap{ max-width:100%; min-width:0; width:100%; }
 
-      /* 테이블 스크롤 */
-      .table-wrap{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-      table{ min-width:560px; }
+      /* ⑭ 로그인 */
+      .login-card{ min-height:100vh; padding:28px 18px; }
+      .lf-body{ padding:28px 18px 24px; }
+      .lf-top{ padding:18px 18px 14px; }
+      .lf-footer{ padding:12px 18px 18px; }
 
-      /* 모드 토글 위치 조정 */
-      .top-actions{ display:none; }
-
-      /* 로그인 */
-      .login-card{ min-height:100vh; padding:32px 20px; }
-      .lf-body{ padding:32px 20px 28px; }
-      .lf-top{ padding:20px 20px 16px; }
-      .lf-footer{ padding:14px 20px 20px; }
-
-      /* 사이드바 내부 - 드로어 안에서 모드 토글 표시 */
-      .sidebar .mode-toggle{
-        display:flex!important;
-        margin-top:8px; margin-bottom:4px;
-      }
+      /* ⑮ 팝업 모달 모바일 */
+      .sched-modal{ border-radius:16px; }
+      .sched-modal-head{ padding:16px 18px 14px; border-radius:16px 16px 0 0; }
+      .sched-modal-body{ padding:16px 18px; }
+      .sched-modal-footer{ padding:12px 18px 18px; }
+      .sched-modal-grid{ grid-template-columns:1fr; gap:8px; }
+      .sched-modal-grid .full{ grid-column:1; }
     }
 
     @media(max-width:400px){
-      .summary-grid{ grid-template-columns:1fr; }
+      .summary-grid{ grid-template-columns:repeat(2,1fr); }
       .mob-brand-name{ display:none; }
+      .calendar-cell{ min-height:38px; }
     }
 
     /* ── EDU BADGES ── */
