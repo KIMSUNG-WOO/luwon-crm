@@ -3126,42 +3126,15 @@
       const company = ($("scheduleCompany")||{}).value||"";
       const address = ($("scheduleAddress")||{}).value||"";
       const people  = ($("schedulePeople")||{}).value||"";
-      const age     = ($("scheduleAge")||{}).value||"";
-      const subject = ($("scheduleSubject")||{}).value||"";
-      const manager = ($("scheduleManager")||{}).value||"";
-      const phone   = ($("schedulePhone")||{}).value||"";
-      const memo    = ($("scheduleMemo")||{}).value||"";
-
       if(!company && !date){ preview.textContent = "—"; return; }
-
-      // 네이트온 단축 양식 (기존 buildNateonPreviewText 동일)
-      const shortLine = buildNateonPreviewText({ assignee, date, time, company, address, people });
-
-      // 전체 양식 (기존 buildFullCopyText 동일)
-      const fullLines = [
-        `섭외자 : ${assignee}`,
-        `섭외 : ${($("scheduleType")||{}).value||"교육섭외"}`,
-        `날짜 : ${date}`,
-        `시간 : ${normalizeManualTime(time)}`,
-        `업체 : ${company}`,
-        `주소 : ${address}`,
-        `키맨 : ${manager}`,
-        `번호 : ${formatPhone(phone)}`,
-        `인원 : ${people}`,
-        `연령대 : ${age}`,
-        `교육과목 : ${subject}`,
-      ];
-      if(memo) fullLines.push(`특이사항 : ${memo}`);
-
-      preview.textContent = `▶ 네이트온 단축\n${shortLine}\n\n▶ 전체 양식\n${fullLines.join("\n")}`;
+      // 기존 buildNateonPreviewText 와 동일: 업체/인원/날짜(MM-DD)/시간/주소(앞3단어)/섭외자
+      preview.textContent = buildNateonPreviewText({ assignee, date, time, company, address, people });
     }
 
     function copySchedModalNateon(){
       const preview = $("schedNateonPreview");
       if(!preview || preview.textContent === "—") return alert("먼저 업체명이나 날짜를 입력해 주세요.");
-      // 전체 양식만 복사 (▶ 전체 양식 이후 내용)
-      const full = preview.textContent.split("▶ 전체 양식\n")[1] || preview.textContent;
-      safeCopy(full.trim());
+      safeCopy(preview.textContent.trim());
       alert("✅ 네이트온 양식이 복사되었습니다!");
     }
 
@@ -3169,8 +3142,7 @@
       const el = $("schedNateonPreview");
       const value = el ? el.textContent.trim() : "";
       if(!value || value === "—") return alert("복사할 네이트온 양식이 없습니다.");
-      const full = value.split("▶ 전체 양식\n")[1] || value;
-      safeCopy(full.trim());
+      safeCopy(value);
     }
 
     function renderSchedules(){
@@ -5695,7 +5667,7 @@
           <input id="scheduleSubject" class="full" placeholder="교육과목">
           <textarea id="scheduleMemo" class="full" placeholder="특이사항"></textarea>
         </div>
-        <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;">네이트온 양식 미리보기</div>
+        <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;">네이트온 양식 (업체/인원/날짜/시간/주소/섭외자)</div>
         <div class="sched-modal-nateon" id="schedNateonPreview">—</div>
       </div>
       <div class="sched-modal-footer">
