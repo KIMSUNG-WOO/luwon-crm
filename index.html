@@ -852,7 +852,8 @@
       .calendar-cell{ min-height:38px; }
     }
 
-    .mob-mode-wrap{ display:none; }
+    /* PC에서는 모바일 모드토글 숨김 */
+    @media(min-width:769px){ .mob-mode-wrap{ display:none!important; } }
 
     /* ── EDU BADGES ── */
     .edu-pass{
@@ -2741,7 +2742,9 @@
       if(!state.currentUser || state.currentUser.staffNo !== ADMIN_JIJUMJANG_NO) return;
       state.currentMode = mode;
       hydrateUserUI();
+      renderAll();
       setView("home");
+      closeMobMenu();
     }
 
     function isAdminMode(){
