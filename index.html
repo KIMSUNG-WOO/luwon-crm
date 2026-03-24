@@ -694,7 +694,7 @@
     @media(max-width:768px){
 
       /* ① 레이아웃 */
-      .dashboard{ display:block!important; padding-top:56px; }
+      .dashboard{ padding-top:56px; }
       .topbar{ display:none; }
       .top-actions{ display:none; }
       .main{ padding:10px; gap:8px; min-height:calc(100vh - 56px); overflow-x:hidden; }
@@ -2483,7 +2483,7 @@
             state.currentUser = user;
             state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
             $("loginPage").style.display = "none";
-            $("dashboard").style.display = "grid";
+            $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
             hydrateUserUI();
             renderAll();
             const savedView = (() => { try{ return localStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
@@ -2655,7 +2655,7 @@
       try{ localStorage.setItem("luwon_auth", JSON.stringify({ staffNo:user.staffNo, password:user.password })); }catch(e){}
 
       $("loginPage").style.display = "none";
-      $("dashboard").style.display = "grid";
+      $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
 
       hydrateUserUI();
       renderAll();
