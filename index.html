@@ -683,6 +683,31 @@
     .mob-header{ display:none; }
     .mob-overlay{ display:none; }
 
+    /* ── 쪽지함 스타일 ── */
+    .msg-icon-btn{width:100%;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06);color:#94a3b8;font-size:12px;font-weight:700;
+      cursor:pointer;transition:all .2s;position:relative;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .msg-icon-btn:hover{background:rgba(255,255,255,.12);color:#f1f5f9;}
+    .msg-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;
+      background:#ef4444;color:#fff;font-size:10px;font-weight:900;
+      display:inline-flex;align-items:center;justify-content:center;padding:0 4px;}
+    .msg-panel{position:absolute;bottom:44px;left:0;right:0;z-index:2000;
+      background:var(--panel);border:1.5px solid var(--line);border-radius:16px;
+      box-shadow:0 8px 32px rgba(0,0,0,.25);min-width:280px;max-width:320px;}
+    .msg-panel-head{display:flex;justify-content:space-between;align-items:center;
+      padding:14px 16px 10px;border-bottom:1px solid var(--line);}
+    .msg-action-btn{height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line);
+      background:var(--bg);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;}
+    .msg-action-btn:hover{color:var(--text);}
+    .msg-item{padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .15s;}
+    .msg-item:hover{background:rgba(59,130,246,.06);}
+    .msg-item:last-child{border-bottom:none;}
+    .msg-item.msg-read{opacity:.55;}
+    .msg-item-head{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+    .msg-type-icon{font-size:13px;flex-shrink:0;}
+    .msg-title{flex:1;font-size:12px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .msg-time{font-size:10px;color:var(--muted);flex-shrink:0;}
+    .msg-body{font-size:11px;color:var(--muted);line-height:1.5;white-space:pre-line;margin-left:19px;}
     /* ── RESPONSIVE ── */
     @media(max-width:1320px){
       .summary-grid{grid-template-columns:repeat(2,1fr)}
@@ -1462,8 +1487,22 @@
       </div>
 
       <div class="menu" id="menuBox"></div>
-      <div class="crm-push-wrap">
-        <button class="crm-push-btn" id="crmPushBtn" onclick="crmSubscribePush()">🔔 알림 구독하기</button>
+      <!-- 쪽지함 버튼 + 패널 -->
+      <div class="msg-wrap" style="padding:8px 16px 4px;position:relative;">
+        <button class="msg-icon-btn" onclick="msgTogglePanel()">
+          📬 쪽지함
+          <span class="msg-badge" id="msgBadge" style="display:none;"></span>
+        </button>
+        <div class="msg-panel hidden" id="msgPanel">
+          <div class="msg-panel-head">
+            <span style="font-weight:800;font-size:14px;">📬 쪽지함</span>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button class="msg-action-btn" onclick="msgMarkAllRead()">전체 읽음</button>
+              <button class="msg-action-btn" onclick="msgClosePanel()">✕</button>
+            </div>
+          </div>
+          <div id="msgListBody" style="max-height:320px;overflow-y:auto;"></div>
+        </div>
       </div>
       <button class="logout" onclick="logout()">로그아웃</button>
     </aside>
@@ -1905,6 +1944,7 @@
             <table style="font-size:12px;">
               <thead>
                 <tr>
+                  <th style="width:36px;text-align:center;color:var(--muted);font-size:11px;">#</th>
                   <th id="leadChkTh" class="hidden" style="width:32px;"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
                   <th>사업장</th>
                   <th>주소</th>
@@ -1998,6 +2038,7 @@
             <button class="tab-btn" id="settingsTabSystem" onclick="setSettingsTab('system')">시스템</button>
             <button class="tab-btn" id="settingsTabGoal" onclick="setSettingsTab('goal')">목표 설정</button>
             <button class="tab-btn" id="settingsTabLog" onclick="setSettingsTab('log')">활동 로그</button>
+            <button class="tab-btn" id="settingsTabMsg" onclick="setSettingsTab('msg')">직원 쪽지</button>
           </div>
 
           <!-- ── 직원 / 사번 탭 ── -->
@@ -2274,6 +2315,39 @@
                 <button class="ghost-btn" style="font-size:12px;height:32px;padding:0 12px;" onclick="crmClearLogs()">로그 초기화</button>
               </div>
               <div id="crmLogListBox"><div class="empty">활동 로그가 없습니다.</div></div>
+            </div>
+          </div>
+
+          <!-- 직원 쪽지 탭 패널 -->
+          <div id="settingsPaneMsg" class="hidden">
+            <div class="panel" style="margin-bottom:16px;">
+              <h5 style="margin:0 0 6px;font-size:15px;">✉️ 직원 쪽지 발송</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">개별 또는 전체 직원에게 쪽지를 발송합니다.</p>
+              <div class="form-grid">
+                <select id="msgAdminToNo" style="height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;">
+                  <option value="all">📢 전체 직원</option>
+                </select>
+                <input id="msgAdminTitle" placeholder="쪽지 제목">
+              </div>
+              <div style="margin-top:10px;">
+                <textarea id="msgAdminBody" placeholder="쪽지 내용 (선택)" rows="3"
+                  style="width:100%;border:1px solid var(--line);border-radius:14px;padding:12px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+              </div>
+              <div style="text-align:right;margin-top:10px;">
+                <button class="small-btn" onclick="msgAdminSend()">📨 쪽지 발송</button>
+              </div>
+            </div>
+            <div class="panel">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h5 style="font-size:15px;">📋 쪽지 발송 이력</h5>
+                <button class="ghost-btn" style="font-size:12px;height:32px;padding:0 12px;" onclick="msgAdminViewAll()">조회</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>수신자</th><th>제목</th><th>내용</th><th>읽음</th><th>발송시각</th></tr></thead>
+                  <tbody id="msgAdminTableBody"><tr><td colspan="5"><div class="empty">조회 버튼을 눌러주세요.</div></td></tr></tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -2728,6 +2802,10 @@
 
     // 단가 / 수익 설정 - 직원별 { [staffNo]: { edu, sanjo, health, insurance } }
     let paySettings = {};
+    // 직원별 월간 목표 { [staffNo]: { calls, scheds } }
+    let staffGoals = {};
+    // 활동 로그 (최대 200건)
+    let activityLogs = [];
 
     // ─── 앱 데이터 localStorage 저장/복원 ───
     const APP_DATA_KEY = "luwon_app_data";
@@ -3008,6 +3086,8 @@
       renderAll();
       setView("home");
       loadData();
+      // 쪽지함 초기화 (로그인 후)
+      setTimeout(() => { try{ msgInit(); }catch(e){} }, 1200);
     }
 
     function logout(){
@@ -4125,12 +4205,14 @@
         const hasMemo = !!(l.memo && l.memo.trim());
         const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})">${hasMemo?"📝 메모":"메모"}</button></td>`;
 
+        const rowNum = start + rows.indexOf(l) + 1;
+        const numCell = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;">${rowNum}</td>`;
         const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>`;
         const actionCell = admin
           ? `<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`
           : "";
 
-        return `<tr>${chkCell}<td>${escapeHtml(l.company||"")}</td><td>${addrCell}</td><td>${escapeHtml(l.manager||"")}</td><td>${escapeHtml(l.repName||"")}</td><td>${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td>${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
+        return `<tr>${numCell}${chkCell}<td>${escapeHtml(l.company||"")}</td><td>${addrCell}</td><td>${escapeHtml(l.manager||"")}</td><td>${escapeHtml(l.repName||"")}</td><td>${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td>${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
       }).join("");
 
       body.innerHTML = html;  // DOM 업데이트 1회만
@@ -6499,8 +6581,6 @@
     /* ══════════════════════════════════════════════════════════
        [추가] 기능 5: 직원별 월간 목표 설정
     ══════════════════════════════════════════════════════════ */
-    // { [staffNo]: { calls: 숫자, scheds: 숫자 } }
-    let staffGoals = {};
 
     function crmRefreshGoalStaffDropdown(){
       const sel = $("crmGoalStaffSelect");
@@ -6604,7 +6684,6 @@
     /* ══════════════════════════════════════════════════════════
        [추가] 기능 6: 활동 로그
     ══════════════════════════════════════════════════════════ */
-    let activityLogs = [];
 
     function crmAddLog(level, action, detail){
       // level: "info" | "ok" | "warn" | "danger"
@@ -6769,13 +6848,26 @@
         const goalTabEl  = $("settingsTabGoal");
         const logTabEl   = $("settingsTabLog");
 
+        const msgPaneEl = $("settingsPaneMsg");
+        const msgTabEl  = $("settingsTabMsg");
+
         if(goalPaneEl) goalPaneEl.classList.toggle("hidden", tab !== "goal");
         if(logPaneEl)  logPaneEl.classList.toggle("hidden",  tab !== "log");
+        if(msgPaneEl)  msgPaneEl.classList.toggle("hidden",  tab !== "msg");
         if(goalTabEl)  goalTabEl.classList.toggle("active",  tab === "goal");
         if(logTabEl)   logTabEl.classList.toggle("active",   tab === "log");
+        if(msgTabEl)   msgTabEl.classList.toggle("active",   tab === "msg");
 
         if(tab === "goal"){ crmRefreshGoalStaffDropdown(); crmRenderGoalTable(); }
         if(tab === "log")  crmRenderLogs();
+        if(tab === "msg"){
+          // 수신자 드롭다운 갱신
+          const sel = $("msgAdminToNo");
+          if(sel){
+            sel.innerHTML = `<option value="all">📢 전체 직원</option>` +
+              staffs.map(s=>`<option value="${escapeHtml(s.no)}">${escapeHtml(s.name)}</option>`).join("");
+          }
+        }
       };
     })();
 
@@ -6892,114 +6984,281 @@
     crmApplyDarkMode();
 
     /* ══════════════════════════════════════════════════════════
-       🔔 푸시 알림 시스템 (Web Push + VAPID)
+       📬 쪽지함 시스템 (내부 메시지)
     ══════════════════════════════════════════════════════════ */
-    const PUSH_VAPID_PUBLIC = "BLfltotdiwpBUnIJAPEbsFomb6c1hRzTTBvdp8a6B2Q7jlgnLrOYh-1Q56izt828GILICvzJRxTSDt2gu2lsYmE";
 
-    // Base64url → Uint8Array 변환
-    function urlBase64ToUint8Array(base64String){
-      const padding = "=".repeat((4 - base64String.length % 4) % 4);
-      const base64  = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-      const raw     = atob(base64);
-      return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+    // 쪽지 데이터 (Supabase messages 테이블과 동기화)
+    let msgList = [];
+    let msgLastChecked = null; // 마지막 로그인 시 공지 체크 시간
+
+    // ── 쪽지함 초기화 (로그인 후 호출) ──
+    async function msgInit(){
+      await msgLoadFromDB();
+      msgRenderBadge();
+      msgScheduleEducationCheck();
     }
 
-    // 서비스워커 등록
-    async function crmRegisterSW(){
-      if(!("serviceWorker" in navigator)) return null;
+    // ── DB에서 내 쪽지 로드 ──
+    async function msgLoadFromDB(){
+      const user = state.currentUser;
+      if(!user) return;
       try{
-        const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-        return reg;
-      } catch(e){
-        // GitHub Pages 서브경로 시도
-        try{
-          const reg = await navigator.serviceWorker.register("sw.js");
-          return reg;
-        } catch(e2){ return null; }
-      }
+        const { data, error } = await sbClient
+          .from("messages")
+          .select("*")
+          .eq("to_staff_no", user.staffNo)
+          .order("created_at", { ascending: false })
+          .limit(100);
+        if(error) throw error;
+        msgList = data || [];
+      } catch(e){ console.warn("쪽지 로드 오류:", e.message); }
     }
 
-    // 푸시 알림 구독
-    async function crmSubscribePush(){
-      if(!("Notification" in window)) return alert("이 브라우저는 푸시 알림을 지원하지 않습니다.");
-      const perm = await Notification.requestPermission();
-      if(perm !== "granted") return alert("알림 권한이 거부되었습니다.\n설정에서 허용해 주세요.");
-      const reg = await crmRegisterSW();
-      if(!reg) return alert("서비스워커 등록에 실패했습니다.");
+    // ── 쪽지 배지 업데이트 ──
+    function msgRenderBadge(){
+      const unread = msgList.filter(m => !m.is_read).length;
+      const badge = $("msgBadge");
+      if(!badge) return;
+      badge.textContent = unread > 0 ? (unread > 99 ? "99+" : String(unread)) : "";
+      badge.style.display = unread > 0 ? "inline-flex" : "none";
+    }
+
+    // ── 쪽지함 패널 열기/닫기 ──
+    function msgTogglePanel(){
+      const panel = $("msgPanel");
+      if(!panel) return;
+      const isOpen = !panel.classList.contains("hidden");
+      if(isOpen){ panel.classList.add("hidden"); return; }
+      panel.classList.remove("hidden");
+      msgRenderPanel();
+    }
+
+    function msgClosePanel(){
+      const panel = $("msgPanel");
+      if(panel) panel.classList.add("hidden");
+    }
+
+    // ── 쪽지 목록 렌더링 ──
+    function msgRenderPanel(){
+      const list = $("msgListBody");
+      if(!list) return;
+      if(!msgList.length){
+        list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">📭 쪽지가 없습니다.</div>`;
+        return;
+      }
+      list.innerHTML = msgList.map(m => {
+        const isRead = m.is_read;
+        const dt = m.created_at ? new Date(m.created_at).toLocaleString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
+        const typeIcon = { notice:"📢", schedule:"📅", education:"🎓", general:"✉️" }[m.type] || "✉️";
+        return `<div class="msg-item ${isRead?"msg-read":""}" onclick="msgMarkRead(${m.id})">
+          <div class="msg-item-head">
+            <span class="msg-type-icon">${typeIcon}</span>
+            <span class="msg-title">${escapeHtml(m.title||"")}</span>
+            <span class="msg-time">${dt}</span>
+          </div>
+          ${m.body ? `<div class="msg-body">${escapeHtml(m.body)}</div>` : ""}
+        </div>`;
+      }).join("");
+    }
+
+    // ── 쪽지 읽음 처리 ──
+    async function msgMarkRead(id){
+      const m = msgList.find(x => x.id === id);
+      if(!m || m.is_read) return;
+      m.is_read = true;
+      msgRenderPanel();
+      msgRenderBadge();
       try{
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC)
-        });
-        // Supabase에 구독 정보 저장
-        const user = state.currentUser;
-        const subJson = sub.toJSON();
-        await sbClient.from("push_subscriptions").upsert({
-          staff_no:  user?.staffNo || "unknown",
-          staff_name: user?.name   || "unknown",
-          endpoint:  subJson.endpoint,
-          p256dh:    subJson.keys?.p256dh   || "",
-          auth:      subJson.keys?.auth     || "",
-          updated_at: new Date().toISOString()
-        }, { onConflict: "endpoint" });
-        alert("✅ 푸시 알림 구독 완료!\n새 공지나 중요 알림이 오면 알려드립니다.");
-        crmAddLog("ok", "푸시 알림 구독", user?.name || "");
-        crmUpdatePushBtn();
-      } catch(e){
-        alert("구독 오류: " + e.message);
-      }
-    }
-
-    // 푸시 알림 구독 해제
-    async function crmUnsubscribePush(){
-      if(!confirm("푸시 알림 구독을 해제할까요?")) return;
-      const reg = await crmRegisterSW();
-      if(!reg) return;
-      const sub = await reg.pushManager.getSubscription();
-      if(sub){
-        await sbClient.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
-        await sub.unsubscribe();
-      }
-      alert("알림 구독이 해제되었습니다.");
-      crmUpdatePushBtn();
-    }
-
-    // 구독 버튼 상태 업데이트
-    async function crmUpdatePushBtn(){
-      const btn = $("crmPushBtn");
-      if(!btn || !("serviceWorker" in navigator)) return;
-      try{
-        const reg = await navigator.serviceWorker.getRegistration();
-        if(!reg){ btn.textContent = "🔔 알림 구독하기"; btn.onclick = crmSubscribePush; return; }
-        const sub = await reg.pushManager.getSubscription();
-        if(sub){ btn.textContent = "🔕 알림 구독 해제"; btn.onclick = crmUnsubscribePush; }
-        else   { btn.textContent = "🔔 알림 구독하기";  btn.onclick = crmSubscribePush;   }
+        await sbClient.from("messages").update({ is_read: true }).eq("id", id);
       } catch(e){}
     }
 
-    // 공지 등록 시 푸시 발송 (관리자 → 전직원)
-    async function crmSendPushToAll(title, body){
-      if(!isAdminMode()) return;
+    // ── 전체 읽음 처리 ──
+    async function msgMarkAllRead(){
+      const unreadIds = msgList.filter(m=>!m.is_read).map(m=>m.id);
+      if(!unreadIds.length) return;
+      msgList.forEach(m=>{ m.is_read = true; });
+      msgRenderPanel();
+      msgRenderBadge();
       try{
-        await sbClient.functions.invoke("send-push", { body: { title, body } });
-      } catch(e){ console.warn("푸시 발송 오류:", e.message); }
+        await sbClient.from("messages").update({ is_read: true }).in("id", unreadIds);
+      } catch(e){}
     }
 
-    // 초기화: SW 등록 + 버튼 상태 반영
-    window.addEventListener("load", () => {
-      if("serviceWorker" in navigator) crmRegisterSW();
-      setTimeout(crmUpdatePushBtn, 1500);
-    });
-  </script>
+    // ── 쪽지 생성 (DB 저장) ──
+    async function msgSend({ toStaffNo, title, body="", type="general", fromStaffNo=null }){
+      try{
+        const { data, error } = await sbClient.from("messages").insert({
+          to_staff_no:   toStaffNo,
+          from_staff_no: fromStaffNo,
+          title, body, type,
+          is_read: false
+        }).select().single();
+        if(error) throw error;
+        // 본인 쪽지면 로컬에도 추가
+        if(state.currentUser && toStaffNo === state.currentUser.staffNo){
+          msgList.unshift(data);
+          msgRenderBadge();
+        }
+        return data;
+      } catch(e){ console.warn("쪽지 발송 오류:", e.message); return null; }
+    }
 
-  <!-- 푸시 알림 구독 버튼 (사이드바 하단) -->
-  <style>
-    .crm-push-wrap{ padding:10px 16px 4px; }
-    .crm-push-btn{ width:100%; height:36px; border-radius:10px; border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.06); color:#94a3b8; font-size:12px; font-weight:700;
-      cursor:pointer; transition:all .2s; }
-    .crm-push-btn:hover{ background:rgba(255,255,255,.12); color:#f1f5f9; }
-  </style>
+    // ── 전체 직원 쪽지 발송 (관리자) ──
+    async function msgSendToAll({ title, body="", type="general" }){
+      if(!isAdminMode()) return;
+      const allNos = staffs.map(s => s.no).filter(Boolean);
+      for(const no of allNos){
+        await msgSend({ toStaffNo: no, title, body, type, fromStaffNo: state.currentUser?.staffNo });
+      }
+      crmAddLog("ok", "전체 쪽지 발송", title);
+    }
+
+    // ── 로그인 시 자동 쪽지 ──
+    async function msgAutoOnLogin(){
+      const user = state.currentUser;
+      if(!user) return;
+      const today = todayStr();
+      const tomorrow = (() => { const d=new Date(); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); })();
+
+      // 1. 익일 일정 쪽지
+      const myTomSchs = schedules.filter(s => s.date === tomorrow &&
+        (s.ownerNo === user.staffNo || s.ownerName === user.name || s.assignee === user.name));
+      if(myTomSchs.length > 0){
+        // 오늘 이미 발송한 쪽지가 있는지 확인
+        const alreadySent = msgList.some(m =>
+          m.type === "schedule" && m.title.includes("익일") &&
+          (m.created_at || "").slice(0,10) === today
+        );
+        if(!alreadySent){
+          await msgSend({
+            toStaffNo: user.staffNo,
+            title: `📅 내일 일정 ${myTomSchs.length}건 있습니다`,
+            body: myTomSchs.map(s=>`${s.time||""} ${s.company||""}`).join("\n"),
+            type: "schedule"
+          });
+        }
+      }
+
+      // 2. 신규 공지 쪽지 (마지막 로그인 이후)
+      const lastLogin = localStorage.getItem("luwon_last_login_" + user.staffNo) || "2000-01-01";
+      const newNotices = notices.filter(n => {
+        const id = n.id || 0;
+        return String(id) > lastLogin;
+      });
+      // 시간 기반으로 비교하기 위해 notices에 createdAt이 있으면 사용
+      const recentNotices = notices.filter(n =>
+        !msgList.some(m => m.type==="notice" && m.title.includes(n.title||""))
+      ).slice(0, 3);
+      for(const n of recentNotices){
+        const alreadySent = msgList.some(m=>m.type==="notice" && m.title.includes(n.title||""));
+        if(!alreadySent){
+          await msgSend({
+            toStaffNo: user.staffNo,
+            title: `📢 공지: ${n.title}`,
+            body: (n.body||"").slice(0,100),
+            type: "notice"
+          });
+          break; // 한 번에 1건만
+        }
+      }
+      localStorage.setItem("luwon_last_login_" + user.staffNo, Date.now().toString());
+    }
+
+    // ── 교육 1시간 전 알림 체크 (반복 실행) ──
+    function msgScheduleEducationCheck(){
+      function check(){
+        const user = state.currentUser;
+        if(!user) return;
+        const now = new Date();
+        const todayDate = now.toISOString().slice(0,10);
+        const myTodaySchs = schedules.filter(s =>
+          s.date === todayDate &&
+          (s.ownerNo === user.staffNo || s.ownerName === user.name || s.assignee === user.name)
+        );
+        for(const s of myTodaySchs){
+          if(!s.time) continue;
+          // 시간 파싱 (예: "1000", "10:00", "1700")
+          const rawTime = String(s.time).replace(":","");
+          if(rawTime.length < 3) continue;
+          const hh = parseInt(rawTime.slice(0,-2), 10);
+          const mm = parseInt(rawTime.slice(-2), 10);
+          const schedDt = new Date(todayDate);
+          schedDt.setHours(hh, mm, 0, 0);
+          const diffMin = (schedDt - now) / 60000;
+          // 55~65분 전 구간
+          if(diffMin >= 55 && diffMin <= 65){
+            const alreadySent = msgList.some(m =>
+              m.type==="education" &&
+              m.title.includes(s.company||"") &&
+              (m.created_at||"").slice(0,10) === todayDate
+            );
+            if(!alreadySent){
+              msgSend({
+                toStaffNo: user.staffNo,
+                title: `🎓 1시간 후 교육: ${s.company||""}`,
+                body: `${s.time} ${s.address||""}`,
+                type: "education"
+              });
+            }
+          }
+        }
+      }
+      // 1분마다 체크
+      setInterval(check, 60000);
+    }
+
+    // ── 관리자 직원 쪽지 전송 ──
+    async function msgAdminSend(){
+      if(!isAdminMode()) return;
+      const toNo    = ($("msgAdminToNo")||{}).value || "";
+      const title   = ($("msgAdminTitle")||{}).value.trim();
+      const body    = ($("msgAdminBody")||{}).value.trim();
+      if(!title) return alert("제목을 입력해 주세요.");
+      if(toNo === "all"){
+        if(!confirm(`전체 직원(${staffs.length}명)에게 쪽지를 보낼까요?`)) return;
+        await msgSendToAll({ title, body, type: "general" });
+      } else {
+        if(!toNo) return alert("수신자를 선택해 주세요.");
+        await msgSend({ toStaffNo: toNo, title, body, type: "general", fromStaffNo: state.currentUser?.staffNo });
+      }
+      if($("msgAdminTitle")) $("msgAdminTitle").value = "";
+      if($("msgAdminBody"))  $("msgAdminBody").value  = "";
+      alert("✅ 쪽지 발송 완료!");
+    }
+
+    // ── 관리자 수신 확인 (직원별 읽음 여부) ──
+    async function msgAdminViewAll(){
+      const tbody = $("msgAdminTableBody");
+      if(!tbody) return;
+      try{
+        const { data, error } = await sbClient.from("messages")
+          .select("*").order("created_at", { ascending: false }).limit(200);
+        if(error) throw error;
+        if(!data || !data.length){
+          tbody.innerHTML = `<tr><td colspan="5"><div class="empty">발송된 쪽지가 없습니다.</div></td></tr>`;
+          return;
+        }
+        tbody.innerHTML = data.map(m => {
+          const s = staffs.find(x => x.no === m.to_staff_no);
+          const dt = m.created_at ? new Date(m.created_at).toLocaleString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
+          return `<tr>
+            <td>${escapeHtml(s?.name||m.to_staff_no)}</td>
+            <td>${escapeHtml(m.title||"")}</td>
+            <td>${escapeHtml((m.body||"").slice(0,30))}</td>
+            <td><span style="color:${m.is_read?"#059669":"#dc2626"};font-weight:700;">${m.is_read?"✅읽음":"⏳안읽음"}</span></td>
+            <td>${dt}</td>
+          </tr>`;
+        }).join("");
+      } catch(e){ console.warn("쪽지 조회 오류:", e.message); }
+    }
+
+    // ── 공지 등록 시 전직원 쪽지 발송 ──
+    async function crmSendPushToAll(title, body){
+      // Web Push 제거 → 내부 쪽지로 대체
+      await msgSendToAll({ title, body: body||"", type: "notice" });
+    }
+  </script>
 
   <!-- ── 홈 카드 상세 팝업 ── -->
   <div class="sched-modal-overlay" id="homeDetailOverlay" onclick="if(event.target===this)closeHomeDetail()">
