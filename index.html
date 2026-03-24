@@ -1501,6 +1501,7 @@
               <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" class="hidden" onchange="parseExcelFile(this)">
               <button id="btnDeleteAll" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteAllLeads()">🗑 전체삭제</button>
               <button id="btnDeleteSel" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteSelectedLeads()">☑ 선택삭제</button>
+              <button id="btnMarkEdu" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #bbf7d0;background:#f0fdf4;color:#15803d;font-size:13px;font-weight:800;cursor:pointer;" onclick="markSelectedAsCompleted()">✅ 선택 교육이수처리</button>
             </div>
           </div>
 
@@ -2162,7 +2163,7 @@
   <script>
     // ── Supabase 초기화 ──────────────────────────────────────
     const SUPABASE_URL = "https://cbcbuensicssiyobfuuf.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_GDyS-wfgvdMXGnpfmLywGw__aTuCBzd";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiY2J1ZW5zaWNzc2l5b2JmdXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODc1MzEsImV4cCI6MjA4OTc2MzUzMX0.Bg1ioGO0K2KhVS3nKMhs_8gcrPRGnIJyU2PbFzOQtxo";
     const { createClient } = window.supabase;
     const sbClient = createClient(SUPABASE_URL, SUPABASE_KEY);
     // ─────────────────────────────────────────────────────────
@@ -2348,25 +2349,39 @@
       }catch(e){ console.warn("직원 삭제 오류:", e.message); }
     }
 
-    // ─── 앱 초기화 (Supabase 직원 로드 → 세션 복원) ───
+    // ─── 앱 초기화 (세션 즉시 복원 → Supabase 백그라운드 동기화) ───
     async function initApp(){
       try{ loadAppData(); }catch(e){}          // 1. localStorage 캐시
-      try{ await loadStaffFromSupabase(); }catch(e){ console.warn("Supabase 초기화 실패, 로컬 데이터로 진행:", e); }  // 2. Supabase 병합 (실패해도 로컬로 진행)
+
+      // 2. 세션 먼저 복원 → 로그인 화면 플래시 없음
       try{
         const saved = localStorage.getItem("luwon_auth");
-        if(!saved) return;
-        const { staffNo, password } = JSON.parse(saved);
-        const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
-        if(!user){ localStorage.removeItem("luwon_auth"); return; }
-        state.currentUser = user;
-        state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
-        $("loginPage").style.display = "none";
-        $("dashboard").style.display = "grid";
-        hydrateUserUI();
-        renderAll();
-        setView("home");
-        loadData();
+        if(saved){
+          const { staffNo, password } = JSON.parse(saved);
+          const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+          if(user){
+            state.currentUser = user;
+            state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
+            $("loginPage").style.display = "none";
+            $("dashboard").style.display = "grid";
+            hydrateUserUI();
+            renderAll();
+            const savedView = (() => { try{ return localStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
+            const safeView = (!isAdminMode() && ["staff","settings","progress"].includes(savedView)) ? "home" : savedView;
+            setView(safeView);
+          } else {
+            localStorage.removeItem("luwon_auth");
+          }
+        }
       }catch(e){ try{ localStorage.removeItem("luwon_auth"); }catch(_){} }
+
+      // 3. Supabase 직원 동기화 (백그라운드)
+      try{ await loadStaffFromSupabase(); }catch(e){ console.warn("Supabase 초기화 실패, 로컬 데이터로 진행:", e); }
+
+      // 4. DB 데이터 로드 (로그인 상태일 때만)
+      if(state.currentUser){
+        try{ loadData(); }catch(e){}
+      }
     }
 
     function $(id){ return document.getElementById(id); }
@@ -2486,25 +2501,30 @@
       if(!staffNo)  return showMsg("사번을 입력해 주세요.", "error");
       if(!password) return showMsg("비밀번호를 입력해 주세요.", "error");
 
-      // 1. 로컬 캐시에서 먼저 확인
-      let user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+      showMsg("로그인 중...", "info");
 
-      // 2. 로컬에 없으면 Supabase에서 직접 확인 (캐시 미스 대응)
+      // 1. Supabase에서 직접 확인 (항상 최신 데이터 기준)
+      let user = null;
+      try{
+        const { data, error } = await sbClient.from("staff_accounts")
+          .select("*").eq("staff_no", staffNo).eq("password", password).maybeSingle();
+        if(!error && data){
+          user = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch };
+          // 로컬 배열 동기화
+          const idx = authUsers.findIndex(u => u.staffNo === user.staffNo);
+          if(idx >= 0) authUsers[idx] = user;
+          else authUsers.unshift(user);
+          const si = staffs.findIndex(s => s.no === data.staff_no);
+          if(si >= 0){ staffs[si].rank = data.rank; staffs[si].name = data.name; }
+          else staffs.unshift({ name:data.name, no:data.staff_no, role:data.role, branch:data.branch, rank:data.rank||"대리" });
+          staffRanks[data.staff_no] = data.rank || "대리";
+          saveAppData();
+        }
+      }catch(e){ console.warn("Supabase 로그인 확인 실패:", e.message); }
+
+      // 2. Supabase 실패 시 로컬 캐시에서 확인
       if(!user){
-        try{
-          const { data, error } = await sbClient.from("staff_accounts")
-            .select("*").eq("staff_no", staffNo).eq("password", password).maybeSingle();
-          if(!error && data){
-            user = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch };
-            // 로컬 배열에도 추가
-            if(!authUsers.find(u => u.staffNo === user.staffNo)){
-              authUsers.unshift(user);
-              staffs.unshift({ name:data.name, no:data.staff_no, role:data.role, branch:data.branch, rank:data.rank });
-              staffRanks[data.staff_no] = data.rank;
-              saveAppData();
-            }
-          }
-        }catch(e){}
+        user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
       }
 
       if(!user) return showMsg("사번 또는 비밀번호가 틀렸습니다.", "error");
@@ -2528,6 +2548,7 @@
       state.currentMode = "staff";
       state.currentView = "home";
       try{ localStorage.removeItem("luwon_auth"); }catch(e){}
+      try{ localStorage.removeItem("luwon_view"); }catch(e){}
       $("dashboard").style.display = "none";
       $("loginPage").style.display = "grid";
       $("staffId").value = "";
@@ -2677,6 +2698,7 @@
       if(view === "progress" && !isAdminMode()) return;
 
       state.currentView = view;
+      try{ localStorage.setItem("luwon_view", view); }catch(e){}
       renderMenu();
 
       document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
@@ -3468,6 +3490,7 @@
       if(chkTh) chkTh.classList.remove("hidden");
       if($("btnDeleteAll")) $("btnDeleteAll").classList.toggle("hidden", !admin);
       if($("btnDeleteSel")) $("btnDeleteSel").classList.toggle("hidden", !admin);
+      if($("btnMarkEdu"))   $("btnMarkEdu").classList.toggle("hidden", !admin);
 
       if(!rows.length){
         body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없습니다.</div></td></tr>`;
@@ -3485,10 +3508,10 @@
           ? `<span class="addr-link" onclick="openNaverMap(${addrIdx})">${escapeHtml(l.address)}</span>`
           : "";
 
-        // 점검제외 체크
+        // 점검제외 체크 — 관리자는 DB탭에서 텍스트만 표시 (규칙 관리는 관리자설정에서만)
         const allowed = isCompanyAllowed(l.company);
         const statusCell = admin
-          ? `<button class="edu-toggle-btn ${sc}" onclick="toggleLeadStatus(${l.id})">${escapeHtml(l.status || "미지정")}</button>`
+          ? `<span class="edu-toggle-btn ${sc}" style="cursor:default;">${escapeHtml(l.status || "미지정")}</span>`
           : l.status === "점검제외처리"
             ? allowed
               ? `<button class="edu-toggle-btn edu-fail" onclick="staffToggleLeadStatus(${l.id})" title="점검제외 처리">${escapeHtml(l.status)}</button>`
@@ -3754,51 +3777,52 @@
           .order("created_at", { ascending: false });
 
         if(error) throw error;
-        if(!data || !data.length) return;
 
-        // DB 데이터 → leads 배열로 변환 (중복 방지: id 기준)
-        const existingIds = new Set(leads.map(l => String(l.id)));
-        data.forEach(row => {
-          if(existingIds.has(String(row.id))) return;
-          leads.push({
-            id:        row.id,
-            type:      row.type || "교육섭외",
-            date:      row.date || "",
-            time:      row.time || "",
-            company:   row.company || "",
-            address:   row.address || "",
-            manager:   row.manager || "",
-            repName:   row.rep_name || "",
-            phone:     row.phone || "",
-            people:    row.people || "",
-            age:       row.age_group || "",
-            subject:   row.subject || "",
-            industry:  row.industry || "",
-            status:    row.status || "",
-            ownerNo:    row.staff_no || "",
-            ownerName:  row.staff_name || "",
-            memo:       row.memo || "",
-            result:     row.result || "",
-            resultDate: row.result_date || "",
-            resultTime: row.result_time || "",
-            createdAt:  row.created_at ? row.created_at.slice(0,10) : todayStr()
-          });
-        });
+        // Supabase가 소스오브트루스 — 로컬 병합 없이 완전 교체
+        // 이렇게 해야 삭제된 항목이 새로고침 후 복원되지 않음
+        leads = (data || []).map(row => ({
+          id:        row.id,
+          type:      row.type || "교육섭외",
+          date:      row.date || "",
+          time:      row.time || "",
+          company:   row.company || "",
+          address:   row.address || "",
+          manager:   row.manager || "",
+          repName:   row.rep_name || "",
+          phone:     row.phone || "",
+          people:    row.people || "",
+          age:       row.age_group || "",
+          subject:   row.subject || "",
+          industry:  row.industry || "",
+          status:    row.status || "",
+          ownerNo:   row.staff_no || "",
+          ownerName: row.staff_name || "",
+          memo:      row.memo || "",
+          result:    row.result || "",
+          resultDate: row.result_date || "",
+          resultTime: row.result_time || "",
+          createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr()
+        }));
 
+        saveAppData(); // 최신 상태를 로컬에도 저장
         renderLeads();
         runHomeSummary();
         loadProgress();
       } catch(err){
         console.warn("Supabase loadData 오류:", err.message);
+        // 오류 시 localStorage 캐시 데이터 그대로 유지
       }
     }
 
     async function insertData(row){
       try{
+        // id 필드 제외 — GENERATED ALWAYS IDENTITY 컬럼이므로 Supabase가 자동 할당
         const { error } = await sbClient
           .from("education_db")
           .insert([{
             type:       row.type || "교육섭외",
+            date:       row.date || "",
+            time:       row.time || "",
             company:    row.company || "",
             address:    row.address || "",
             manager:    row.manager || "",
@@ -3813,6 +3837,8 @@
             staff_name: row.ownerName || ""
           }]);
         if(error) throw error;
+        // 단건 추가 후 Supabase ID로 동기화
+        await loadData();
       } catch(err){
         console.warn("Supabase insertData 오류:", err.message);
       }
@@ -3820,8 +3846,11 @@
 
     async function syncAfterUpload(rows){
       try{
+        // id 필드 제외 — GENERATED ALWAYS IDENTITY 컬럼이므로 Supabase가 자동 할당
         const inserts = rows.map(row => ({
           type:       row.type || "교육섭외",
+          date:       row.date || "",
+          time:       row.time || "",
           company:    row.company || "",
           address:    row.address || "",
           manager:    row.manager || "",
@@ -3837,6 +3866,8 @@
         }));
         const { error } = await sbClient.from("education_db").insert(inserts);
         if(error) throw error;
+        // 업로드 후 Supabase 실제 ID로 leads 동기화 → 이후 삭제 정상 동작
+        await loadData();
       } catch(err){
         console.warn("Supabase syncAfterUpload 오류:", err.message);
       }
@@ -3878,7 +3909,7 @@
       const targetStaffNo = targetAuthUser ? targetAuthUser.staffNo : targetStaffName;
 
       const reader = new FileReader();
-      reader.onload = function(e){
+      reader.onload = async function(e){
         try{
           const data = new Uint8Array(e.target.result);
           const wb = XLSX.read(data, { type:"array" });
@@ -3887,11 +3918,10 @@
 
           if(!rows.length) return alert("엑셀에 데이터가 없습니다.");
 
-          // 엑셀 행을 순서대로 수집 (2행이 테이블 첫줄)
+          // 엑셀 행을 순서대로 수집
           const newItems = [];
-          rows.forEach((row, idx) => {
+          rows.forEach((row) => {
             const item = {};
-            // 컬럼명 자동 매칭 (연락처2가 연락처1을 덮어씀)
             Object.keys(row).forEach(col => {
               const key = EXCEL_COL_MAP[col.trim()] || null;
               if(key) item[key] = String(row[col] || "").trim();
@@ -3899,15 +3929,14 @@
 
             if(!item.company) return; // 사업장명 없으면 스킵
 
-            // 자동 처리
-            item.phone    = item.phone || "";  // 정규화 없이 원본 유지
+            item.phone    = item.phone || "";
             item.status   = "점검제외처리";
             item.repName  = item.repName || "";
             item.ownerNo  = targetStaffNo;
             item.ownerName= targetStaffName;
             item.createdAt= todayStr();
-            item.id       = Date.now() + idx;
             item.type     = item.type || "교육섭외";
+            // id 미설정 — Supabase IDENTITY 컬럼이 자동 할당
 
             newItems.push(item);
           });
@@ -3915,16 +3944,11 @@
           const added = newItems.length;
           if(!added) return alert("유효한 데이터가 없습니다 (사업장명 필수).");
 
-          // 엑셀 2행이 테이블 맨 위 → 기존 데이터 위에 정방향으로 삽입
-          leads.unshift(...newItems);
-
-          // 파일 입력 초기화
           input.value = "";
-          renderLeads();
-          runHomeSummary();
-          loadProgress();
-          syncAfterUpload(newItems);
-          alert(`✅ 엑셀 업로드 완료!\n${added}건 누적 추가되었습니다.`);
+
+          // Supabase에 업로드 → 내부에서 loadData() 호출로 실제 ID 동기화
+          await syncAfterUpload(newItems);
+          alert(`✅ 엑셀 업로드 완료!\n${added}건이 추가되었습니다.`);
         } catch(err){
           alert("엑셀 파일을 읽는 중 오류가 발생했습니다.\n" + err.message);
         }
@@ -3940,6 +3964,7 @@
       if(!confirm(`현재 표시된 데이터 ${cnt}건을 모두 삭제할까요?\n이 작업은 되돌릴 수 없어요.`)) return;
       const ids = getVisibleLeads().map(l => l.id);
       ids.forEach(id => { leads = leads.filter(x => x.id !== id); });
+      saveAppData();
       renderLeads(); runHomeSummary();
       try{
         for(const id of ids){
@@ -3955,6 +3980,7 @@
       if(!checked.length) return alert("삭제할 항목을 먼저 선택해 주세요.");
       if(!confirm(`선택한 ${checked.length}건을 삭제할까요?`)) return;
       checked.forEach(id => { leads = leads.filter(x => x.id !== id); });
+      saveAppData();
       renderLeads(); runHomeSummary();
       try{
         for(const id of checked){
@@ -3962,6 +3988,25 @@
         }
         showLeadMsg(`🗑 ${checked.length}건 삭제 완료!`, "");
       } catch(e){ console.warn(e); }
+    }
+
+    async function markSelectedAsCompleted(){
+      if(!isAdminMode()) return;
+      const checked = Array.from(document.querySelectorAll('.lead-chk:checked')).map(c => Number(c.dataset.id));
+      if(!checked.length) return alert("처리할 항목을 먼저 선택해 주세요.");
+      if(!confirm(`선택한 ${checked.length}건을 교육 이수 처리할까요?`)) return;
+      checked.forEach(id => {
+        const l = leads.find(x => x.id === id);
+        if(l) l.status = "교육 이수";
+      });
+      saveAppData();
+      renderLeads();
+      showLeadMsg(`✅ ${checked.length}건 교육 이수 처리 완료!`, "");
+      try{
+        for(const id of checked){
+          await sbClient.from("education_db").update({ status:"교육 이수" }).eq("id", id);
+        }
+      }catch(e){ console.warn(e); }
     }
 
     function toggleLeadCheckAll(chk){
