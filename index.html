@@ -955,6 +955,104 @@
       white-space:nowrap;cursor:pointer;color:var(--primary);font-size:11px;
     }
     .itin-note-cell:hover{text-decoration:underline}
+
+    /* ── 일정등록 모달 ── */
+    .sched-modal-overlay{
+      display:none;position:fixed;inset:0;z-index:2100;
+      background:rgba(8,14,28,.72);backdrop-filter:blur(4px);
+      align-items:center;justify-content:center;padding:20px;
+    }
+    .sched-modal-overlay.open{display:flex;}
+    .sched-modal{
+      background:#fff;border-radius:20px;width:100%;max-width:680px;
+      max-height:90vh;overflow-y:auto;
+      box-shadow:0 24px 64px rgba(0,0,0,.28),0 4px 16px rgba(0,0,0,.12);
+      animation:schedModalIn .22s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes schedModalIn{
+      from{opacity:0;transform:translateY(24px) scale(.96);}
+      to{opacity:1;transform:translateY(0) scale(1);}
+    }
+    .sched-modal-head{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:22px 24px 18px;
+      border-bottom:1px solid #f1f5f9;
+      background:linear-gradient(135deg,#080e1c 0%,#1e293b 100%);
+      border-radius:20px 20px 0 0;
+    }
+    .sched-modal-head-left{display:flex;align-items:center;gap:12px;}
+    .sched-modal-icon{
+      width:40px;height:40px;border-radius:12px;
+      background:linear-gradient(135deg,#3b82f6,#6366f1);
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;flex-shrink:0;
+    }
+    .sched-modal-title{color:#f1f5f9;font-size:16px;font-weight:800;letter-spacing:-.3px;}
+    .sched-modal-sub{color:#64748b;font-size:12px;margin-top:2px;}
+    .sched-modal-close{
+      width:36px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.07);color:#94a3b8;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;font-size:18px;
+      transition:all .15s;flex-shrink:0;
+    }
+    .sched-modal-close:hover{background:rgba(255,255,255,.14);color:#f1f5f9;}
+    .sched-modal-body{padding:22px 24px;}
+    .sched-modal-grid{
+      display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;
+    }
+    .sched-modal-grid .full{grid-column:1/-1;}
+    .sched-modal-grid input,
+    .sched-modal-grid textarea,
+    .sched-modal-grid select{
+      width:100%;height:42px;padding:0 14px;
+      border:1.5px solid #e2e8f0;border-radius:12px;
+      font-size:13px;font-family:inherit;background:#fafbfc;
+      transition:border-color .15s,box-shadow .15s;outline:none;
+    }
+    .sched-modal-grid input:focus,
+    .sched-modal-grid textarea:focus{
+      border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1);background:#fff;
+    }
+    .sched-modal-grid textarea{
+      height:72px;resize:vertical;padding:10px 14px;line-height:1.5;
+    }
+    .sched-modal-nateon{
+      background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:12px;
+      padding:12px 14px;font-size:12px;color:#475569;line-height:1.7;
+      white-space:pre-wrap;min-height:60px;margin-bottom:16px;
+      font-family:monospace;
+    }
+    .sched-modal-footer{
+      display:flex;gap:10px;justify-content:flex-end;
+      padding:16px 24px 22px;border-top:1px solid #f1f5f9;
+    }
+    .sched-modal-footer .sched-copy-btn{
+      height:42px;padding:0 18px;border-radius:12px;
+      border:1.5px solid #e2e8f0;background:#fff;
+      color:#475569;font-size:13px;font-weight:700;cursor:pointer;
+      transition:all .15s;
+    }
+    .sched-modal-footer .sched-copy-btn:hover{border-color:#3b82f6;color:#3b82f6;}
+    .sched-modal-footer .sched-save-btn{
+      height:42px;padding:0 24px;border-radius:12px;
+      background:linear-gradient(135deg,#3b82f6,#6366f1);
+      border:none;color:#fff;font-size:13px;font-weight:800;cursor:pointer;
+      box-shadow:0 4px 12px rgba(59,130,246,.35);transition:all .15s;
+    }
+    .sched-modal-footer .sched-save-btn:hover{opacity:.9;transform:translateY(-1px);}
+    .btn-add-sched{
+      height:40px;padding:0 16px;border-radius:12px;
+      background:linear-gradient(135deg,#3b82f6,#6366f1);
+      border:none;color:#fff;font-size:13px;font-weight:800;cursor:pointer;
+      box-shadow:0 2px 8px rgba(59,130,246,.3);transition:all .15s;
+      display:inline-flex;align-items:center;gap:6px;
+    }
+    .btn-add-sched:hover{opacity:.88;transform:translateY(-1px);}
+    @media(max-width:768px){
+      .sched-modal{max-height:95vh;}
+      .sched-modal-grid{grid-template-columns:1fr;}
+      .sched-modal-grid .full{grid-column:1;}
+    }
   </style>
 </head>
 <body>
@@ -1207,36 +1305,10 @@
         <div class="view hidden" id="view-schedule">
           <div class="section-head">
             <div>
-              <h4 id="scheduleTitle">일정등록</h4>
-              <p id="scheduleDesc">교육섭외 일정 입력, 풀 양식 복사, 네이트온 간단 양식 복사를 할 수 있습니다.</p>
+              <h4 id="scheduleTitle">일정등록 현황</h4>
+              <p id="scheduleDesc">등록된 교육섭외 일정 현황입니다. 교육섭외 DB에서 일정등록 버튼으로 추가하세요.</p>
             </div>
-          </div>
-
-          <div class="form-grid">
-            <input id="scheduleAssignee" placeholder="섭외자" readonly>
-            <input id="scheduleType" placeholder="섭외" value="교육섭외">
-
-            <input id="scheduleDate" type="date">
-            <input id="scheduleTime" placeholder="시간 예: 1000 / 1700 / 09:30">
-
-            <input id="scheduleCompany" placeholder="업체">
-            <input id="scheduleAddress" class="full" placeholder="주소">
-
-            <input id="scheduleManager" placeholder="키맨">
-            <input id="schedulePhone" placeholder="번호">
-
-            <input id="schedulePeople" placeholder="인원">
-            <input id="scheduleAge" placeholder="연령대 예: 20~40대">
-
-            <input id="scheduleSubject" class="full" placeholder="교육과목">
-
-            <textarea id="scheduleMemo" class="full" placeholder="특이사항"></textarea>
-            <textarea id="scheduleNateonPreview" class="full" readonly placeholder="네이트온 양식"></textarea>
-          </div>
-
-          <div class="toolbar">
-            <button class="small-btn" onclick="addSchedule()">일정 추가</button>
-            <button class="ghost-btn" type="button" onclick="copyNateonPreview()">네이트온 양식 복사</button>
+            <button class="btn-add-sched" onclick="openScheduleModal()">📅 일정등록</button>
           </div>
 
           <div class="table-wrap" style="margin-top:16px;">
@@ -1486,6 +1558,7 @@
             <button class="edu-cat-btn active" onclick="setLeadCat('lead',this)">📋 교육섭외 DB</button>
             <button class="edu-cat-btn" onclick="setLeadCat('online',this)">🖥 온라인교육확인</button>
             <span class="edu-org-tag">산업안전교육협회 &nbsp;·&nbsp; 한국나눔안전교육원 &nbsp;·&nbsp; 대한안전교육협회</span>
+            <button class="btn-add-sched" onclick="openScheduleModal()" style="margin-left:auto;">📅 일정등록</button>
           </div>
 
           <div id="leadMsgBox" class="msg"></div>
@@ -2636,7 +2709,7 @@
       const menus = isAdmin ? [
         ["home","🏠","홈"],
         ["notice","📢","공지사항"],
-        ["schedule","🗓","일정등록"],
+        ["schedule","🗓","일정등록 현황"],
         ["aggregate","📌","익일취합"],
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
@@ -2648,7 +2721,7 @@
       ] : [
         ["home","🏠","홈"],
         ["notice","📢","공지사항"],
-        ["schedule","🗓","일정등록"],
+        ["schedule","🗓","일정등록 현황"],
         ["aggregate","📌","익일취합"],
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
@@ -2709,7 +2782,7 @@
       const titles = {
         home:["홈", isAdminMode() ? "관리자 홈 화면입니다." : "직원 홈 화면입니다."],
         notice:["공지사항","공지 등록과 확인 화면입니다."],
-        schedule:["일정등록","갑섭외 입력 구조를 포함한 일정등록 화면입니다."],
+        schedule:["일정등록 현황","등록된 교육섭외 일정 현황 화면입니다."],
         aggregate:["익일취합","선택한 날짜의 다음날 일정을 취합하는 화면입니다."],
         "performance-save":["실적저장","실적 입력 화면입니다."],
         "performance-report":["실적조회","실적 조회 화면입니다."],
@@ -2952,14 +3025,8 @@
     }
 
     function updateNateonPreview(){
-      $("scheduleNateonPreview").value = buildNateonPreviewText({
-        assignee: $("scheduleAssignee").value || currentStaffName(),
-        date: $("scheduleDate").value || "",
-        time: $("scheduleTime").value || "",
-        company: $("scheduleCompany").value || "",
-        address: $("scheduleAddress").value || "",
-        people: $("schedulePeople").value || ""
-      });
+      // 모달 네이트온 미리보기 업데이트
+      updateSchedModalNateon();
     }
 
     function bindSchedulePreviewEvents(){
@@ -3020,11 +3087,73 @@
       $("scheduleType").value = "교육섭외";
       $("scheduleAssignee").value = currentStaffName();
       updateNateonPreview();
+      closeScheduleModal();
+    }
+
+    function openScheduleModal(){
+      if(!state.currentUser) return;
+      // 기본값 세팅
+      $("scheduleAssignee").value = currentStaffName();
+      if(!$("scheduleDate").value) $("scheduleDate").value = tomorrowStr();
+      $("scheduleType").value = $("scheduleType").value || "교육섭외";
+      updateSchedModalNateon();
+      $("schedModalOverlay").classList.add("open");
+      // 날짜 변경 등 입력 시 미리보기 업데이트
+      ["scheduleDate","scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo","scheduleType"].forEach(id => {
+        const el = $(id);
+        if(el && !el._schedModalListener){
+          el._schedModalListener = true;
+          el.addEventListener("input", updateSchedModalNateon);
+          el.addEventListener("change", updateSchedModalNateon);
+        }
+      });
+    }
+
+    function closeScheduleModal(){
+      $("schedModalOverlay").classList.remove("open");
+    }
+
+    function onSchedOverlayClick(e){
+      if(e.target === $("schedModalOverlay")) closeScheduleModal();
+    }
+
+    function updateSchedModalNateon(){
+      const preview = $("schedNateonPreview");
+      if(!preview) return;
+      const company = ($("scheduleCompany")||{}).value||"";
+      const date    = ($("scheduleDate")||{}).value||"";
+      const time    = ($("scheduleTime")||{}).value||"";
+      const people  = ($("schedulePeople")||{}).value||"";
+      const age     = ($("scheduleAge")||{}).value||"";
+      const subject = ($("scheduleSubject")||{}).value||"";
+      const address = ($("scheduleAddress")||{}).value||"";
+      const manager = ($("scheduleManager")||{}).value||"";
+      const phone   = ($("schedulePhone")||{}).value||"";
+      const memo    = ($("scheduleMemo")||{}).value||"";
+      if(!company && !date){ preview.textContent = "—"; return; }
+      preview.textContent = [
+        company && `📌 ${company}`,
+        address && `📍 ${address}`,
+        (date||time) && `📅 ${date}${time ? " "+time : ""}`,
+        people && `👥 ${people}`,
+        age && `🎂 ${age}`,
+        subject && `📚 ${subject}`,
+        (manager||phone) && `👤 ${manager}${phone ? " "+phone : ""}`,
+        memo && `📝 ${memo}`
+      ].filter(Boolean).join("\n");
+    }
+
+    function copySchedModalNateon(){
+      const preview = $("schedNateonPreview");
+      if(!preview || preview.textContent === "—") return alert("먼저 업체명이나 날짜를 입력해 주세요.");
+      safeCopy(preview.textContent);
+      alert("✅ 네이트온 양식이 복사되었습니다!");
     }
 
     function copyNateonPreview(){
-      const value = $("scheduleNateonPreview").value.trim();
-      if(!value) return alert("복사할 네이트온 양식이 없습니다.");
+      const el = $("schedNateonPreview");
+      const value = el ? el.textContent.trim() : "";
+      if(!value || value === "—") return alert("복사할 네이트온 양식이 없습니다.");
       safeCopy(value);
     }
 
@@ -5521,5 +5650,43 @@
       else openMobMenu();
     }
   </script>
+
+  <!-- ── 일정등록 모달 ── -->
+  <div class="sched-modal-overlay" id="schedModalOverlay" onclick="onSchedOverlayClick(event)">
+    <div class="sched-modal" id="schedModal">
+      <div class="sched-modal-head">
+        <div class="sched-modal-head-left">
+          <div class="sched-modal-icon">📅</div>
+          <div>
+            <div class="sched-modal-title">일정등록</div>
+            <div class="sched-modal-sub">교육섭외 일정을 입력하세요</div>
+          </div>
+        </div>
+        <button class="sched-modal-close" onclick="closeScheduleModal()">✕</button>
+      </div>
+      <div class="sched-modal-body">
+        <div class="sched-modal-grid">
+          <input id="scheduleAssignee" placeholder="섭외자" readonly>
+          <input id="scheduleType" placeholder="섭외" value="교육섭외">
+          <input id="scheduleDate" type="date">
+          <input id="scheduleTime" placeholder="시간 예) 1000 / 1700 / 09:30">
+          <input id="scheduleCompany" placeholder="업체">
+          <input id="scheduleAddress" class="full" placeholder="주소">
+          <input id="scheduleManager" placeholder="키맨">
+          <input id="schedulePhone" placeholder="번호">
+          <input id="schedulePeople" placeholder="인원">
+          <input id="scheduleAge" placeholder="연령대 예) 20~40대">
+          <input id="scheduleSubject" class="full" placeholder="교육과목">
+          <textarea id="scheduleMemo" class="full" placeholder="특이사항"></textarea>
+        </div>
+        <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;">네이트온 양식 미리보기</div>
+        <div class="sched-modal-nateon" id="schedNateonPreview">—</div>
+      </div>
+      <div class="sched-modal-footer">
+        <button class="sched-copy-btn" onclick="copySchedModalNateon()">📋 네이트온 복사</button>
+        <button class="sched-save-btn" onclick="addSchedule()">✅ 일정 저장</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
