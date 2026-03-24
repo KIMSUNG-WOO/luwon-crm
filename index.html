@@ -3777,42 +3777,40 @@
           .order("created_at", { ascending: false });
 
         if(error) throw error;
-        if(!data || !data.length) return;
 
-        // DB 데이터 → leads 배열로 변환 (중복 방지: id 기준)
-        const existingIds = new Set(leads.map(l => String(l.id)));
-        data.forEach(row => {
-          if(existingIds.has(String(row.id))) return;
-          leads.push({
-            id:        row.id,
-            type:      row.type || "교육섭외",
-            date:      row.date || "",
-            time:      row.time || "",
-            company:   row.company || "",
-            address:   row.address || "",
-            manager:   row.manager || "",
-            repName:   row.rep_name || "",
-            phone:     row.phone || "",
-            people:    row.people || "",
-            age:       row.age_group || "",
-            subject:   row.subject || "",
-            industry:  row.industry || "",
-            status:    row.status || "",
-            ownerNo:    row.staff_no || "",
-            ownerName:  row.staff_name || "",
-            memo:       row.memo || "",
-            result:     row.result || "",
-            resultDate: row.result_date || "",
-            resultTime: row.result_time || "",
-            createdAt:  row.created_at ? row.created_at.slice(0,10) : todayStr()
-          });
-        });
+        // Supabase가 소스오브트루스 — 로컬 병합 없이 완전 교체
+        // 이렇게 해야 삭제된 항목이 새로고침 후 복원되지 않음
+        leads = (data || []).map(row => ({
+          id:        row.id,
+          type:      row.type || "교육섭외",
+          date:      row.date || "",
+          time:      row.time || "",
+          company:   row.company || "",
+          address:   row.address || "",
+          manager:   row.manager || "",
+          repName:   row.rep_name || "",
+          phone:     row.phone || "",
+          people:    row.people || "",
+          age:       row.age_group || "",
+          subject:   row.subject || "",
+          industry:  row.industry || "",
+          status:    row.status || "",
+          ownerNo:   row.staff_no || "",
+          ownerName: row.staff_name || "",
+          memo:      row.memo || "",
+          result:    row.result || "",
+          resultDate: row.result_date || "",
+          resultTime: row.result_time || "",
+          createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr()
+        }));
 
+        saveAppData(); // 최신 상태를 로컬에도 저장
         renderLeads();
         runHomeSummary();
         loadProgress();
       } catch(err){
         console.warn("Supabase loadData 오류:", err.message);
+        // 오류 시 localStorage 캐시 데이터 그대로 유지
       }
     }
 
