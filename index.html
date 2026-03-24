@@ -1462,6 +1462,9 @@
       </div>
 
       <div class="menu" id="menuBox"></div>
+      <div class="crm-push-wrap">
+        <button class="crm-push-btn" id="crmPushBtn" onclick="crmSubscribePush()">🔔 알림 구독하기</button>
+      </div>
       <button class="logout" onclick="logout()">로그아웃</button>
     </aside>
 
@@ -2731,10 +2734,14 @@
 
     function saveAppData(){
       try{
-        localStorage.setItem(APP_DATA_KEY, JSON.stringify({
+        const payload = {
           staffs, authUsers, paySettings, staffRanks, adminRates,
           performances, leads, schedules, itineraries, notices, inspectionRules, onlineEduRules
-        }));
+        };
+        // 추가 데이터 (선언 후 안전하게 포함)
+        try{ if(typeof staffGoals  !== "undefined") payload.staffGoals  = staffGoals;  }catch(e){}
+        try{ if(typeof activityLogs!== "undefined") payload.activityLogs = activityLogs;}catch(e){}
+        localStorage.setItem(APP_DATA_KEY, JSON.stringify(payload));
       }catch(e){}
     }
 
@@ -2755,6 +2762,9 @@
         if(d.notices         && Array.isArray(d.notices))        notices         = d.notices;
         if(d.inspectionRules && Array.isArray(d.inspectionRules)) inspectionRules = d.inspectionRules;
         if(d.onlineEduRules  && Array.isArray(d.onlineEduRules))  onlineEduRules  = d.onlineEduRules;
+        // 추가 데이터 복원
+        try{ if(d.staffGoals   && typeof d.staffGoals==="object")  staffGoals   = d.staffGoals;  }catch(e){}
+        try{ if(d.activityLogs && Array.isArray(d.activityLogs))   activityLogs = d.activityLogs;}catch(e){}
       }catch(e){}
     }
 
@@ -3328,6 +3338,10 @@
       resetNoticeForm();
       renderNotices();
       saveAppData();
+      // 새 공지 등록 시 전직원에게 푸시 알림 발송
+      if(!state.editingNoticeId){
+        try{ crmSendPushToAll(`📢 새 공지: ${title}`, body.length > 60 ? body.slice(0,60)+"…" : body); }catch(e){}
+      }
       alert("공지 저장 완료");
     }
 
@@ -6434,11 +6448,14 @@
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement("a");
       a.href     = url;
-      a.download = `LUWON_CRM_백업_${todayStr()}.json`;
+      const fileName = `LUWON_CRM_백업_${todayStr()}.json`;
+      a.download = fileName;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       crmAddLog("ok", "데이터 백업 완료", `JSON 파일 다운로드`);
-      alert("✅ 데이터 백업 완료!");
+      alert(`✅ 데이터 백업 완료!\n\n파일명: ${fileName}\n저장 위치: 기기의 다운로드 폴더\n\n📱 갤럭시: 내 파일 앱 → 다운로드\n🍎 아이폰: 파일 앱 → 다운로드`);
     }
 
     function crmRestoreData(input){
@@ -6873,7 +6890,116 @@
 
     // 페이지 로드 시 다크모드 즉시 적용 (로그인 전에도)
     crmApplyDarkMode();
+
+    /* ══════════════════════════════════════════════════════════
+       🔔 푸시 알림 시스템 (Web Push + VAPID)
+    ══════════════════════════════════════════════════════════ */
+    const PUSH_VAPID_PUBLIC = "BLfltotdiwpBUnIJAPEbsFomb6c1hRzTTBvdp8a6B2Q7jlgnLrOYh-1Q56izt828GILICvzJRxTSDt2gu2lsYmE";
+
+    // Base64url → Uint8Array 변환
+    function urlBase64ToUint8Array(base64String){
+      const padding = "=".repeat((4 - base64String.length % 4) % 4);
+      const base64  = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+      const raw     = atob(base64);
+      return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+    }
+
+    // 서비스워커 등록
+    async function crmRegisterSW(){
+      if(!("serviceWorker" in navigator)) return null;
+      try{
+        const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+        return reg;
+      } catch(e){
+        // GitHub Pages 서브경로 시도
+        try{
+          const reg = await navigator.serviceWorker.register("sw.js");
+          return reg;
+        } catch(e2){ return null; }
+      }
+    }
+
+    // 푸시 알림 구독
+    async function crmSubscribePush(){
+      if(!("Notification" in window)) return alert("이 브라우저는 푸시 알림을 지원하지 않습니다.");
+      const perm = await Notification.requestPermission();
+      if(perm !== "granted") return alert("알림 권한이 거부되었습니다.\n설정에서 허용해 주세요.");
+      const reg = await crmRegisterSW();
+      if(!reg) return alert("서비스워커 등록에 실패했습니다.");
+      try{
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC)
+        });
+        // Supabase에 구독 정보 저장
+        const user = state.currentUser;
+        const subJson = sub.toJSON();
+        await sbClient.from("push_subscriptions").upsert({
+          staff_no:  user?.staffNo || "unknown",
+          staff_name: user?.name   || "unknown",
+          endpoint:  subJson.endpoint,
+          p256dh:    subJson.keys?.p256dh   || "",
+          auth:      subJson.keys?.auth     || "",
+          updated_at: new Date().toISOString()
+        }, { onConflict: "endpoint" });
+        alert("✅ 푸시 알림 구독 완료!\n새 공지나 중요 알림이 오면 알려드립니다.");
+        crmAddLog("ok", "푸시 알림 구독", user?.name || "");
+        crmUpdatePushBtn();
+      } catch(e){
+        alert("구독 오류: " + e.message);
+      }
+    }
+
+    // 푸시 알림 구독 해제
+    async function crmUnsubscribePush(){
+      if(!confirm("푸시 알림 구독을 해제할까요?")) return;
+      const reg = await crmRegisterSW();
+      if(!reg) return;
+      const sub = await reg.pushManager.getSubscription();
+      if(sub){
+        await sbClient.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+        await sub.unsubscribe();
+      }
+      alert("알림 구독이 해제되었습니다.");
+      crmUpdatePushBtn();
+    }
+
+    // 구독 버튼 상태 업데이트
+    async function crmUpdatePushBtn(){
+      const btn = $("crmPushBtn");
+      if(!btn || !("serviceWorker" in navigator)) return;
+      try{
+        const reg = await navigator.serviceWorker.getRegistration();
+        if(!reg){ btn.textContent = "🔔 알림 구독하기"; btn.onclick = crmSubscribePush; return; }
+        const sub = await reg.pushManager.getSubscription();
+        if(sub){ btn.textContent = "🔕 알림 구독 해제"; btn.onclick = crmUnsubscribePush; }
+        else   { btn.textContent = "🔔 알림 구독하기";  btn.onclick = crmSubscribePush;   }
+      } catch(e){}
+    }
+
+    // 공지 등록 시 푸시 발송 (관리자 → 전직원)
+    async function crmSendPushToAll(title, body){
+      if(!isAdminMode()) return;
+      try{
+        await sbClient.functions.invoke("send-push", { body: { title, body } });
+      } catch(e){ console.warn("푸시 발송 오류:", e.message); }
+    }
+
+    // 초기화: SW 등록 + 버튼 상태 반영
+    window.addEventListener("load", () => {
+      if("serviceWorker" in navigator) crmRegisterSW();
+      setTimeout(crmUpdatePushBtn, 1500);
+    });
   </script>
+
+  <!-- 푸시 알림 구독 버튼 (사이드바 하단) -->
+  <style>
+    .crm-push-wrap{ padding:10px 16px 4px; }
+    .crm-push-btn{ width:100%; height:36px; border-radius:10px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.06); color:#94a3b8; font-size:12px; font-weight:700;
+      cursor:pointer; transition:all .2s; }
+    .crm-push-btn:hover{ background:rgba(255,255,255,.12); color:#f1f5f9; }
+  </style>
 
   <!-- ── 홈 카드 상세 팝업 ── -->
   <div class="sched-modal-overlay" id="homeDetailOverlay" onclick="if(event.target===this)closeHomeDetail()">
