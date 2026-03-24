@@ -1485,7 +1485,7 @@
           <div class="edu-cat-row">
             <button class="edu-cat-btn active" onclick="setLeadCat('lead',this)">📋 교육섭외 DB</button>
             <button class="edu-cat-btn" onclick="setLeadCat('online',this)">🖥 온라인교육확인</button>
-            <span class="edu-org-tag">산업안전교육협회 &nbsp;·&nbsp; 한국나눔안전 &nbsp;·&nbsp; 대한안전교육협회</span>
+            <span class="edu-org-tag">산업안전교육협회 &nbsp;·&nbsp; 한국나눔안전교육원 &nbsp;·&nbsp; 대한안전교육협회</span>
           </div>
 
           <div id="leadMsgBox" class="msg"></div>
@@ -1783,7 +1783,7 @@
           <div id="settingsPaneInspection" class="hidden">
             <div class="panel" style="margin-bottom:16px;">
               <h5 style="margin:0 0 6px;font-size:15px;">점검제외 사업장 규칙 추가</h5>
-              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">사업장명을 등록하고 처리 방식을 설정하세요. <b>허용</b>으로 설정된 사업장은 직원이 점검제외처리 버튼 클릭 시 팝업 없이 바로 처리됩니다. <b>불가</b>로 설정되거나 미등록 사업장은 "산업안전 보건법 라 항목 누락건으로 점검제외 처리 불가" 팝업이 표시됩니다.</p>
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">사업장명을 등록하고 처리 방식을 설정하세요. <b>허용</b>으로 설정된 사업장은 직원이 점검제외처리 버튼 클릭 시 팝업 없이 바로 처리됩니다. <b>불가</b>로 설정되거나 미등록 사업장은 "산업안전 보건교육 (라) 항목 누락건으로 점검제외 처리 불가" 팝업이 표시됩니다.</p>
               <div class="form-grid">
                 <input id="inspRuleCompany" placeholder="사업장명 (예: 예시사업장A)">
                 <select id="inspRuleType" style="height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;">
@@ -1797,7 +1797,7 @@
             </div>
             <div class="panel" style="margin-bottom:16px;">
               <h5 style="margin:0 0 14px;font-size:15px;">점검제외 규칙 목록</h5>
-              <p style="margin:0 0 12px;font-size:12px;color:var(--muted);">• <b style="color:#059669;">허용</b>: 직원·관리자 모두 팝업 없이 점검제외 처리 가능 &nbsp;|&nbsp; <b style="color:#dc2626;">불가</b>: "산업안전 보건교육(라) 항목 누락건으로 점검제외 처리 불가" 팝업 표시</p>
+              <p style="margin:0 0 12px;font-size:12px;color:var(--muted);">• <b style="color:#059669;">허용</b>: 직원·관리자 모두 팝업 없이 점검제외 처리 가능 &nbsp;|&nbsp; <b style="color:#dc2626;">불가</b>: "산업안전 보건교육 (라) 항목 누락건으로 점검제외 처리 불가" 팝업 표시</p>
               <div class="table-wrap">
                 <table>
                   <thead><tr><th>사업장명</th><th>처리 방식</th><th>관리</th></tr></thead>
@@ -3609,7 +3609,7 @@
         if(rule && rule.type === "allowed"){
           l.status = "점검제외처리";
         } else {
-          alert("산업안전 보건법 라 항목 누락건으로 점검제외 처리 불가");
+          alert("산업안전 보건교육 (라) 항목 누락건으로 점검제외 처리 불가");
           return;
         }
       }
@@ -3627,7 +3627,7 @@
     }
 
     function showInspectionBlocked(){
-      alert("산업안전 보건법 라 항목 누락건으로 점검제외 처리 불가");
+      alert("산업안전 보건교육 (라) 항목 누락건으로 점검제외 처리 불가");
     }
 
     // 사업장명이 관리자 허용 목록에 있는지 확인
