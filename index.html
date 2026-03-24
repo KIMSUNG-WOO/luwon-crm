@@ -3132,24 +3132,14 @@
       if(!rows.length){
         $("homeDetailBody").innerHTML = `<div class="empty">데이터가 없습니다.</div>`;
       } else {
-        $("homeDetailBody").innerHTML = `
-          <table style="width:100%;border-collapse:collapse;">
-            <thead>
-              <tr style="border-bottom:2px solid #f1f5f9;">
-                <th style="text-align:left;padding:8px 10px;font-size:12px;color:#64748b;font-weight:700;">섭외자</th>
-                <th style="text-align:right;padding:8px 10px;font-size:12px;color:#64748b;font-weight:700;">건수</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows.map((r,i) => `
-                <tr style="border-bottom:1px solid #f8fafc;${i%2===0?"background:#fafbfc":""}">
-                  <td style="padding:9px 10px;font-size:13px;font-weight:700;">${escapeHtml(r.name)}</td>
-                  <td style="padding:9px 10px;font-size:14px;font-weight:800;color:#3b82f6;text-align:right;">${r.count}건</td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        `;
+        $("homeDetailBody").innerHTML = rows.map((r,i) => `
+          <div style="display:flex;align-items:center;justify-content:space-between;
+                      padding:10px 14px;border-radius:10px;margin-bottom:6px;
+                      background:${i%2===0?"#f8fafc":"#fff"};border:1px solid #f1f5f9;">
+            <span style="font-size:14px;font-weight:700;color:#1e293b;">${escapeHtml(r.name)}</span>
+            <span style="font-size:15px;font-weight:800;color:#3b82f6;white-space:nowrap;">${r.count}건</span>
+          </div>
+        `).join("");
       }
       $("homeDetailOverlay").classList.add("open");
     }
