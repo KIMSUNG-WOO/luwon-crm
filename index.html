@@ -711,6 +711,36 @@
       .sidebar.mob-open{ transform:translateX(0); box-shadow:8px 0 40px rgba(0,0,0,.45); }
       .sidebar .mode-toggle{ display:flex!important; margin-top:8px; margin-bottom:4px; }
 
+      /* 모바일 모드 토글 */
+      .mob-mode-wrap{
+        display:flex; background:rgba(255,255,255,.1); border-radius:8px;
+        padding:2px; gap:2px; flex-shrink:0;
+      }
+      .mob-mode-btn{
+        height:28px; padding:0 10px; border-radius:6px; border:none;
+        background:transparent; color:#94a3b8; font-size:11px; font-weight:700;
+        cursor:pointer; transition:all .15s; white-space:nowrap;
+      }
+      .mob-mode-btn.active{
+        background:#3b82f6; color:#fff;
+        box-shadow:0 2px 6px rgba(59,130,246,.4);
+      }
+
+      /* 캘린더 먼저 (홈 화면) */
+      .split-grid{ display:flex; flex-direction:column; }
+      #homeCalendarPanel{ order:-1; }
+      #homeNoticePanel{ order:1; }
+
+      /* 캘린더 네비 버튼 오버플로 방지 */
+      .calendar-nav{ gap:4px; }
+      .calendar-nav button{ font-size:11px; padding:4px 8px; white-space:nowrap; min-width:0; flex:1; max-width:80px; }
+      .calendar-title{ font-size:13px; }
+
+      /* 텍스트 오버플로 전반 방지 */
+      .section-head h4{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+      .summary-card .k{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .edu-org-tag{ display:none; }
+
       /* ③ 딤 오버레이 */
       .mob-overlay{
         display:block!important; position:fixed; inset:0;
@@ -821,6 +851,8 @@
       .mob-brand-name{ display:none; }
       .calendar-cell{ min-height:38px; }
     }
+
+    .mob-mode-wrap{ display:none; }
 
     /* ── EDU BADGES ── */
     .edu-pass{
@@ -1159,16 +1191,20 @@
 
     <!-- 모바일 상단 헤더 -->
     <header class="mob-header" id="mobHeader">
-      <div class="mob-logo-wrap"><div class="logo">L</div></div>
-      <div class="mob-brand-name">LUWON CRM</div>
+      <div class="mob-logo-wrap" onclick="setView('home')" style="cursor:pointer;"><div class="logo">L</div></div>
+      <div class="mob-brand-name" onclick="setView('home')" style="cursor:pointer;">LUWON CRM</div>
       <div class="mob-page-title" id="mobPageTitle">홈</div>
+      <div class="mob-mode-wrap hidden" id="mobModeWrap">
+        <button class="mob-mode-btn" id="mobStaffModeBtn" onclick="switchMode('staff')">직원</button>
+        <button class="mob-mode-btn" id="mobAdminModeBtn" onclick="switchMode('admin')">관리자</button>
+      </div>
       <button class="mob-menu-btn" id="mobMenuBtn" onclick="toggleMobMenu()">
         <span></span><span></span><span></span>
       </button>
     </header>
 
     <aside class="sidebar">
-      <div class="side-brand">
+      <div class="side-brand" onclick="setView('home')" style="cursor:pointer;" title="홈으로 이동">
         <div class="logo-wrap"><div class="logo">L</div></div>
         <div>
           <strong>LUWON CRM</strong>
@@ -1250,19 +1286,19 @@
           </div>
 
           <div class="split-grid">
-            <div class="panel">
+            <div class="panel" id="homeNoticePanel">
               <h5>최근 공지</h5>
               <p>관리자는 수정/삭제 가능하고 직원은 읽기 전용입니다.</p>
               <div class="home-notice-list" id="homeNoticeList"></div>
             </div>
 
-            <div class="panel">
+            <div class="panel" id="homeCalendarPanel">
               <div class="calendar-head">
                 <div class="calendar-title" id="calendarTitle">2026년 3월</div>
                 <div class="calendar-nav">
-                  <button type="button" id="calendarPrevBtn" onclick="moveCalendar(-1)">저번달(2월)</button>
-                  <button type="button" onclick="goTodayCalendar()">오늘</button>
-                  <button type="button" id="calendarNextBtn" onclick="moveCalendar(1)">다음달(4월)</button>
+                  <button type="button" id="calendarPrevBtn" onclick="moveCalendar(-1)">◀ 2월</button>
+                  <button type="button" id="calendarTodayBtn" onclick="goTodayCalendar()">3월</button>
+                  <button type="button" id="calendarNextBtn" onclick="moveCalendar(1)">4월 ▶</button>
                 </div>
               </div>
 
@@ -2686,6 +2722,12 @@
 
       // 지점장만 모드 토글 표시
       $("modeToggle").classList.toggle("hidden", !isJijum);
+      const mobModeWrap = $("mobModeWrap");
+      if(mobModeWrap) mobModeWrap.classList.toggle("hidden", !isJijum);
+      // Sync active state
+      const isAdmin = state.currentMode === "admin";
+      if($("mobStaffModeBtn")) $("mobStaffModeBtn").classList.toggle("active", !isAdmin);
+      if($("mobAdminModeBtn")) $("mobAdminModeBtn").classList.toggle("active", isAdmin);
       if(isJijum){
         $("staffModeBtn").classList.toggle("active", state.currentMode === "staff");
         $("adminModeBtn").classList.toggle("active", state.currentMode === "admin");
@@ -4759,8 +4801,9 @@
       const today = todayStr();
 
       $("calendarTitle").textContent = getMonthLabel(year, month);
-      $("calendarPrevBtn").textContent = `저번달(${getPrevMonthLabel(year, month)})`;
-      $("calendarNextBtn").textContent = `다음달(${getNextMonthLabel(year, month)})`;
+      $("calendarPrevBtn").textContent = `◀ ${getPrevMonthLabel(year, month)}`;
+      $("calendarTodayBtn").textContent = `${month + 1}월`;
+      $("calendarNextBtn").textContent = `${getNextMonthLabel(year, month)} ▶`;
 
       const first = new Date(year, month, 1);
       const startDay = first.getDay();
@@ -5168,6 +5211,27 @@
       if(state.currentUser) runHomeSummary();
       updateNateonPreview();
     }
+
+    // ── 자정 자동 업데이트 ──────────────────────────────────────
+    (function startMidnightRefresh(){
+      let _lastDate  = todayStr();
+      let _lastMonth = monthPrefix();
+      setInterval(() => {
+        const nowDate  = todayStr();
+        const nowMonth = monthPrefix();
+        if(nowDate !== _lastDate){
+          _lastDate  = nowDate;
+          _lastMonth = nowMonth;
+          runHomeSummary();
+          loadProgress();
+          renderCalendar();
+        } else if(nowMonth !== _lastMonth){
+          _lastMonth = nowMonth;
+          runHomeSummary();
+          loadProgress();
+        }
+      }, 60 * 1000); // 1분마다 체크
+    })();
 
     $("staffId").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
     $("password").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
