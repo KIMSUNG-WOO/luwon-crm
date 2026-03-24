@@ -1526,6 +1526,7 @@
               </thead>
               <tbody id="leadTableBody"></tbody>
             </table>
+            <div id="leadPagination" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0;flex-wrap:wrap;"></div>
           </div>
         </div>
 
@@ -3475,90 +3476,96 @@
       alert(`✅ 직원 추가 완료!\n${name} / 사번 ${no}\n초기 비밀번호: ${no}`);
     }
 
+    let _leadPage = 1;
+    const _leadPerPage = 50;
+
     function renderLeads(){
       const body = $("leadTableBody");
-      const rows = getVisibleLeads();
+      const allRows = getVisibleLeads();
       const admin = isAdminMode();
-      body.innerHTML = "";
 
       // 관리자면 수정/삭제 열 표시
       const th = $("leadActionTh");
       if(th) th.classList.toggle("hidden", !admin);
-
-      // 체크박스 열: 관리자·직원 모두 표시 / 삭제 버튼은 관리자만
       const chkTh = $("leadChkTh");
       if(chkTh) chkTh.classList.remove("hidden");
       if($("btnDeleteAll")) $("btnDeleteAll").classList.toggle("hidden", !admin);
       if($("btnDeleteSel")) $("btnDeleteSel").classList.toggle("hidden", !admin);
       if($("btnMarkEdu"))   $("btnMarkEdu").classList.toggle("hidden", !admin);
 
-      if(!rows.length){
+      if(!allRows.length){
         body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없습니다.</div></td></tr>`;
-        // 체크박스 열은 항상 포함이므로 colspan 일치
+        renderLeadPagination(0, 0);
         return;
       }
 
+      // 페이지 범위 보정
+      const totalPages = Math.ceil(allRows.length / _leadPerPage);
+      if(_leadPage < 1) _leadPage = 1;
+      if(_leadPage > totalPages) _leadPage = totalPages;
+      const start = (_leadPage - 1) * _leadPerPage;
+      const rows  = allRows.slice(start, start + _leadPerPage);
+
       const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "일정픽스", "교육 이수 완료", "기타"];
 
-      rows.forEach(l => {
+      // innerHTML 한 번만 설정 (루프 += 제거 → 렉 방지)
+      const html = rows.map(l => {
         const sc = l.status === "교육 이수" ? "edu-pass" : l.status === "점검제외처리" ? "edu-fail" : "";
         const phone = l.phone || "";
-        const addrIdx = leads.indexOf(l);
         const addrCell = l.address
-          ? `<span class="addr-link" onclick="openNaverMap(${addrIdx})">${escapeHtml(l.address)}</span>`
+          ? `<span class="addr-link" onclick="openNaverMap(leads.findIndex(x=>x.id===${l.id}))">${escapeHtml(l.address)}</span>`
           : "";
 
-        // 점검제외 체크 — 관리자는 DB탭에서 텍스트만 표시 (규칙 관리는 관리자설정에서만)
         const allowed = isCompanyAllowed(l.company);
         const statusCell = admin
           ? `<span class="edu-toggle-btn ${sc}" style="cursor:default;">${escapeHtml(l.status || "미지정")}</span>`
           : l.status === "점검제외처리"
             ? allowed
-              ? `<button class="edu-toggle-btn edu-fail" onclick="staffToggleLeadStatus(${l.id})" title="점검제외 처리">${escapeHtml(l.status)}</button>`
+              ? `<button class="edu-toggle-btn edu-fail" onclick="staffToggleLeadStatus(${l.id})">${escapeHtml(l.status)}</button>`
               : `<button class="edu-toggle-btn edu-fail" onclick="showInspectionBlocked()">${escapeHtml(l.status)}</button>`
             : `${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}`;
 
-        // 결과값 드롭다운
         const resultOpts = RESULT_OPTIONS.map(o =>
           `<option value="${o}" ${l.result===o?"selected":""}>${o||"선택"}</option>`).join("");
         const resultLabel = l.result === "일정픽스" && l.resultDate
           ? `<div style="font-size:10px;color:#2563eb;margin-top:2px;">${escapeHtml(l.resultDate)} ${escapeHtml(l.resultTime||"")}</div>` : "";
-        const resultCell = `<td>
-          <select class="result-select" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>
-          ${resultLabel}
-        </td>`;
+        const resultCell = `<td><select class="result-select" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>${resultLabel}</td>`;
 
-        // 메모 버튼
         const hasMemo = !!(l.memo && l.memo.trim());
-        const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})" title="${hasMemo?escapeHtml(l.memo):'메모 없음'}">${hasMemo?"📝 메모":"메모"}</button></td>`;
+        const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})">${hasMemo?"📝 메모":"메모"}</button></td>`;
 
-        // 관리자 수정/삭제
         const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>`;
         const actionCell = admin
-          ? `<td style="white-space:nowrap;">
-               <button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button>
-               <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button>
-             </td>`
+          ? `<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`
           : "";
 
-        body.innerHTML += `
-          <tr>
-            ${chkCell}
-            <td>${escapeHtml(l.company || "")}</td>
-            <td>${addrCell}</td>
-            <td>${escapeHtml(l.manager || "")}</td>
-            <td>${escapeHtml(l.repName || "")}</td>
-            <td>${escapeHtml(phone)}</td>
-            <td>${escapeHtml(l.people || "")}</td>
-            <td>${escapeHtml(l.industry || "")}</td>
-            <td>${escapeHtml(l.ownerName || "")}</td>
-            <td>${statusCell}</td>
-            ${resultCell}
-            ${memoCell}
-            ${actionCell}
-          </tr>
-        `;
-      });
+        return `<tr>${chkCell}<td>${escapeHtml(l.company||"")}</td><td>${addrCell}</td><td>${escapeHtml(l.manager||"")}</td><td>${escapeHtml(l.repName||"")}</td><td>${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td>${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
+      }).join("");
+
+      body.innerHTML = html;  // DOM 업데이트 1회만
+      renderLeadPagination(allRows.length, totalPages);
+    }
+
+    function renderLeadPagination(total, totalPages){
+      const el = $("leadPagination");
+      if(!el) return;
+      if(totalPages <= 1){ el.innerHTML = ""; return; }
+      let html = `<span style="font-size:12px;color:#64748b;">총 ${total}건</span>`;
+      html += `<button onclick="gotoLeadPage(1)" ${_leadPage===1?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">◀◀</button>`;
+      html += `<button onclick="gotoLeadPage(${_leadPage-1})" ${_leadPage===1?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">◀</button>`;
+      const from = Math.max(1, _leadPage-2), to = Math.min(totalPages, _leadPage+2);
+      for(let i=from;i<=to;i++){
+        html += `<button onclick="gotoLeadPage(${i})" style="padding:3px 8px;border-radius:6px;border:1px solid ${i===_leadPage?"#3b82f6":"#e2e8f0"};background:${i===_leadPage?"#3b82f6":"#fff"};color:${i===_leadPage?"#fff":"#334155"};cursor:pointer;font-size:12px;">${i}</button>`;
+      }
+      html += `<button onclick="gotoLeadPage(${_leadPage+1})" ${_leadPage===totalPages?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">▶</button>`;
+      html += `<button onclick="gotoLeadPage(${totalPages})" ${_leadPage===totalPages?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">▶▶</button>`;
+      html += `<span style="font-size:12px;color:#64748b;">${_leadPage}/${totalPages}페이지</span>`;
+      el.innerHTML = html;
+    }
+
+    function gotoLeadPage(page){
+      _leadPage = page;
+      renderLeads();
     }
 
     function addLead(){
