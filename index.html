@@ -9,6 +9,7 @@
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Inter,Arial,sans-serif' font-size='110' font-weight='900' fill='white'%3EL%3C/text%3E%3C/svg%3E">
   <meta name="theme-color" content="#3b82f6">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1100,6 +1101,229 @@
       .sched-modal-grid{grid-template-columns:1fr;}
       .sched-modal-grid .full{grid-column:1;}
     }
+
+    /* ══════════════════════════════════════
+       [추가] 다크모드 변수 및 스타일
+    ══════════════════════════════════════ */
+    body.dark-mode{
+      --bg:#0f1623;
+      --bg2:#151e2d;
+      --panel:#1a2236;
+      --line:#2a3a55;
+      --line2:#1e2d42;
+      --text:#e2e8f0;
+      --text2:#cbd5e1;
+      --muted:#7a9ab8;
+      --sidebar-bg:#080e1c;
+    }
+    body.dark-mode .topbar,
+    body.dark-mode .content-card,
+    body.dark-mode .summary-card,
+    body.dark-mode .panel,
+    body.dark-mode .table-wrap,
+    body.dark-mode .modal-card,
+    body.dark-mode .tab-btn,
+    body.dark-mode .ghost-btn,
+    body.dark-mode .calendar-cell,
+    body.dark-mode .home-notice,
+    body.dark-mode .stack-item,
+    body.dark-mode .modal-left-panel,
+    body.dark-mode .modal-right-panel,
+    body.dark-mode .modal-group,
+    body.dark-mode .modal-entry{
+      background:var(--panel);
+      border-color:var(--line);
+      color:var(--text);
+    }
+    body.dark-mode th{background:#0f1e32;color:#7a9ab8;border-bottom-color:var(--line)}
+    body.dark-mode td{border-bottom-color:var(--line2);color:var(--text)}
+    body.dark-mode tr:hover td{background:#1e2d42}
+    body.dark-mode .toolbar input,
+    body.dark-mode .toolbar select,
+    body.dark-mode .form-grid input,
+    body.dark-mode .form-grid textarea,
+    body.dark-mode .form-grid select,
+    body.dark-mode .sched-modal-grid input,
+    body.dark-mode .sched-modal-grid textarea,
+    body.dark-mode .sched-modal-grid select,
+    body.dark-mode .manual-editor-text,
+    body.dark-mode .input{
+      background:#101928;border-color:var(--line);color:var(--text);
+    }
+    body.dark-mode .empty{background:#101928;border-color:var(--line);color:var(--muted)}
+    body.dark-mode .mode-toggle{background:#101928;border-color:var(--line)}
+    body.dark-mode .login-card{background:#1a2236;color:var(--text)}
+    body.dark-mode .lf-top{border-bottom-color:var(--line)}
+    body.dark-mode .lf-footer{border-top-color:var(--line)}
+    body.dark-mode .sched-modal{background:var(--panel)}
+    body.dark-mode .sched-modal-nateon{background:#101928;border-color:var(--line)}
+    body.dark-mode .sched-modal-footer .sched-copy-btn{background:var(--panel);border-color:var(--line);color:var(--text)}
+    body.dark-mode .calendar-cell.today{background:#1e3a5f;border-color:var(--primary)}
+    body.dark-mode .calendar-detail{background:var(--panel);border-color:var(--line)}
+    body.dark-mode .itin-cal-wrap{background:var(--panel);border-color:var(--line)}
+    body.dark-mode .modal-backdrop{background:rgba(0,0,0,.7)}
+
+    /* 다크모드 토글 버튼 */
+    #darkModeToggleBtn{
+      width:38px;height:38px;border-radius:var(--r8);border:1.5px solid var(--line);
+      background:var(--panel);color:var(--text);font-size:17px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      transition:all .18s;flex-shrink:0;font-family:inherit;
+    }
+    #darkModeToggleBtn:hover{background:var(--bg);border-color:#93c5fd}
+
+    /* ══════════════════════════════════════
+       [추가] 페이지 전환 애니메이션
+    ══════════════════════════════════════ */
+    @keyframes crm-fadeIn{
+      from{opacity:0;transform:translateY(8px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    .view:not(.hidden){
+      animation:crm-fadeIn .2s ease;
+    }
+
+    /* ══════════════════════════════════════
+       [추가] 버튼 클릭 피드백
+    ══════════════════════════════════════ */
+    .small-btn:active,
+    .login-btn:active{
+      transform:scale(0.96)!important;
+      transition:transform .1s!important;
+    }
+
+    /* ══════════════════════════════════════
+       [추가] 빈 화면 일러스트
+    ══════════════════════════════════════ */
+    .crm-empty-illust{
+      padding:44px 20px;text-align:center;
+      color:var(--muted);
+    }
+    .crm-empty-illust svg{margin:0 auto 14px;display:block;opacity:.45}
+    .crm-empty-illust p{font-size:13px;line-height:1.7}
+
+    /* ══════════════════════════════════════
+       [추가] 스켈레톤 로딩
+    ══════════════════════════════════════ */
+    .crm-skeleton-row td{
+      padding:10px 14px!important;
+    }
+    .crm-skeleton-cell{
+      height:14px;border-radius:6px;
+      background:linear-gradient(90deg,#e2e8f0 25%,#f8fafc 50%,#e2e8f0 75%);
+      background-size:200% 100%;
+      animation:crm-shimmer 1.2s infinite;
+    }
+    body.dark-mode .crm-skeleton-cell{
+      background:linear-gradient(90deg,#1e2d42 25%,#2a3a55 50%,#1e2d42 75%);
+      background-size:200% 100%;
+    }
+    @keyframes crm-shimmer{
+      0%{background-position:200% 0}
+      100%{background-position:-200% 0}
+    }
+
+    /* ══════════════════════════════════════
+       [추가] 차트 영역
+    ══════════════════════════════════════ */
+    .crm-chart-area{
+      margin-bottom:18px;
+      display:grid;grid-template-columns:1fr 1fr;gap:14px;
+    }
+    .crm-chart-card{
+      background:var(--panel);border:1px solid var(--line);
+      border-radius:var(--r12);padding:16px;
+    }
+    .crm-chart-card h6{font-size:13px;font-weight:800;margin-bottom:10px;color:var(--text)}
+    #crm-margin-chart-card{border:2px solid #fca5a5;background:#fff7f7}
+    body.dark-mode #crm-margin-chart-card{background:#2d1519;border-color:#7f1d1d}
+    @media(max-width:900px){.crm-chart-area{grid-template-columns:1fr}}
+
+    /* ══════════════════════════════════════
+       [추가] 검색창
+    ══════════════════════════════════════ */
+    .crm-search-wrap{
+      display:flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:var(--r8);
+      border:1.5px solid var(--line);background:var(--panel);
+      transition:border-color .15s;
+    }
+    .crm-search-wrap:focus-within{border-color:#93c5fd}
+    .crm-search-input{
+      border:none;background:transparent;outline:none;
+      font-size:13px;color:var(--text);font-family:inherit;
+      min-width:140px;flex:1;
+    }
+    .crm-search-clear{
+      border:none;background:none;cursor:pointer;
+      font-size:14px;color:var(--muted);padding:0 2px;
+      line-height:1;
+    }
+    .crm-search-clear:hover{color:var(--danger)}
+
+    /* ══════════════════════════════════════
+       [추가] 활동 로그 탭
+    ══════════════════════════════════════ */
+    .crm-log-item{
+      display:flex;align-items:flex-start;gap:10px;
+      padding:10px 12px;border-radius:var(--r8);
+      border:1px solid var(--line);background:var(--bg2);
+      margin-bottom:6px;font-size:12px;
+    }
+    .crm-log-badge{
+      flex-shrink:0;padding:2px 8px;border-radius:999px;
+      font-size:10px;font-weight:700;white-space:nowrap;
+      background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;
+    }
+    .crm-log-badge.warn{background:#fef9c3;color:#854d0e;border-color:#fde047}
+    .crm-log-badge.danger{background:#fef2f2;color:#dc2626;border-color:#fca5a5}
+    .crm-log-badge.ok{background:#dcfce7;color:#059669;border-color:#86efac}
+    .crm-log-text{flex:1;color:var(--text);line-height:1.6}
+    .crm-log-time{color:var(--muted);font-size:11px;white-space:nowrap}
+
+    /* ══════════════════════════════════════
+       [추가] 목표 달성률 배지
+    ══════════════════════════════════════ */
+    .crm-goal-badge{
+      display:inline-flex;align-items:center;gap:4px;
+      font-size:11px;font-weight:700;
+      padding:2px 8px;border-radius:999px;
+      background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;
+      margin-top:4px;
+    }
+    .crm-goal-badge.done{background:#dcfce7;color:#059669;border-color:#86efac}
+    .crm-goal-badge.warn{background:#fef9c3;color:#854d0e;border-color:#fde047}
+
+    /* ══════════════════════════════════════
+       [추가] 모바일 하단 탭바 (max-width:768px)
+    ══════════════════════════════════════ */
+    #crmMobTabBar{
+      display:none;
+    }
+    @media(max-width:768px){
+      #crmMobTabBar{
+        display:flex;
+        position:fixed;bottom:0;left:0;right:0;
+        height:58px;z-index:1050;
+        background:#0f172a;
+        border-top:1px solid rgba(255,255,255,.08);
+        align-items:stretch;
+        box-shadow:0 -4px 20px rgba(0,0,0,.3);
+      }
+      #crmMobTabBar .crm-tab-item{
+        flex:1;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;gap:3px;
+        cursor:pointer;border:none;background:transparent;
+        color:#475569;font-size:9px;font-weight:700;
+        font-family:inherit;transition:color .15s;
+        padding:0;letter-spacing:.3px;
+      }
+      #crmMobTabBar .crm-tab-item .crm-tab-icon{font-size:19px;line-height:1}
+      #crmMobTabBar .crm-tab-item.active{color:#3b82f6}
+      #crmMobTabBar .crm-tab-item:active{opacity:.7}
+      /* 하단 탭바 높이만큼 main 패딩 추가 */
+      .main{ padding-bottom:68px !important; }
+    }
   </style>
 </head>
 <body>
@@ -1253,6 +1477,7 @@
             <button class="mode-btn active" id="staffModeBtn" onclick="switchMode('staff')">직원 모드</button>
             <button class="mode-btn" id="adminModeBtn" onclick="switchMode('admin')">관리자 모드</button>
           </div>
+          <button id="darkModeToggleBtn" title="다크모드 전환" onclick="crmToggleDarkMode()">🌙</button>
         </div>
       </div>
 
@@ -1272,11 +1497,13 @@
               <div class="k" id="homeCardLabel1">내 오늘 등록 일정</div>
               <div class="v" id="homeValue1">0</div>
               <div class="s" id="homeCardDesc1">내가 오늘 등록한 일정 수</div>
+              <div id="crmGoalBadge1"></div>
             </div>
             <div class="summary-card" ondblclick="onHomeCardDblClick(2)" style="cursor:pointer;" title="더블클릭 시 상세 보기">
               <div class="k" id="homeCardLabel2">내 오늘 콜량</div>
               <div class="v" id="homeValue2">0</div>
               <div class="s" id="homeCardDesc2">결과값 입력된 DB 건수</div>
+              <div id="crmGoalBadge2"></div>
             </div>
             <div class="summary-card" ondblclick="onHomeCardDblClick(3)" style="cursor:pointer;" title="더블클릭 시 상세 보기">
               <div class="k" id="homeCardLabel3">내 익일 일정</div>
@@ -1287,6 +1514,7 @@
               <div class="k" id="homeCardLabel4">내 이번달 등록 일정</div>
               <div class="v" id="homeValue4">0</div>
               <div class="s" id="homeCardDesc4">이번달 등록 누적</div>
+              <div id="crmGoalBadge4"></div>
             </div>
           </div>
 
@@ -1360,6 +1588,16 @@
               <p id="scheduleDesc">등록된 교육섭외 일정 현황입니다. 교육섭외 DB에서 일정등록 버튼으로 추가하세요.</p>
             </div>
             <button class="btn-add-sched" onclick="openScheduleModal()">📅 일정등록</button>
+          </div>
+
+          <!-- [추가] 일정등록현황 검색 + 엑셀 -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+            <div class="crm-search-wrap">
+              <span style="font-size:14px;opacity:.5;">🔍</span>
+              <input class="crm-search-input" id="schedSearchInput" placeholder="업체명 · 섭외자 · 날짜 검색" oninput="crmFilterSchedules()">
+              <button class="crm-search-clear" onclick="crmClearSchedSearch()" title="초기화">✕</button>
+            </div>
+            <button id="crmSchedExcelBtn" class="ghost-btn hidden" onclick="crmExportSchedExcel()">📥 엑셀 다운로드</button>
           </div>
 
           <div class="table-wrap" style="margin-top:16px;">
@@ -1458,6 +1696,27 @@
               <h4 id="performanceTitle">실적조회</h4>
               <p id="performanceDesc">직원은 본인 실적, 관리자는 전체 실적 중심으로 조회 가능.</p>
             </div>
+          </div>
+
+          <!-- [추가] 차트 영역 -->
+          <div class="crm-chart-area" id="crmChartArea">
+            <div class="crm-chart-card">
+              <h6>직원별 월간 실적</h6>
+              <canvas id="crmBarChart" height="160"></canvas>
+            </div>
+            <div class="crm-chart-card">
+              <h6>월별 실적 추이</h6>
+              <canvas id="crmLineChart" height="160"></canvas>
+            </div>
+            <div class="crm-chart-card" id="crm-margin-chart-card" style="display:none;">
+              <h6 style="color:#be123c;">마진 현황 (관리자 전용)</h6>
+              <canvas id="crmMarginChart" height="160"></canvas>
+            </div>
+          </div>
+
+          <!-- [추가] 실적 엑셀 다운로드 버튼 (관리자만) -->
+          <div id="crmPerfExcelBox" class="hidden" style="margin-bottom:8px;">
+            <button class="ghost-btn" onclick="crmExportPerfExcel()">📥 엑셀 다운로드</button>
           </div>
 
           <div class="toolbar">
@@ -1614,6 +1873,16 @@
 
           <div id="leadMsgBox" class="msg"></div>
 
+          <!-- [추가] 교육섭외 DB 검색창 + 엑셀 -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
+            <div class="crm-search-wrap">
+              <span style="font-size:14px;opacity:.5;">🔍</span>
+              <input class="crm-search-input" id="leadSearchInput" placeholder="업체명 · 키맨 · 주소 검색" oninput="crmFilterLeads()">
+              <button class="crm-search-clear" onclick="crmClearLeadSearch()" title="초기화">✕</button>
+            </div>
+            <button id="crmLeadExcelBtn" class="ghost-btn hidden" onclick="crmExportLeadExcel()">📥 엑셀 다운로드</button>
+          </div>
+
           <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
             <div id="excelUploadBox" class="hidden" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
               <select id="excelTargetStaff" onchange="onLeadStaffFilter()" style="height:40px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:700;cursor:pointer;">
@@ -1724,6 +1993,8 @@
             <button class="tab-btn" id="settingsTabPay" onclick="setSettingsTab('pay')">단가 / 수익</button>
             <button class="tab-btn" id="settingsTabInspection" onclick="setSettingsTab('inspection')">점검제외 관리</button>
             <button class="tab-btn" id="settingsTabSystem" onclick="setSettingsTab('system')">시스템</button>
+            <button class="tab-btn" id="settingsTabGoal" onclick="setSettingsTab('goal')">목표 설정</button>
+            <button class="tab-btn" id="settingsTabLog" onclick="setSettingsTab('log')">활동 로그</button>
           </div>
 
           <!-- ── 직원 / 사번 탭 ── -->
@@ -1955,7 +2226,68 @@
             </div>
           </div>
 
+          <!-- [추가] 목표설정 탭 패널 -->
+          <div id="settingsPaneGoal" class="hidden">
+            <div class="panel" style="margin-bottom:16px;">
+              <h5 style="margin:0 0 6px;font-size:15px;">🎯 직원별 월간 목표 설정</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원별 월 콜 목표와 일정 목표를 설정합니다. 홈 화면 카드에서 달성률을 확인할 수 있습니다.</p>
+              <div style="margin-bottom:14px;">
+                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">직원 선택</label>
+                <select id="crmGoalStaffSelect" onchange="crmOnGoalStaffChange()"
+                  style="width:100%;max-width:240px;height:42px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font-size:14px;background:var(--panel);color:var(--text);">
+                  <option value="">-- 직원 선택 --</option>
+                </select>
+              </div>
+              <div class="form-grid" id="crmGoalFields" style="opacity:.4;pointer-events:none;max-width:400px;">
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">월 콜 목표 (건)</label>
+                  <input id="crmGoalCalls" type="number" min="0" placeholder="예: 100">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">월 일정 목표 (건)</label>
+                  <input id="crmGoalScheds" type="number" min="0" placeholder="예: 20">
+                </div>
+              </div>
+              <div style="text-align:right;margin-top:12px;max-width:400px;">
+                <button class="small-btn" onclick="crmSaveGoal()">목표 저장</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h5 style="margin:0 0 14px;font-size:15px;">목표 목록</h5>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>직원명</th><th>월 콜 목표</th><th>월 일정 목표</th></tr></thead>
+                  <tbody id="crmGoalTableBody"><tr><td colspan="3"><div class="empty">설정된 목표가 없습니다.</div></td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- [추가] 활동 로그 탭 패널 -->
+          <div id="settingsPaneLog" class="hidden">
+            <div class="panel">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h5 style="font-size:15px;">📋 최근 활동 로그 (최대 50건)</h5>
+                <button class="ghost-btn" style="font-size:12px;height:32px;padding:0 12px;" onclick="crmClearLogs()">로그 초기화</button>
+              </div>
+              <div id="crmLogListBox"><div class="empty">활동 로그가 없습니다.</div></div>
+            </div>
+          </div>
+
           <div id="settingsPaneSystem" class="hidden">
+            <!-- [추가] 백업/복원 섹션 -->
+            <div class="panel" style="margin-bottom:16px;border:2px solid #bfdbfe;background:#eff6ff;">
+              <h5 style="margin:0 0 6px;font-size:15px;color:#1d4ed8;">💾 데이터 백업 / 복원</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:#1e40af;">전체 앱 데이터를 JSON 파일로 백업하거나, 백업 파일에서 복원할 수 있습니다.</p>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                <button class="small-btn" style="background:#1d4ed8;" onclick="crmBackupData()">📤 전체 데이터 백업 (JSON)</button>
+                <label style="height:40px;padding:0 16px;border-radius:var(--r8);background:#fff;border:1.5px solid #93c5fd;color:#1d4ed8;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;">
+                  📥 데이터 복원
+                  <input type="file" accept=".json" id="crmRestoreInput" style="display:none;" onchange="crmRestoreData(this)">
+                </label>
+              </div>
+            </div>
+
             <div class="panel" style="margin-bottom:16px;">
               <h5 style="margin:0 0 14px;font-size:15px;">데이터 현황</h5>
               <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;">
@@ -5791,6 +6123,756 @@
       if(sidebar.classList.contains("mob-open")) closeMobMenu();
       else openMobMenu();
     }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 기능 1: Chart.js 차트 - 실적 현황 시각화
+    ══════════════════════════════════════════════════════════ */
+    let _crmBarChart   = null;
+    let _crmLineChart  = null;
+    let _crmMarginChart = null;
+
+    function crmUpdateCharts(){
+      if(typeof Chart === "undefined") return;
+      const admin = isAdminMode();
+      const month = monthPrefix();
+
+      // 차트 영역 / 마진 차트 가시성
+      const chartArea = $("crmChartArea");
+      const marginCard = $("crm-margin-chart-card");
+      if(chartArea) chartArea.style.display = "";
+      if(marginCard) marginCard.style.display = (admin && ($("perfReportScope") && $("perfReportScope").value === "all")) ? "" : "none";
+
+      // ── 1. 직원별 실적 막대그래프 ──
+      const staffNames = [...new Set(performances.map(p => p.staff))];
+      const barSanjo   = staffNames.map(n => performances.filter(p => p.staff === n && p.type === "상조" && String(p.date||"").startsWith(month)).reduce((s,p) => s + (Number(String(p.value||"").replace(/[^\d]/g,""))||0), 0));
+      const barHealth  = staffNames.map(n => performances.filter(p => p.staff === n && p.type === "건식" && String(p.date||"").startsWith(month)).reduce((s,p) => s + (Number(String(p.value||"").replace(/[^\d]/g,""))||0), 0));
+      const barInsur   = staffNames.map(n => performances.filter(p => p.staff === n && p.type === "보험" && String(p.date||"").startsWith(month)).length);
+
+      const barCtx = ($("crmBarChart") || {}).getContext && $("crmBarChart").getContext("2d");
+      if(barCtx){
+        if(_crmBarChart) _crmBarChart.destroy();
+        _crmBarChart = new Chart(barCtx, {
+          type:"bar",
+          data:{
+            labels: staffNames.length ? staffNames : ["데이터 없음"],
+            datasets:[
+              { label:"상조(구좌)", data: barSanjo, backgroundColor:"rgba(59,130,246,.75)", borderRadius:4 },
+              { label:"건식(박스)", data: barHealth, backgroundColor:"rgba(5,150,105,.75)", borderRadius:4 },
+              { label:"보험(건)",   data: barInsur,  backgroundColor:"rgba(139,92,246,.75)", borderRadius:4 }
+            ]
+          },
+          options:{
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ position:"bottom", labels:{ font:{ size:11 } } } },
+            scales:{ y:{ beginAtZero:true, ticks:{ font:{ size:11 } } }, x:{ ticks:{ font:{ size:11 } } } }
+          }
+        });
+      }
+
+      // ── 2. 월별 추이 꺾은선 그래프 ──
+      const now = new Date();
+      const monthLabels = [];
+      const monthData   = [];
+      for(let i=5; i>=0; i--){
+        const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+        const ym = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+        monthLabels.push(`${d.getMonth()+1}월`);
+        monthData.push(performances.filter(p => String(p.date||"").startsWith(ym)).length);
+      }
+      const lineCtx = ($("crmLineChart") || {}).getContext && $("crmLineChart").getContext("2d");
+      if(lineCtx){
+        if(_crmLineChart) _crmLineChart.destroy();
+        _crmLineChart = new Chart(lineCtx, {
+          type:"line",
+          data:{
+            labels: monthLabels,
+            datasets:[{
+              label:"월별 실적 건수",
+              data: monthData,
+              borderColor:"rgba(59,130,246,1)",
+              backgroundColor:"rgba(59,130,246,.12)",
+              fill:true, tension:.4,
+              pointBackgroundColor:"rgba(59,130,246,1)",
+              pointRadius:4
+            }]
+          },
+          options:{
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{ position:"bottom", labels:{ font:{ size:11 } } } },
+            scales:{ y:{ beginAtZero:true, ticks:{ font:{ size:11 } } }, x:{ ticks:{ font:{ size:11 } } } }
+          }
+        });
+      }
+
+      // ── 3. 마진 차트 (관리자 전용) ──
+      if(admin){
+        const marginPerfs = performances.filter(p => String(p.date||"").startsWith(month));
+        let mS=0, mH=0, mI=0;
+        marginPerfs.forEach(p => {
+          const sNo = p.staffNo || (staffs.find(x=>x.name===p.staff)||{}).no||"";
+          const rate = paySettings[sNo] || {};
+          const val  = Number(String(p.value||"").replace(/[^\d]/g,""))||0;
+          const amt  = Number(p.amount)||0;
+          if(p.type==="상조")      mS += val * (adminRates.sanjo  - (rate.sanjo||0));
+          else if(p.type==="건식") mH += val * (adminRates.health - (rate.health||0));
+          else if(p.type==="보험") mI += Math.round(amt*(adminRates.insurancePct-(rate.insurancePct||0))/100);
+        });
+        const marginCtx = ($("crmMarginChart") || {}).getContext && $("crmMarginChart").getContext("2d");
+        if(marginCtx && marginCard && marginCard.style.display !== "none"){
+          if(_crmMarginChart) _crmMarginChart.destroy();
+          _crmMarginChart = new Chart(marginCtx, {
+            type:"doughnut",
+            data:{
+              labels:["상조 마진","건식 마진","보험 마진"],
+              datasets:[{ data:[Math.max(0,mS),Math.max(0,mH),Math.max(0,mI)], backgroundColor:["rgba(59,130,246,.8)","rgba(5,150,105,.8)","rgba(139,92,246,.8)"], borderWidth:2 }]
+            },
+            options:{
+              responsive:true, maintainAspectRatio:false,
+              plugins:{ legend:{ position:"bottom", labels:{ font:{ size:11 } } } }
+            }
+          });
+        }
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 기능 2: 전체 검색 기능
+    ══════════════════════════════════════════════════════════ */
+    let _crmLeadSearchTerm  = "";
+    let _crmSchedSearchTerm = "";
+
+    function crmFilterLeads(){
+      _crmLeadSearchTerm = (($("leadSearchInput")||{}).value||"").toLowerCase().trim();
+      _leadPage = 1;
+      crmRenderFilteredLeads();
+    }
+
+    function crmClearLeadSearch(){
+      _crmLeadSearchTerm = "";
+      if($("leadSearchInput")) $("leadSearchInput").value = "";
+      _leadPage = 1;
+      renderLeads();
+    }
+
+    function crmGetFilteredLeads(){
+      const q = _crmLeadSearchTerm;
+      if(!q) return getVisibleLeads();
+      return getVisibleLeads().filter(l =>
+        (l.company||"").toLowerCase().includes(q) ||
+        (l.manager||"").toLowerCase().includes(q) ||
+        (l.address||"").toLowerCase().includes(q) ||
+        (l.ownerName||"").toLowerCase().includes(q)
+      );
+    }
+
+    function crmRenderFilteredLeads(){
+      if(!_crmLeadSearchTerm){ renderLeads(); return; }
+      const body = $("leadTableBody");
+      const allRows = crmGetFilteredLeads();
+      const admin = isAdminMode();
+
+      if(!allRows.length){
+        body.innerHTML = `<tr><td colspan="${admin?13:12}"><div class="crm-empty-illust"><svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#e2e8f0" stroke-width="2"/><path d="M20 28h16M28 20v16" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg><p>"${escapeHtml(_crmLeadSearchTerm)}" 검색 결과가 없습니다.</p></div></td></tr>`;
+        renderLeadPagination(0,0);
+        return;
+      }
+
+      const totalPages = Math.ceil(allRows.length / _leadPerPage);
+      if(_leadPage > totalPages) _leadPage = totalPages;
+      const start = (_leadPage-1)*_leadPerPage;
+      const rows  = allRows.slice(start, start+_leadPerPage);
+      const RESULT_OPTIONS = ["","부재","결번","확인후연락","일정픽스","교육 이수 완료","기타"];
+      const html = rows.map(l => {
+        const sc = l.status==="교육 이수"?"edu-pass":l.status==="점검제외처리"?"edu-fail":"";
+        const addrCell = l.address?`<span class="addr-link" onclick="openNaverMap(leads.findIndex(x=>x.id===${l.id}))">${escapeHtml(l.address)}</span>`:"";
+        const allowed  = isCompanyAllowed(l.company);
+        const statusCell = admin
+          ? `<span class="edu-toggle-btn ${sc}" style="cursor:default;">${escapeHtml(l.status||"미지정")}</span>`
+          : l.status==="점검제외처리"
+            ? allowed
+              ? `<button class="edu-toggle-btn edu-fail" onclick="staffToggleLeadStatus(${l.id})">${escapeHtml(l.status)}</button>`
+              : `<button class="edu-toggle-btn edu-fail" onclick="showInspectionBlocked()">${escapeHtml(l.status)}</button>`
+            : `${l.status?`<span class="${sc}">${escapeHtml(l.status)}</span>`:""}`;
+        const resultOpts = RESULT_OPTIONS.map(o=>`<option value="${o}" ${l.result===o?"selected":""}>${o||"선택"}</option>`).join("");
+        const resultLabel = l.result==="일정픽스"&&l.resultDate?`<div style="font-size:10px;color:#2563eb;margin-top:2px;">${escapeHtml(l.resultDate)} ${escapeHtml(l.resultTime||"")}</div>`:"";
+        const resultCell = `<td><select class="result-select" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>${resultLabel}</td>`;
+        const hasMemo = !!(l.memo&&l.memo.trim());
+        const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})">${hasMemo?"📝 메모":"메모"}</button></td>`;
+        const chkCell  = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>`;
+        const actionCell = admin?`<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`:"";
+        return `<tr>${chkCell}<td>${escapeHtml(l.company||"")}</td><td>${addrCell}</td><td>${escapeHtml(l.manager||"")}</td><td>${escapeHtml(l.repName||"")}</td><td>${escapeHtml(l.phone||"")}</td><td>${escapeHtml(l.people||"")}</td><td>${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
+      }).join("");
+      body.innerHTML = html;
+      renderLeadPagination(allRows.length, totalPages);
+    }
+
+    function crmFilterSchedules(){
+      _crmSchedSearchTerm = (($("schedSearchInput")||{}).value||"").toLowerCase().trim();
+      crmRenderFilteredSchedules();
+    }
+
+    function crmClearSchedSearch(){
+      _crmSchedSearchTerm = "";
+      if($("schedSearchInput")) $("schedSearchInput").value = "";
+      renderSchedules();
+    }
+
+    function crmRenderFilteredSchedules(){
+      if(!_crmSchedSearchTerm){ renderSchedules(); return; }
+      const q    = _crmSchedSearchTerm;
+      const body = $("scheduleTableBody");
+      const rows = getVisibleSchedules().filter(s =>
+        (s.company||"").toLowerCase().includes(q) ||
+        (s.assignee||"").toLowerCase().includes(q) ||
+        (s.date||"").includes(q) ||
+        (s.manager||"").toLowerCase().includes(q)
+      ).sort((a,b)=>`${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`,"ko"));
+
+      if(!rows.length){
+        body.innerHTML = `<tr><td colspan="12"><div class="crm-empty-illust"><svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#e2e8f0" stroke-width="2"/><path d="M20 28h16M28 20v16" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg><p>"${escapeHtml(_crmSchedSearchTerm)}" 검색 결과가 없습니다.</p></div></td></tr>`;
+        return;
+      }
+      body.innerHTML = rows.map(row=>`
+        <tr>
+          <td>${escapeHtml(row.assignee)}</td>
+          <td>${escapeHtml(row.type||"교육섭외")}</td>
+          <td>${escapeHtml(row.date)}</td>
+          <td>${escapeHtml(row.time)}</td>
+          <td>${escapeHtml(row.company)}</td>
+          <td>${escapeHtml(row.manager)}</td>
+          <td>${escapeHtml(formatPhone(row.phone))}</td>
+          <td>${escapeHtml(row.people)}</td>
+          <td>${escapeHtml(row.age||"")}</td>
+          <td>${escapeHtml(row.subject||"")}</td>
+          <td>${escapeHtml(row.memo)}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="ghost-btn" type="button" onclick="copyScheduleFullText(${row.id})">복사</button>
+              <button class="danger-btn" type="button" onclick="deleteScheduleById(${row.id})">삭제</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 기능 3: 엑셀 내보내기
+    ══════════════════════════════════════════════════════════ */
+    function crmExportLeadExcel(){
+      if(!isAdminMode()) return;
+      const rows = crmGetFilteredLeads();
+      if(!rows.length) return alert("내보낼 데이터가 없습니다.");
+      const data = rows.map(l=>({
+        "사업장":l.company||"", "주소":l.address||"", "키맨":l.manager||"",
+        "대표자":l.repName||"", "연락처":l.phone||"", "인원":l.people||"",
+        "업종":l.industry||"", "섭외자":l.ownerName||"",
+        "점검제외체크":l.status||"", "결과값":l.result||"", "메모":l.memo||""
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "교육섭외DB");
+      XLSX.writeFile(wb, `교육섭외DB_${todayStr()}.xlsx`);
+      crmAddLog("info", "교육섭외 DB 엑셀 다운로드", `${rows.length}건`);
+    }
+
+    function crmExportSchedExcel(){
+      if(!isAdminMode()) return;
+      const rows = getVisibleSchedules();
+      if(!rows.length) return alert("내보낼 데이터가 없습니다.");
+      const data = rows.map(s=>({
+        "섭외자":s.assignee||"", "섭외":s.type||"교육섭외",
+        "날짜":s.date||"", "시간":s.time||"", "업체":s.company||"",
+        "주소":s.address||"", "키맨":s.manager||"",
+        "번호":formatPhone(s.phone||""), "인원":s.people||"",
+        "연령대":s.age||"", "교육과목":s.subject||"", "특이사항":s.memo||""
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "일정등록현황");
+      XLSX.writeFile(wb, `일정등록현황_${todayStr()}.xlsx`);
+      crmAddLog("info", "일정등록현황 엑셀 다운로드", `${rows.length}건`);
+    }
+
+    function crmExportPerfExcel(){
+      if(!isAdminMode()) return;
+      const start = ($("perfReportStart")||{}).value||"";
+      const end   = ($("perfReportEnd")||{}).value||"";
+      const scope = ($("perfReportScope")||{}).value||"mine";
+      const admin = isAdminMode();
+      const rows  = performances.filter(p=>{
+        if(scope!=="all"||!admin){ if(!(p.createdByNo===currentStaffNo()||p.staff===currentStaffName())) return false; }
+        if(start && p.date<start) return false;
+        if(end   && p.date>end)   return false;
+        return true;
+      });
+      if(!rows.length) return alert("내보낼 데이터가 없습니다.");
+      const data = rows.map(p=>({
+        "날짜":p.date||"", "직원명":p.staff||"", "상품항목":p.type||"",
+        "건수/금액":p.value||"", "직원수익":calcStaffTake(p).take,
+        "지점장마진":calcAdminMargin(p).margin, "메모":p.memo||""
+      }));
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "실적조회");
+      XLSX.writeFile(wb, `실적조회_${todayStr()}.xlsx`);
+      crmAddLog("info", "실적조회 엑셀 다운로드", `${rows.length}건`);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 기능 4: 데이터 백업 / 복원
+    ══════════════════════════════════════════════════════════ */
+    function crmBackupData(){
+      if(!isAdminMode()) return;
+      const payload = {
+        _backup_version:1,
+        _backup_date: new Date().toISOString(),
+        staffs, authUsers, paySettings, staffRanks, adminRates,
+        performances, leads, schedules, itineraries, notices,
+        inspectionRules, onlineEduRules, activityLogs, staffGoals
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `LUWON_CRM_백업_${todayStr()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      crmAddLog("ok", "데이터 백업 완료", `JSON 파일 다운로드`);
+      alert("✅ 데이터 백업 완료!");
+    }
+
+    function crmRestoreData(input){
+      if(!isAdminMode()) return;
+      const file = input.files[0];
+      if(!file) return;
+      if(!confirm("백업 파일에서 데이터를 복원하면 현재 데이터가 덮어씌워집니다. 계속하시겠습니까?")) {
+        input.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e){
+        try{
+          const d = JSON.parse(e.target.result);
+          if(d.staffs          && Array.isArray(d.staffs))          staffs          = d.staffs;
+          if(d.authUsers       && Array.isArray(d.authUsers))       authUsers       = d.authUsers;
+          if(d.paySettings     && typeof d.paySettings==="object")  paySettings     = d.paySettings;
+          if(d.staffRanks      && typeof d.staffRanks==="object")   staffRanks      = d.staffRanks;
+          if(d.adminRates      && typeof d.adminRates==="object")   Object.assign(adminRates, d.adminRates);
+          if(d.performances    && Array.isArray(d.performances))    performances    = d.performances;
+          if(d.leads           && Array.isArray(d.leads))           leads           = d.leads;
+          if(d.schedules       && Array.isArray(d.schedules))       schedules       = d.schedules;
+          if(d.itineraries     && Array.isArray(d.itineraries))     itineraries     = d.itineraries;
+          if(d.notices         && Array.isArray(d.notices))         notices         = d.notices;
+          if(d.inspectionRules && Array.isArray(d.inspectionRules)) inspectionRules = d.inspectionRules;
+          if(d.onlineEduRules  && Array.isArray(d.onlineEduRules))  onlineEduRules  = d.onlineEduRules;
+          if(d.activityLogs    && Array.isArray(d.activityLogs))    activityLogs    = d.activityLogs;
+          if(d.staffGoals      && typeof d.staffGoals==="object")   staffGoals      = d.staffGoals;
+          saveAppData();
+          renderAll();
+          crmAddLog("ok", "데이터 복원 완료", file.name);
+          alert("✅ 데이터 복원 완료!\n페이지를 새로고침하면 모든 화면에 반영됩니다.");
+        } catch(err){
+          alert("복원 파일 파싱 오류:\n" + err.message);
+        }
+        input.value = "";
+      };
+      reader.readAsText(file);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 기능 5: 직원별 월간 목표 설정
+    ══════════════════════════════════════════════════════════ */
+    // { [staffNo]: { calls: 숫자, scheds: 숫자 } }
+    let staffGoals = {};
+
+    function crmRefreshGoalStaffDropdown(){
+      const sel = $("crmGoalStaffSelect");
+      if(!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">-- 직원 선택 --</option>` +
+        staffs.map(s => `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
+      if(cur) sel.value = cur;
+    }
+
+    function crmOnGoalStaffChange(){
+      const no = ($("crmGoalStaffSelect")||{}).value||"";
+      const fields = $("crmGoalFields");
+      if(!fields) return;
+      if(!no){
+        fields.style.opacity = ".4";
+        fields.style.pointerEvents = "none";
+        if($("crmGoalCalls"))  $("crmGoalCalls").value  = "";
+        if($("crmGoalScheds")) $("crmGoalScheds").value = "";
+        return;
+      }
+      fields.style.opacity = "1";
+      fields.style.pointerEvents = "auto";
+      const g = staffGoals[no] || {};
+      if($("crmGoalCalls"))  $("crmGoalCalls").value  = g.calls  !== undefined ? g.calls  : "";
+      if($("crmGoalScheds")) $("crmGoalScheds").value = g.scheds !== undefined ? g.scheds : "";
+    }
+
+    function crmSaveGoal(){
+      if(!isAdminMode()) return;
+      const no = ($("crmGoalStaffSelect")||{}).value||"";
+      if(!no) return alert("직원을 선택해 주세요.");
+      staffGoals[no] = {
+        calls:  Number(($("crmGoalCalls")||{}).value)||0,
+        scheds: Number(($("crmGoalScheds")||{}).value)||0
+      };
+      saveAppData();
+      crmRenderGoalTable();
+      crmUpdateGoalBadges();
+      alert("✅ 목표 저장 완료!");
+    }
+
+    function crmRenderGoalTable(){
+      const tbody = $("crmGoalTableBody");
+      if(!tbody) return;
+      const nos = Object.keys(staffGoals);
+      if(!nos.length){
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = nos.map(no => {
+        const s = staffs.find(x => x.no === no);
+        const g = staffGoals[no];
+        return `<tr>
+          <td>${escapeHtml(s ? s.name : no)}</td>
+          <td>${g.calls}건</td>
+          <td>${g.scheds}건</td>
+        </tr>`;
+      }).join("");
+    }
+
+    function crmUpdateGoalBadges(){
+      const user = state.currentUser;
+      if(!user) return;
+      const no    = user.staffNo;
+      const goal  = staffGoals[no];
+      const month = monthPrefix();
+
+      // 뱃지1: 오늘 등록 일정 (콜 목표 기반)
+      const b1 = $("crmGoalBadge1");
+      if(b1){
+        if(goal && goal.calls > 0){
+          const today = todayStr();
+          const val1  = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
+          const pct1  = Math.round((val1/goal.calls)*100);
+          b1.innerHTML = `<span class="crm-goal-badge${pct1>=100?" done":pct1>=50?" warn":""}">목표 ${goal.calls}건 · ${pct1}%</span>`;
+        } else { b1.innerHTML = ""; }
+      }
+
+      // 뱃지2: 오늘 콜량 (콜 목표 기반)
+      const b2 = $("crmGoalBadge2");
+      if(b2){
+        if(goal && goal.calls > 0){
+          const val2 = leads.filter(l => (l.ownerNo===no||l.ownerName===currentStaffName()) && l.result && l.result!=="").length;
+          const pct2 = Math.round((val2/goal.calls)*100);
+          b2.innerHTML = `<span class="crm-goal-badge${pct2>=100?" done":pct2>=50?" warn":""}">목표 ${goal.calls}건 · ${pct2}%</span>`;
+        } else { b2.innerHTML = ""; }
+      }
+
+      // 뱃지4: 이번달 등록 일정 (일정 목표 기반)
+      const b4 = $("crmGoalBadge4");
+      if(b4){
+        if(goal && goal.scheds > 0){
+          const val4 = schedules.filter(s => String(s.createdAt||"").startsWith(month) && s.createdByNo===no).length;
+          const pct4 = Math.round((val4/goal.scheds)*100);
+          b4.innerHTML = `<span class="crm-goal-badge${pct4>=100?" done":pct4>=50?" warn":""}">목표 ${goal.scheds}건 · ${pct4}%</span>`;
+        } else { b4.innerHTML = ""; }
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 기능 6: 활동 로그
+    ══════════════════════════════════════════════════════════ */
+    let activityLogs = [];
+
+    function crmAddLog(level, action, detail){
+      // level: "info" | "ok" | "warn" | "danger"
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")} ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+      activityLogs.unshift({ level, action, detail: detail||"", time: timeStr, user: state.currentUser ? state.currentUser.name : "" });
+      if(activityLogs.length > 50) activityLogs = activityLogs.slice(0,50);
+      // saveAppData는 호출하는 쪽에서 이미 호출하므로 여기선 생략 (무한루프 방지)
+    }
+
+    function crmRenderLogs(){
+      const box = $("crmLogListBox");
+      if(!box) return;
+      if(!activityLogs.length){
+        box.innerHTML = `<div class="empty">활동 로그가 없습니다.</div>`;
+        return;
+      }
+      box.innerHTML = activityLogs.map(log => `
+        <div class="crm-log-item">
+          <span class="crm-log-badge ${log.level||"info"}">${escapeHtml(log.level||"info")}</span>
+          <div class="crm-log-text">
+            <b>${escapeHtml(log.action)}</b>
+            ${log.detail ? `<span style="color:var(--muted);"> · ${escapeHtml(log.detail)}</span>` : ""}
+            ${log.user ? `<span style="color:var(--muted);font-size:11px;"> [${escapeHtml(log.user)}]</span>` : ""}
+          </div>
+          <span class="crm-log-time">${escapeHtml(log.time)}</span>
+        </div>
+      `).join("");
+    }
+
+    function crmClearLogs(){
+      if(!isAdminMode()) return;
+      if(!confirm("활동 로그를 모두 삭제할까요?")) return;
+      activityLogs = [];
+      saveAppData();
+      crmRenderLogs();
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 기능 7: 실시간 동기화 (Supabase Realtime)
+    ══════════════════════════════════════════════════════════ */
+    function crmInitRealtime(){
+      try{
+        sbClient.channel("crm-notices-realtime")
+          .on("postgres_changes", { event:"*", schema:"public", table:"notices" }, () => {
+            // notices 테이블 변경 감지 → renderNotices 재호출
+            renderNotices();
+          })
+          .subscribe();
+      } catch(e){ console.warn("Realtime 구독 실패:", e); }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 기능 8: UI 애니메이션 - 빈 화면 일러스트 / 스켈레톤
+    ══════════════════════════════════════════════════════════ */
+    const CRM_EMPTY_SVG = `<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="8" width="48" height="48" rx="10" stroke="#e2e8f0" stroke-width="2"/><path d="M22 32h20M22 24h20M22 40h12" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg>`;
+
+    function crmShowSkeleton(tbodyId, cols){
+      const tbody = $(tbodyId);
+      if(!tbody) return;
+      let html = "";
+      for(let r=0; r<4; r++){
+        html += "<tr class='crm-skeleton-row'>";
+        for(let c=0; c<cols; c++){
+          const w = 60 + Math.random()*35;
+          html += `<td><div class="crm-skeleton-cell" style="width:${w}%;"></div></td>`;
+        }
+        html += "</tr>";
+      }
+      tbody.innerHTML = html;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 기능 9: 다크모드
+    ══════════════════════════════════════════════════════════ */
+    const CRM_DARK_KEY = "luwon_dark_mode";
+
+    function crmToggleDarkMode(){
+      const isDark = document.body.classList.toggle("dark-mode");
+      try{ localStorage.setItem(CRM_DARK_KEY, isDark ? "1" : "0"); }catch(e){}
+      const btn = $("darkModeToggleBtn");
+      if(btn) btn.textContent = isDark ? "☀️" : "🌙";
+    }
+
+    function crmApplyDarkMode(){
+      try{
+        const saved = localStorage.getItem(CRM_DARK_KEY);
+        if(saved === "1"){
+          document.body.classList.add("dark-mode");
+          const btn = $("darkModeToggleBtn");
+          if(btn) btn.textContent = "☀️";
+        }
+      }catch(e){}
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 기능 10: 모바일 하단 탭바 활성화 업데이트
+    ══════════════════════════════════════════════════════════ */
+    function crmUpdateMobTabBar(view){
+      const tabBar = $("crmMobTabBar");
+      if(!tabBar) return;
+      tabBar.querySelectorAll(".crm-tab-item").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.view === view);
+      });
+      // 설정 탭 - 비관리자면 비활성 표시
+      const settingsBtn = $("crmMobTabSettings");
+      if(settingsBtn) settingsBtn.style.opacity = isAdminMode() ? "1" : ".4";
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] saveAppData / loadAppData 확장 - activityLogs, staffGoals 포함
+       기존 함수를 덮어쓰지 않고 래퍼 방식으로 처리 (원본 유지 후 이후 호출에서 자동 포함)
+    ══════════════════════════════════════════════════════════ */
+    // 기존 saveAppData의 JSON에 activityLogs, staffGoals 추가를 위해 원본 참조 후 재정의
+    (function patchSaveLoadAppData(){
+      const _origSave = saveAppData;
+      const _origLoad = loadAppData;
+
+      saveAppData = function(){
+        try{
+          localStorage.setItem(APP_DATA_KEY, JSON.stringify({
+            staffs, authUsers, paySettings, staffRanks, adminRates,
+            performances, leads, schedules, itineraries, notices,
+            inspectionRules, onlineEduRules, activityLogs, staffGoals
+          }));
+        }catch(e){}
+      };
+
+      loadAppData = function(){
+        try{
+          const raw = localStorage.getItem(APP_DATA_KEY);
+          if(!raw) return;
+          const d = JSON.parse(raw);
+          if(d.staffs          && Array.isArray(d.staffs))          staffs          = d.staffs;
+          if(d.authUsers       && Array.isArray(d.authUsers))        authUsers       = d.authUsers;
+          if(d.paySettings     && typeof d.paySettings==="object")   paySettings     = d.paySettings;
+          if(d.staffRanks      && typeof d.staffRanks==="object")    staffRanks      = d.staffRanks;
+          if(d.adminRates      && typeof d.adminRates==="object")    Object.assign(adminRates, d.adminRates);
+          if(d.performances    && Array.isArray(d.performances))     performances    = d.performances;
+          if(d.leads           && Array.isArray(d.leads))            leads           = d.leads;
+          if(d.schedules       && Array.isArray(d.schedules))        schedules       = d.schedules;
+          if(d.itineraries     && Array.isArray(d.itineraries))      itineraries     = d.itineraries;
+          if(d.notices         && Array.isArray(d.notices))          notices         = d.notices;
+          if(d.inspectionRules && Array.isArray(d.inspectionRules))  inspectionRules = d.inspectionRules;
+          if(d.onlineEduRules  && Array.isArray(d.onlineEduRules))   onlineEduRules  = d.onlineEduRules;
+          if(d.activityLogs    && Array.isArray(d.activityLogs))     activityLogs    = d.activityLogs;
+          if(d.staffGoals      && typeof d.staffGoals==="object")    staffGoals      = d.staffGoals;
+        }catch(e){}
+      };
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] setSettingsTab 확장 - goal, log 탭 처리
+    ══════════════════════════════════════════════════════════ */
+    (function patchSetSettingsTab(){
+      const _orig = setSettingsTab;
+      setSettingsTab = function(tab){
+        _orig(tab);
+        // 추가 탭 처리
+        const goalPaneEl = $("settingsPaneGoal");
+        const logPaneEl  = $("settingsPaneLog");
+        const goalTabEl  = $("settingsTabGoal");
+        const logTabEl   = $("settingsTabLog");
+
+        if(goalPaneEl) goalPaneEl.classList.toggle("hidden", tab !== "goal");
+        if(logPaneEl)  logPaneEl.classList.toggle("hidden",  tab !== "log");
+        if(goalTabEl)  goalTabEl.classList.toggle("active",  tab === "goal");
+        if(logTabEl)   logTabEl.classList.toggle("active",   tab === "log");
+
+        if(tab === "goal"){ crmRefreshGoalStaffDropdown(); crmRenderGoalTable(); }
+        if(tab === "log")  crmRenderLogs();
+      };
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] setView 패치 - 탭바 업데이트 + 차트 + 엑셀 버튼
+    ══════════════════════════════════════════════════════════ */
+    (function patchSetView(){
+      const _orig = setView;
+      setView = function(view){
+        _orig(view);
+        crmUpdateMobTabBar(view);
+        // 실적조회 뷰 진입 시 차트 업데이트 + 엑셀 버튼 가시성
+        if(view === "performance-report"){
+          setTimeout(crmUpdateCharts, 80);
+          const perfExcelBox = $("crmPerfExcelBox");
+          if(perfExcelBox) perfExcelBox.classList.toggle("hidden", !isAdminMode());
+        }
+        // 교육섭외 DB 뷰 진입 시 엑셀 버튼 가시성
+        if(view === "lead"){
+          const leadExcelBtn = $("crmLeadExcelBtn");
+          if(leadExcelBtn) leadExcelBtn.classList.toggle("hidden", !isAdminMode());
+        }
+        // 일정등록 현황 뷰 진입 시 엑셀 버튼 가시성
+        if(view === "schedule"){
+          const schedExcelBtn = $("crmSchedExcelBtn");
+          if(schedExcelBtn) schedExcelBtn.classList.toggle("hidden", !isAdminMode());
+        }
+      };
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] renderPerformances 패치 - 차트 갱신
+    ══════════════════════════════════════════════════════════ */
+    (function patchRenderPerformances(){
+      const _orig = renderPerformances;
+      renderPerformances = function(){
+        _orig();
+        if(state.currentView === "performance-report") setTimeout(crmUpdateCharts, 80);
+      };
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] 로그 후킹 - 주요 액션에 로그 삽입
+    ══════════════════════════════════════════════════════════ */
+    (function patchForLogs(){
+      // DB 업로드 로그
+      const _origSyncUpload = syncAfterUpload;
+      syncAfterUpload = async function(rows){
+        crmAddLog("ok", "교육섭외 DB 엑셀 업로드", `${rows.length}건 추가`);
+        return _origSyncUpload(rows);
+      };
+
+      // 실적 저장 로그
+      const _origAddPerf = addPerformance;
+      addPerformance = function(){
+        _origAddPerf();
+        crmAddLog("ok", "실적 저장", `${($("perfSaveType")||{}).value||""}`);
+      };
+
+      // 일정 등록 로그
+      const _origAddSched = addSchedule;
+      addSchedule = function(){
+        crmAddLog("info", "일정 등록", `${($("scheduleCompany")||{}).value||""}`);
+        _origAddSched();
+      };
+
+      // 공지 저장 로그
+      const _origSaveNotice = saveNotice;
+      saveNotice = function(){
+        crmAddLog("info", "공지사항 저장", `${($("noticeTitle")||{}).value||""}`);
+        _origSaveNotice();
+      };
+
+      // 교육DB 삭제 로그
+      const _origDeleteLead = deleteLead;
+      deleteLead = async function(id){
+        const l = leads.find(x=>x.id===id);
+        if(l) crmAddLog("danger", "교육DB 삭제", l.company||"");
+        return _origDeleteLead(id);
+      };
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] runHomeSummary 패치 - 목표 배지 갱신
+    ══════════════════════════════════════════════════════════ */
+    (function patchRunHomeSummary(){
+      const _origAdmin = runAdminSummary;
+      const _origMine  = runMySummary;
+      runAdminSummary = function(){ _origAdmin(); crmUpdateGoalBadges(); };
+      runMySummary    = function(){ _origMine();  crmUpdateGoalBadges(); };
+    })();
+
+    /* ══════════════════════════════════════════════════════════
+       [추가] initApp 패치 - Realtime 구독 + 다크모드 복원 + 탭바 초기화
+    ══════════════════════════════════════════════════════════ */
+    (function patchInitApp(){
+      const _orig = initApp;
+      initApp = async function(){
+        await _orig();
+        crmInitRealtime();
+        crmApplyDarkMode();
+        crmUpdateMobTabBar(state.currentView || "home");
+        // 엑셀/차트 버튼 초기 가시성
+        const leadExcelBtn   = $("crmLeadExcelBtn");
+        const schedExcelBtn  = $("crmSchedExcelBtn");
+        const perfExcelBox   = $("crmPerfExcelBox");
+        if(leadExcelBtn)  leadExcelBtn.classList.toggle("hidden",  !isAdminMode());
+        if(schedExcelBtn) schedExcelBtn.classList.toggle("hidden", !isAdminMode());
+        if(perfExcelBox)  perfExcelBox.classList.toggle("hidden",  !isAdminMode());
+      };
+    })();
+
+    // 페이지 로드 시 다크모드 즉시 적용 (로그인 전에도)
+    crmApplyDarkMode();
   </script>
 
   <!-- ── 홈 카드 상세 팝업 ── -->
@@ -5809,6 +6891,25 @@
       <div class="sched-modal-body" id="homeDetailBody" style="padding:16px 20px 20px;"></div>
     </div>
   </div>
+
+  <!-- [추가] 모바일 하단 탭바 -->
+  <nav id="crmMobTabBar">
+    <button class="crm-tab-item active" data-view="home" onclick="setView('home')">
+      <span class="crm-tab-icon">🏠</span>홈
+    </button>
+    <button class="crm-tab-item" data-view="lead" onclick="setView('lead')">
+      <span class="crm-tab-icon">📋</span>DB
+    </button>
+    <button class="crm-tab-item" data-view="schedule" onclick="setView('schedule')">
+      <span class="crm-tab-icon">📅</span>일정
+    </button>
+    <button class="crm-tab-item" data-view="performance-report" onclick="setView('performance-report')">
+      <span class="crm-tab-icon">📈</span>실적
+    </button>
+    <button class="crm-tab-item" data-view="settings" id="crmMobTabSettings" onclick="if(window.isAdminMode && isAdminMode())setView('settings')">
+      <span class="crm-tab-icon">⚙️</span>설정
+    </button>
+  </nav>
 
   <!-- ── 일정등록 모달 ── -->
   <div class="sched-modal-overlay" id="schedModalOverlay" onclick="onSchedOverlayClick(event)">
