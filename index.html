@@ -5111,7 +5111,7 @@
       $("adminAcctNewPw").value = "";
     }
 
-    function saveAdminAccount(){
+    async function saveAdminAccount(){
       const no    = $("adminAcctSelect").value;
       const curPw = $("adminAcctCurPw").value.trim();
       const newId = $("adminAcctNewId").value.trim();
@@ -5125,33 +5125,35 @@
       if(au.password !== curPw) return alert("현재 비밀번호가 틀렸습니다.");
       if(!newId && !newPw) return alert("새 아이디 또는 새 비밀번호를 입력해 주세요.");
 
-      const finalId = newId || au.staffNo;
-      const finalPw = newPw || au.password;
-      const targetName = au.name; // 이름으로 연결
+      const oldId      = au.staffNo;
+      const finalId    = newId || au.staffNo;
+      const finalPw    = newPw || au.password;
+      const targetName = au.name;
 
       if(newId && newId !== au.staffNo && authUsers.find(u => u.staffNo === newId))
         return alert("이미 사용 중인 아이디입니다.");
 
-      // ① 같은 이름의 authUsers 전부 업데이트 (관리자+직원 동일 이름이면 둘 다)
+      // ① authUsers 업데이트
       authUsers.forEach(u => {
         if(u.name === targetName){
-          const oldNo = u.staffNo;
+          const prevNo = u.staffNo;
           u.staffNo  = finalId;
           u.password = finalPw;
-          // paySettings 키 이동
-          if(oldNo !== finalId && paySettings[oldNo]){
-            paySettings[finalId] = paySettings[oldNo];
-            delete paySettings[oldNo];
+          if(prevNo !== finalId && paySettings[prevNo]){
+            paySettings[finalId] = paySettings[prevNo];
+            delete paySettings[prevNo];
           }
         }
       });
 
-      // ② staffs에서 같은 이름 찾아 사번 동기화 (이름 기준 - 사번이 달라도 매칭)
-      staffs.forEach(s => {
-        if(s.name === targetName){
-          s.no = finalId;
-        }
-      });
+      // ② staffs 업데이트
+      staffs.forEach(s => { if(s.name === targetName) s.no = finalId; });
+
+      // ③ staffRanks 키 이동
+      if(oldId !== finalId && staffRanks[oldId]){
+        staffRanks[finalId] = staffRanks[oldId];
+        delete staffRanks[oldId];
+      }
 
       $("adminAcctCurPw").value = "";
       $("adminAcctNewId").value = "";
@@ -5160,8 +5162,15 @@
       renderStaffs();
       refreshLeadStaffDropdown();
       refreshPayStaffDropdown();
+      refreshAdminAcctDropdown();
       saveAppData();
-      alert(`✅ [${targetName}] 계정이 변경되었습니다.\n사번(아이디): ${finalId}`);
+
+      // ④ Supabase에도 반영 (사번 변경 시 기존 행 삭제 후 재삽입)
+      const s = staffs.find(x => x.no === finalId) || { role:"admin", branch:"루원지점", rank:"지점장" };
+      if(oldId !== finalId) await deleteStaffFromSupabase(oldId);
+      await upsertStaffToSupabase(finalId, finalPw, targetName, s.role || "admin", s.branch || "루원지점", s.rank || "지점장");
+
+      alert(`✅ [${targetName}] 계정이 변경되었습니다.\n사번: ${finalId}`);
     }
 
     // ══════════════════════════════════════════════════
