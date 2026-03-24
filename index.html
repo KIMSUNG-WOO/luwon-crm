@@ -1608,6 +1608,7 @@
               <div class="form-grid">
                 <input id="setStaffName" placeholder="직원명 (예: 홍길동)">
                 <input id="setStaffNo" placeholder="사번 (예: 2024001)">
+                <input id="setStaffPw" placeholder="비밀번호 (미입력 시 사번과 동일)">
                 <select id="setStaffRank" style="height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;">
                   <option value="대리">대리</option>
                   <option value="과장">과장</option>
@@ -4974,6 +4975,8 @@
       renderStaffs();
       refreshLeadStaffDropdown();
       refreshPayStaffDropdown();
+      refreshItineraryStaffDropdown();
+      refreshAdminAcctDropdown();
       saveAppData();
       alert(`✅ [${newName}] 정보가 수정되었습니다.\n사번: ${newNo} / 직급: ${newRank}`);
     }
@@ -4982,23 +4985,29 @@
       if(!isAdminMode()) return alert("관리자 모드에서만 가능합니다.");
       const name   = $("setStaffName").value.trim();
       const no     = $("setStaffNo").value.trim();
+      const pw     = $("setStaffPw").value.trim() || no;  // 미입력 시 사번과 동일
       const rank   = $("setStaffRank")?.value || "대리";
       const role   = $("setStaffRole").value;
       const branch = $("setStaffBranch").value.trim() || "루원지점";
       if(!name || !no) return alert("직원명과 사번을 입력해 주세요.");
       if(staffs.find(s => s.no === no)) return alert("이미 등록된 사번입니다.");
       staffs.unshift({ name, no, rank, role, branch });
-      authUsers.unshift({ staffNo: no, password: no, name, role, branch });
+      authUsers.unshift({ staffNo: no, password: pw, name, role, branch });
       staffRanks[no] = rank;
-      $("setStaffName").value = "";
-      $("setStaffNo").value   = "";
+      // 입력 필드 초기화
+      $("setStaffName").value   = "";
+      $("setStaffNo").value     = "";
+      $("setStaffPw").value     = "";
       $("setStaffBranch").value = "";
+      // 모든 드롭다운 및 목록 즉시 갱신
       renderSettingsStaff();
       renderStaffs();
       refreshLeadStaffDropdown();
       refreshPayStaffDropdown();
+      refreshItineraryStaffDropdown();
+      refreshAdminAcctDropdown();
       saveAppData();
-      alert(`✅ 직원 추가 완료!\n${name} / 사번 ${no} / 직급 ${rank}\n초기 비밀번호: ${no}`);
+      alert(`✅ 직원 추가 완료!\n이름: ${name} / 사번: ${no} / 직급: ${rank}\n비밀번호: ${pw}`);
     }
 
     function deleteStaff(no){
@@ -5014,6 +5023,8 @@
       renderStaffs();
       refreshLeadStaffDropdown();
       refreshPayStaffDropdown();
+      refreshItineraryStaffDropdown();
+      refreshAdminAcctDropdown();
       saveAppData();
     }
 
