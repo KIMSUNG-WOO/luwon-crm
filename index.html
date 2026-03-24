@@ -2300,6 +2300,59 @@
       }catch(e){}
     }
 
+    // ─── Supabase 직원 계정 동기화 ───
+    async function loadStaffFromSupabase(){
+      try{
+        const { data, error } = await sbClient.from("staff_accounts").select("*");
+        if(error) throw error;
+        if(!data || !data.length) return;
+        // 서버 데이터로 staffs / authUsers / staffRanks 완전히 덮어쓰기
+        staffs    = data.map(r => ({ name:r.name, no:r.staff_no, role:r.role, branch:r.branch, rank:r.rank }));
+        authUsers = data.map(r => ({ staffNo:r.staff_no, password:r.password, name:r.name, role:r.role, branch:r.branch }));
+        data.forEach(r => { staffRanks[r.staff_no] = r.rank; });
+        saveAppData(); // 로컬에도 캐시
+      }catch(e){ console.warn("직원 목록 로드 오류:", e.message); }
+    }
+
+    async function upsertStaffToSupabase(staffNo, password, name, role, branch, rank){
+      try{
+        const { error } = await sbClient.from("staff_accounts").upsert(
+          { staff_no:staffNo, password, name, role, branch, rank },
+          { onConflict:"staff_no" }
+        );
+        if(error) throw error;
+      }catch(e){ console.warn("직원 저장 오류:", e.message); }
+    }
+
+    async function deleteStaffFromSupabase(staffNo){
+      try{
+        const { error } = await sbClient.from("staff_accounts").delete().eq("staff_no", staffNo);
+        if(error) throw error;
+      }catch(e){ console.warn("직원 삭제 오류:", e.message); }
+    }
+
+    // ─── 앱 초기화 (Supabase 직원 로드 → 세션 복원) ───
+    async function initApp(){
+      loadAppData();                  // 1. localStorage 캐시 먼저 적용
+      await loadStaffFromSupabase();  // 2. Supabase 최신 직원 데이터로 덮어쓰기
+      try{
+        const saved = localStorage.getItem("luwon_auth");
+        if(!saved) return;
+        const { staffNo, password } = JSON.parse(saved);
+        const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+        if(!user){ localStorage.removeItem("luwon_auth"); return; }
+        state.currentUser = user;
+        state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
+        $("loginPage").style.display = "none";
+        $("dashboard").style.display = "grid";
+        hydrateUserUI();
+        renderAll();
+        setView("home");
+        loadData();
+      }catch(e){ try{ localStorage.removeItem("luwon_auth"); }catch(_){} }
+    }
+    }
+
     function $(id){ return document.getElementById(id); }
 
     function todayStr() {
@@ -2410,21 +2463,40 @@
       document.body.removeChild(ta);
     }
 
-    function login(){
-      const staffNo = $("staffId").value.trim();
+    async function login(){
+      const staffNo  = $("staffId").value.trim();
       const password = $("password").value.trim();
 
-      if(!staffNo) return showMsg("사번을 입력해 주세요.", "error");
+      if(!staffNo)  return showMsg("사번을 입력해 주세요.", "error");
       if(!password) return showMsg("비밀번호를 입력해 주세요.", "error");
 
-      const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+      // 1. 로컬 캐시에서 먼저 확인
+      let user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+
+      // 2. 로컬에 없으면 Supabase에서 직접 확인 (캐시 미스 대응)
+      if(!user){
+        try{
+          const { data, error } = await sbClient.from("staff_accounts")
+            .select("*").eq("staff_no", staffNo).eq("password", password).maybeSingle();
+          if(!error && data){
+            user = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch };
+            // 로컬 배열에도 추가
+            if(!authUsers.find(u => u.staffNo === user.staffNo)){
+              authUsers.unshift(user);
+              staffs.unshift({ name:data.name, no:data.staff_no, role:data.role, branch:data.branch, rank:data.rank });
+              staffRanks[data.staff_no] = data.rank;
+              saveAppData();
+            }
+          }
+        }catch(e){}
+      }
+
       if(!user) return showMsg("사번 또는 비밀번호가 틀렸습니다.", "error");
 
       state.currentUser = user;
-      // 관리자 모드는 지점장(ADMIN_JIJUMJANG_NO)만 가능
       state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
       clearMsg();
-      try{ localStorage.setItem("luwon_auth", JSON.stringify({ staffNo: user.staffNo, password: user.password })); }catch(e){}
+      try{ localStorage.setItem("luwon_auth", JSON.stringify({ staffNo:user.staffNo, password:user.password })); }catch(e){}
 
       $("loginPage").style.display = "none";
       $("dashboard").style.display = "grid";
@@ -4825,25 +4897,8 @@
     $("staffId").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
     $("password").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
 
-    // ── 새로고침 후 세션 자동 복원 ──
-    (function restoreSession(){
-      try{
-        loadAppData();
-        const saved = localStorage.getItem("luwon_auth");
-        if(!saved) return;
-        const { staffNo, password } = JSON.parse(saved);
-        const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
-        if(!user){ localStorage.removeItem("luwon_auth"); return; }
-        state.currentUser = user;
-        state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
-        $("loginPage").style.display = "none";
-        $("dashboard").style.display = "grid";
-        hydrateUserUI();
-        renderAll();
-        setView("home");
-        loadData();
-      } catch(e){ try{ localStorage.removeItem("luwon_auth"); }catch(_){} }
-    })();
+    // ── 앱 시작: Supabase 직원 로드 후 세션 복원 ──
+    initApp();
 
     renderNotices();
     $("progressDate").value = todayStr();
@@ -4934,7 +4989,7 @@
     }
 
     // 직원 행 수정 저장
-    function saveStaffRow(oldNo){
+    async function saveStaffRow(oldNo){
       const newName   = $(`edt_name_${oldNo}`)?.value.trim();
       const newNo     = $(`edt_no_${oldNo}`)?.value.trim();
       const newPw     = $(`edt_pw_${oldNo}`)?.value.trim();
@@ -4946,26 +5001,16 @@
       if(!newPw) return alert("비밀번호는 필수입니다.");
       if(newNo !== oldNo && staffs.find(x => x.no === newNo)) return alert("이미 사용 중인 사번입니다.");
 
-      // staffs 업데이트
       const s = staffs.find(x => x.no === oldNo);
       if(!s) return;
       s.name = newName; s.no = newNo; s.rank = newRank; s.role = newRole; s.branch = newBranch;
 
-      // authUsers 업데이트 (사번 + 비밀번호 모두)
       const au = authUsers.find(x => x.staffNo === oldNo);
-      if(au){
-        au.staffNo  = newNo;
-        au.password = newPw;
-        au.name     = newName;
-        au.role     = newRole;
-        au.branch   = newBranch;
-      }
+      if(au){ au.staffNo=newNo; au.password=newPw; au.name=newName; au.role=newRole; au.branch=newBranch; }
 
-      // staffRanks 업데이트
       staffRanks[newNo] = newRank;
       if(newNo !== oldNo) delete staffRanks[oldNo];
 
-      // paySettings 키 이동 (사번 변경 시)
       if(newNo !== oldNo && paySettings[oldNo]){
         paySettings[newNo] = paySettings[oldNo];
         delete paySettings[oldNo];
@@ -4978,28 +5023,29 @@
       refreshItineraryStaffDropdown();
       refreshAdminAcctDropdown();
       saveAppData();
+      // 사번이 바뀐 경우 기존 행 삭제 후 신규 upsert
+      if(newNo !== oldNo) await deleteStaffFromSupabase(oldNo);
+      await upsertStaffToSupabase(newNo, newPw, newName, newRole, newBranch, newRank);
       alert(`✅ [${newName}] 정보가 수정되었습니다.\n사번: ${newNo} / 직급: ${newRank}`);
     }
 
-    function addSettingsStaff(){
+    async function addSettingsStaff(){
       if(!isAdminMode()) return alert("관리자 모드에서만 가능합니다.");
       const name   = $("setStaffName").value.trim();
       const no     = $("setStaffNo").value.trim();
-      const pw     = $("setStaffPw").value.trim() || no;  // 미입력 시 사번과 동일
+      const pw     = $("setStaffPw").value.trim() || no;
       const rank   = $("setStaffRank")?.value || "대리";
       const role   = $("setStaffRole").value;
       const branch = $("setStaffBranch").value.trim() || "루원지점";
       if(!name || !no) return alert("직원명과 사번을 입력해 주세요.");
       if(staffs.find(s => s.no === no)) return alert("이미 등록된 사번입니다.");
       staffs.unshift({ name, no, rank, role, branch });
-      authUsers.unshift({ staffNo: no, password: pw, name, role, branch });
+      authUsers.unshift({ staffNo:no, password:pw, name, role, branch });
       staffRanks[no] = rank;
-      // 입력 필드 초기화
       $("setStaffName").value   = "";
       $("setStaffNo").value     = "";
       $("setStaffPw").value     = "";
       $("setStaffBranch").value = "";
-      // 모든 드롭다운 및 목록 즉시 갱신
       renderSettingsStaff();
       renderStaffs();
       refreshLeadStaffDropdown();
@@ -5007,18 +5053,19 @@
       refreshItineraryStaffDropdown();
       refreshAdminAcctDropdown();
       saveAppData();
+      await upsertStaffToSupabase(no, pw, name, role, branch, rank); // Supabase 저장
       alert(`✅ 직원 추가 완료!\n이름: ${name} / 사번: ${no} / 직급: ${rank}\n비밀번호: ${pw}`);
     }
 
-    function deleteStaff(no){
+    async function deleteStaff(no){
       if(!isAdminMode()) return;
       const s = staffs.find(x => x.no === no);
       if(!s) return;
-      if(!confirm(`[${s.name}] 직원을 삭제할까?\n해당 직원으로 로그인할 수 없게 됩니다.`)) return;
+      if(!confirm(`[${s.name}] 직원을 삭제할까요?\n해당 직원으로 로그인할 수 없게 됩니다.`)) return;
       staffs    = staffs.filter(x => x.no !== no);
       authUsers = authUsers.filter(x => x.staffNo !== no);
-      delete paySettings[no]; // 단가 설정도 제거
-      delete staffRanks[no];  // 직급 설정도 제거
+      delete paySettings[no];
+      delete staffRanks[no];
       renderSettingsStaff();
       renderStaffs();
       refreshLeadStaffDropdown();
@@ -5026,6 +5073,7 @@
       refreshItineraryStaffDropdown();
       refreshAdminAcctDropdown();
       saveAppData();
+      await deleteStaffFromSupabase(no); // Supabase에서도 삭제
     }
 
     // ── 관리자 계정 드롭다운 갱신 ──
