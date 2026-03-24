@@ -2162,7 +2162,7 @@
   <script>
     // ── Supabase 초기화 ──────────────────────────────────────
     const SUPABASE_URL = "https://cbcbuensicssiyobfuuf.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_GDyS-wfgvdMXGnpfmLywGw__aTuCBzd";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiY2J1ZW5zaWNzc2l5b2JmdXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODc1MzEsImV4cCI6MjA4OTc2MzUzMX0.Bg1ioGO0K2KhVS3nKMhs_8gcrPRGnIJyU2PbFzOQtxo";
     const { createClient } = window.supabase;
     const sbClient = createClient(SUPABASE_URL, SUPABASE_KEY);
     // ─────────────────────────────────────────────────────────
@@ -2486,25 +2486,30 @@
       if(!staffNo)  return showMsg("사번을 입력해 주세요.", "error");
       if(!password) return showMsg("비밀번호를 입력해 주세요.", "error");
 
-      // 1. 로컬 캐시에서 먼저 확인
-      let user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+      showMsg("로그인 중...", "info");
 
-      // 2. 로컬에 없으면 Supabase에서 직접 확인 (캐시 미스 대응)
+      // 1. Supabase에서 직접 확인 (항상 최신 데이터 기준)
+      let user = null;
+      try{
+        const { data, error } = await sbClient.from("staff_accounts")
+          .select("*").eq("staff_no", staffNo).eq("password", password).maybeSingle();
+        if(!error && data){
+          user = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch };
+          // 로컬 배열 동기화
+          const idx = authUsers.findIndex(u => u.staffNo === user.staffNo);
+          if(idx >= 0) authUsers[idx] = user;
+          else authUsers.unshift(user);
+          const si = staffs.findIndex(s => s.no === data.staff_no);
+          if(si >= 0){ staffs[si].rank = data.rank; staffs[si].name = data.name; }
+          else staffs.unshift({ name:data.name, no:data.staff_no, role:data.role, branch:data.branch, rank:data.rank||"대리" });
+          staffRanks[data.staff_no] = data.rank || "대리";
+          saveAppData();
+        }
+      }catch(e){ console.warn("Supabase 로그인 확인 실패:", e.message); }
+
+      // 2. Supabase 실패 시 로컬 캐시에서 확인
       if(!user){
-        try{
-          const { data, error } = await sbClient.from("staff_accounts")
-            .select("*").eq("staff_no", staffNo).eq("password", password).maybeSingle();
-          if(!error && data){
-            user = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch };
-            // 로컬 배열에도 추가
-            if(!authUsers.find(u => u.staffNo === user.staffNo)){
-              authUsers.unshift(user);
-              staffs.unshift({ name:data.name, no:data.staff_no, role:data.role, branch:data.branch, rank:data.rank });
-              staffRanks[data.staff_no] = data.rank;
-              saveAppData();
-            }
-          }
-        }catch(e){}
+        user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
       }
 
       if(!user) return showMsg("사번 또는 비밀번호가 틀렸습니다.", "error");
