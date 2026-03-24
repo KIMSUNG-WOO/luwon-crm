@@ -1728,17 +1728,50 @@
             <!-- 수익 현황 -->
             <div class="panel">
               <h5 style="margin:0 0 14px;font-size:15px;">이번달 수익 현황</h5>
-              <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">
+              <!-- 기준 단가 요약 -->
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#475569;">
+                기준 단가 — 상조 <b style="color:#1e40af;">10만원/건</b> &nbsp;|&nbsp; 건식 <b style="color:#065f46;">4만원/건</b> &nbsp;|&nbsp; 보험 <b style="color:#7c3aed;">107.5%</b>
+                &nbsp;&nbsp;·&nbsp;&nbsp; 마진 = 기준단가 − 직원단가 (상품별)
+              </div>
+              <!-- 총합 카드 -->
+              <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px;">
                 <div class="kpi-card"><div class="k">이번달 실적 건수</div><div class="v" id="payCountAll">-</div></div>
                 <div class="kpi-card"><div class="k">직원 지급 총액</div><div class="v" id="payTotalAll">-</div></div>
-                <div class="kpi-card" style="border:2px solid #fca5a5;background:#fff7f7;"><div class="k" style="color:#be123c;">지점장 마진 (추정)</div><div class="v" style="color:#be123c;" id="payMarginAll">-</div></div>
+                <div class="kpi-card" style="border:2px solid #fca5a5;background:#fff7f7;"><div class="k" style="color:#be123c;">지점장 마진 합계</div><div class="v" style="color:#be123c;" id="payMarginAll">-</div></div>
+              </div>
+              <!-- 상품별 마진 카드 -->
+              <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
+                <div class="kpi-card" style="border:1.5px solid #bfdbfe;background:#eff6ff;">
+                  <div class="k" style="color:#1e40af;">상조 마진</div>
+                  <div class="v" style="color:#1e40af;font-size:16px;" id="payMarginSanjo">-</div>
+                  <div style="font-size:10px;color:#64748b;margin-top:4px;" id="payMarginSanjoDetail">-</div>
+                </div>
+                <div class="kpi-card" style="border:1.5px solid #a7f3d0;background:#ecfdf5;">
+                  <div class="k" style="color:#065f46;">건식 마진</div>
+                  <div class="v" style="color:#065f46;font-size:16px;" id="payMarginHealth">-</div>
+                  <div style="font-size:10px;color:#64748b;margin-top:4px;" id="payMarginHealthDetail">-</div>
+                </div>
+                <div class="kpi-card" style="border:1.5px solid #ddd6fe;background:#f5f3ff;">
+                  <div class="k" style="color:#7c3aed;">보험 마진</div>
+                  <div class="v" style="color:#7c3aed;font-size:16px;" id="payMarginInsur">-</div>
+                  <div style="font-size:10px;color:#64748b;margin-top:4px;" id="payMarginInsurDetail">-</div>
+                </div>
               </div>
               <div>
-                <h5 style="margin:0 0 10px;font-size:13px;color:var(--muted);">직원별 이번달 수익 · 마진</h5>
+                <h5 style="margin:0 0 10px;font-size:13px;color:var(--muted);">직원별 이번달 수익 · 마진 (상품별)</h5>
                 <div class="table-wrap">
                   <table>
-                    <thead><tr><th>직원명</th><th>이번달 실적</th><th>단가</th><th>직원 수익</th><th style="color:#be123c;">지점장 마진</th></tr></thead>
-                    <tbody id="payStaffTableBody"><tr><td colspan="5"><div class="empty">데이터 없음</div></td></tr></tbody>
+                    <thead><tr>
+                      <th>직원명</th>
+                      <th>실적</th>
+                      <th>직원단가</th>
+                      <th>직원수익</th>
+                      <th style="color:#1e40af;">상조마진</th>
+                      <th style="color:#065f46;">건식마진</th>
+                      <th style="color:#7c3aed;">보험마진</th>
+                      <th style="color:#be123c;">마진합계</th>
+                    </tr></thead>
+                    <tbody id="payStaffTableBody"><tr><td colspan="8"><div class="empty">데이터 없음</div></td></tr></tbody>
                   </table>
                 </div>
               </div>
@@ -3089,20 +3122,30 @@
       return { take, configured };
     }
 
-    // 지점장 마진: adminRates 총량 - 직원 수익
+    // 지점장 마진 (상품별 분리)
+    // 상조: (기준 10만 − 직원단가) × 건수
+    // 건식: (기준  4만 − 직원단가) × 건수
+    // 보험: 금액 × (기준 107.5% − 직원단가%) / 100
     // 반환값: { margin: 숫자, configured: true/false }
     function calcAdminMargin(p){
-      const { take: staffTake, configured } = calcStaffTake(p);
-      const val = Number(String(p.value || "").replace(/[^\d]/g, "")) || 0;
-      const amt = Number(p.amount) || 0;
+      const sNo  = p.staffNo || (staffs.find(x => x.name === p.staff) || {}).no || "";
+      const rate = paySettings[sNo];
+      const configured = !!rate;
+      const r    = rate || {};
+      const val  = Number(String(p.value || "").replace(/[^\d]/g, "")) || 0;
+      const amt  = Number(p.amount) || 0;
 
-      let adminGross = 0;
-      if(p.type === "상조")      adminGross = val * adminRates.sanjo;
-      else if(p.type === "건식") adminGross = val * adminRates.health;
-      else if(p.type === "보험") adminGross = Math.round(amt * adminRates.insurancePct / 100);
+      let margin = 0;
+      if(p.type === "상조"){
+        // 기준단가 − 직원단가(원/건), 건수 곱하기
+        margin = val * (adminRates.sanjo - (r.sanjo || 0));
+      } else if(p.type === "건식"){
+        margin = val * (adminRates.health - (r.health || 0));
+      } else if(p.type === "보험"){
+        // 기준% − 직원%, 금액에 비율 적용
+        margin = Math.round(amt * (adminRates.insurancePct - (r.insurancePct || 0)) / 100);
+      }
 
-      // 마진 = 지점장 총량 - 직원 수익
-      const margin = adminGross - staffTake;
       return { margin, configured };
     }
 
@@ -5129,19 +5172,64 @@
         grouped[no].entries.push(pf);
       });
 
-      // 직원 지급 총액 & 지점장 마진 합산
-      let totalStaffPay = 0;
-      let totalMargin   = 0;
-      Object.keys(grouped).forEach(no => {
-        grouped[no].entries.forEach(pf => {
-          totalStaffPay += calcStaffTake(pf).take;
-          totalMargin   += calcAdminMargin(pf).margin;
-        });
+      // ── 상품별 마진 분리 계산 ──────────────────────────────
+      // 상조 마진 = (기준 10만 - 직원단가) × 건수
+      // 건식 마진 = (기준  4만 - 직원단가) × 건수
+      // 보험 마진 = 금액 × (기준 107.5% - 직원%) / 100
+      let totalStaffPay   = 0;
+      let marginSanjo     = 0;  // 상조 마진 합계
+      let marginHealth    = 0;  // 건식 마진 합계
+      let marginInsur     = 0;  // 보험 마진 합계
+      let cntSanjo        = 0;  // 상조 건수
+      let cntHealth       = 0;  // 건식 건수
+      let cntInsur        = 0;  // 보험 건수
+
+      monthPerfs.forEach(pf => {
+        const { take } = calcStaffTake(pf);
+        totalStaffPay += take;
+
+        const sNo  = pf.staffNo || (staffs.find(x => x.name === pf.staff) || {}).no || "";
+        const rate = paySettings[sNo] || {};
+        const val  = Number(String(pf.value || "").replace(/[^\d]/g, "")) || 0;
+        const amt  = Number(pf.amount) || 0;
+
+        if(pf.type === "상조"){
+          // 기준 10만 - 직원 상조단가(원/건)
+          const staffSanjo = rate.sanjo || 0;
+          marginSanjo += val * (adminRates.sanjo - staffSanjo);
+          cntSanjo    += val;
+        } else if(pf.type === "건식"){
+          // 기준 4만 - 직원 건식단가(원/건)
+          const staffHealth = rate.health || 0;
+          marginHealth += val * (adminRates.health - staffHealth);
+          cntHealth    += val;
+        } else if(pf.type === "보험"){
+          // 기준 107.5% - 직원 보험단가(%)
+          const staffIns = rate.insurancePct || 0;
+          marginInsur += Math.round(amt * (adminRates.insurancePct - staffIns) / 100);
+          cntInsur    += 1;
+        }
       });
+
+      const totalMargin = marginSanjo + marginHealth + marginInsur;
 
       if($("payCountAll"))  $("payCountAll").textContent  = monthPerfs.length + "건";
       if($("payTotalAll"))  $("payTotalAll").textContent  = totalStaffPay.toLocaleString() + "원";
       if($("payMarginAll")) $("payMarginAll").textContent = totalMargin.toLocaleString() + "원";
+
+      // 상품별 마진 카드 업데이트
+      if($("payMarginSanjo"))       $("payMarginSanjo").textContent       = marginSanjo.toLocaleString() + "원";
+      if($("payMarginSanjoDetail")) $("payMarginSanjoDetail").textContent = cntSanjo
+        ? `${cntSanjo}건 × (${adminRates.sanjo.toLocaleString()} − 직원단가)`
+        : "실적 없음";
+      if($("payMarginHealth"))       $("payMarginHealth").textContent       = marginHealth.toLocaleString() + "원";
+      if($("payMarginHealthDetail")) $("payMarginHealthDetail").textContent = cntHealth
+        ? `${cntHealth}건 × (${adminRates.health.toLocaleString()} − 직원단가)`
+        : "실적 없음";
+      if($("payMarginInsur"))       $("payMarginInsur").textContent       = marginInsur.toLocaleString() + "원";
+      if($("payMarginInsurDetail")) $("payMarginInsurDetail").textContent = cntInsur
+        ? `${cntInsur}건 × (${adminRates.insurancePct}% − 직원단가%)`
+        : "실적 없음";
 
       const staffBody = $("payStaffTableBody");
       if(!staffBody) return;
@@ -5151,39 +5239,64 @@
         return;
       }
       staffBody.innerHTML = nos.map(no => {
-        const g   = grouped[no];
-        const p   = paySettings[no] || null;
-        const sanjo    = g.entries.filter(e=>e.type==="상조").length;
-        const health   = g.entries.filter(e=>e.type==="건식").length;
-        const insurCnt = g.entries.filter(e=>e.type==="보험").length;
-        // 동적 계산
-        let staffRev = 0, margin = 0, hasUnset = false;
+        const g = grouped[no];
+        const p = paySettings[no] || null;
+
+        // ── 상품별 분리 계산 ──────────────────────────
+        let staffRev = 0;
+        let mSanjo = 0, mHealth = 0, mInsur = 0;
+        let cSanjo = 0, cHealth = 0, cInsur = 0;
+        let hasUnset = false;
+
         g.entries.forEach(e => {
           const { take, configured } = calcStaffTake(e);
-          const { margin: m }        = calcAdminMargin(e);
           if(!configured) hasUnset = true;
           staffRev += take;
-          margin   += m;
+
+          const rate = p || {};
+          const val  = Number(String(e.value || "").replace(/[^\d]/g, "")) || 0;
+          const amt  = Number(e.amount) || 0;
+
+          if(e.type === "상조"){
+            mSanjo += val * (adminRates.sanjo  - (rate.sanjo  || 0));
+            cSanjo += val;
+          } else if(e.type === "건식"){
+            mHealth += val * (adminRates.health - (rate.health || 0));
+            cHealth += val;
+          } else if(e.type === "보험"){
+            mInsur += Math.round(amt * (adminRates.insurancePct - (rate.insurancePct || 0)) / 100);
+            cInsur += 1;
+          }
         });
-        const detail   = [
-          sanjo    ? `상조 ${sanjo}건`    : "",
-          health   ? `건식 ${health}건`   : "",
-          insurCnt ? `보험 ${insurCnt}건` : ""
+
+        const totalMarginRow = mSanjo + mHealth + mInsur;
+
+        const detail = [
+          cSanjo  ? `상조 ${cSanjo}건`  : "",
+          cHealth ? `건식 ${cHealth}건` : "",
+          cInsur  ? `보험 ${cInsur}건`  : ""
         ].filter(Boolean).join(" / ") || "0건";
+
         const rateStr = p ? [
-          p.sanjo        ? `상조 ${p.sanjo.toLocaleString()}원`  : "",
-          p.health       ? `건식 ${p.health.toLocaleString()}원` : "",
-          p.insurancePct ? `보험 ${p.insurancePct}%`            : ""
-        ].filter(Boolean).join(" / ") || "미설정" : `<span style="color:#f59e0b;font-weight:700;">⚠ 단가 미설정</span>`;
-        const unsetTag = `<span style="color:#f59e0b;font-size:10px;font-weight:700;"> ⚠미설정</span>`;
-        const revDisplay    = `${staffRev.toLocaleString()}원${hasUnset ? unsetTag : ""}`;
-        const marginDisplay = `${margin.toLocaleString()}원${hasUnset ? unsetTag : ""}`;
+          p.sanjo        ? `상조 ${p.sanjo.toLocaleString()}원` : "상조 미설정",
+          p.health       ? `건식 ${p.health.toLocaleString()}원` : "건식 미설정",
+          p.insurancePct ? `보험 ${p.insurancePct}%` : "보험 미설정"
+        ].join(" / ") : `<span style="color:#f59e0b;font-weight:700;">⚠ 단가 미설정</span>`;
+
+        const unsetTag = `<span style="color:#f59e0b;font-size:10px;font-weight:700;"> ⚠</span>`;
+        const warn = hasUnset ? unsetTag : "";
+
+        const mc = (v) => v === 0 ? `<span style="color:#94a3b8;">0원</span>` : `${v.toLocaleString()}원`;
+
         return `<tr>
           <td style="font-weight:700;">${escapeHtml(g.name)}</td>
-          <td>${detail}</td>
+          <td style="font-size:12px;">${detail}</td>
           <td style="font-size:11px;color:var(--muted);">${rateStr}</td>
-          <td style="font-weight:700;color:var(--ok);">${revDisplay}</td>
-          <td style="font-weight:700;color:#be123c;">${marginDisplay}</td>
+          <td style="font-weight:700;color:var(--ok);">${staffRev.toLocaleString()}원${warn}</td>
+          <td style="font-weight:700;color:#1e40af;">${mc(mSanjo)}</td>
+          <td style="font-weight:700;color:#065f46;">${mc(mHealth)}</td>
+          <td style="font-weight:700;color:#7c3aed;">${mc(mInsur)}</td>
+          <td style="font-weight:700;color:#be123c;">${totalMarginRow.toLocaleString()}원${warn}</td>
         </tr>`;
       }).join("");
     }
