@@ -1019,8 +1019,8 @@
     .sched-modal-nateon{
       background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:12px;
       padding:12px 14px;font-size:12px;color:#475569;line-height:1.7;
-      white-space:pre-wrap;min-height:60px;margin-bottom:16px;
-      font-family:monospace;
+      white-space:pre-wrap;min-height:90px;max-height:180px;
+      overflow-y:auto;margin-bottom:16px;font-family:monospace;
     }
     .sched-modal-footer{
       display:flex;gap:10px;justify-content:flex-end;
@@ -3120,33 +3120,48 @@
     function updateSchedModalNateon(){
       const preview = $("schedNateonPreview");
       if(!preview) return;
-      const company = ($("scheduleCompany")||{}).value||"";
+      const assignee = ($("scheduleAssignee")||{}).value || currentStaffName();
       const date    = ($("scheduleDate")||{}).value||"";
       const time    = ($("scheduleTime")||{}).value||"";
+      const company = ($("scheduleCompany")||{}).value||"";
+      const address = ($("scheduleAddress")||{}).value||"";
       const people  = ($("schedulePeople")||{}).value||"";
       const age     = ($("scheduleAge")||{}).value||"";
       const subject = ($("scheduleSubject")||{}).value||"";
-      const address = ($("scheduleAddress")||{}).value||"";
       const manager = ($("scheduleManager")||{}).value||"";
       const phone   = ($("schedulePhone")||{}).value||"";
       const memo    = ($("scheduleMemo")||{}).value||"";
+
       if(!company && !date){ preview.textContent = "—"; return; }
-      preview.textContent = [
-        company && `📌 ${company}`,
-        address && `📍 ${address}`,
-        (date||time) && `📅 ${date}${time ? " "+time : ""}`,
-        people && `👥 ${people}`,
-        age && `🎂 ${age}`,
-        subject && `📚 ${subject}`,
-        (manager||phone) && `👤 ${manager}${phone ? " "+phone : ""}`,
-        memo && `📝 ${memo}`
-      ].filter(Boolean).join("\n");
+
+      // 네이트온 단축 양식 (기존 buildNateonPreviewText 동일)
+      const shortLine = buildNateonPreviewText({ assignee, date, time, company, address, people });
+
+      // 전체 양식 (기존 buildFullCopyText 동일)
+      const fullLines = [
+        `섭외자 : ${assignee}`,
+        `섭외 : ${($("scheduleType")||{}).value||"교육섭외"}`,
+        `날짜 : ${date}`,
+        `시간 : ${normalizeManualTime(time)}`,
+        `업체 : ${company}`,
+        `주소 : ${address}`,
+        `키맨 : ${manager}`,
+        `번호 : ${formatPhone(phone)}`,
+        `인원 : ${people}`,
+        `연령대 : ${age}`,
+        `교육과목 : ${subject}`,
+      ];
+      if(memo) fullLines.push(`특이사항 : ${memo}`);
+
+      preview.textContent = `▶ 네이트온 단축\n${shortLine}\n\n▶ 전체 양식\n${fullLines.join("\n")}`;
     }
 
     function copySchedModalNateon(){
       const preview = $("schedNateonPreview");
       if(!preview || preview.textContent === "—") return alert("먼저 업체명이나 날짜를 입력해 주세요.");
-      safeCopy(preview.textContent);
+      // 전체 양식만 복사 (▶ 전체 양식 이후 내용)
+      const full = preview.textContent.split("▶ 전체 양식\n")[1] || preview.textContent;
+      safeCopy(full.trim());
       alert("✅ 네이트온 양식이 복사되었습니다!");
     }
 
@@ -3154,7 +3169,8 @@
       const el = $("schedNateonPreview");
       const value = el ? el.textContent.trim() : "";
       if(!value || value === "—") return alert("복사할 네이트온 양식이 없습니다.");
-      safeCopy(value);
+      const full = value.split("▶ 전체 양식\n")[1] || value;
+      safeCopy(full.trim());
     }
 
     function renderSchedules(){
