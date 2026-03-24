@@ -1501,6 +1501,7 @@
               <input type="file" id="excelUpload" accept=".xlsx,.xls,.csv" class="hidden" onchange="parseExcelFile(this)">
               <button id="btnDeleteAll" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteAllLeads()">🗑 전체삭제</button>
               <button id="btnDeleteSel" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteSelectedLeads()">☑ 선택삭제</button>
+              <button id="btnMarkEdu" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #bbf7d0;background:#f0fdf4;color:#15803d;font-size:13px;font-weight:800;cursor:pointer;" onclick="markSelectedAsCompleted()">✅ 선택 교육이수처리</button>
             </div>
           </div>
 
@@ -2348,25 +2349,39 @@
       }catch(e){ console.warn("직원 삭제 오류:", e.message); }
     }
 
-    // ─── 앱 초기화 (Supabase 직원 로드 → 세션 복원) ───
+    // ─── 앱 초기화 (세션 즉시 복원 → Supabase 백그라운드 동기화) ───
     async function initApp(){
       try{ loadAppData(); }catch(e){}          // 1. localStorage 캐시
-      try{ await loadStaffFromSupabase(); }catch(e){ console.warn("Supabase 초기화 실패, 로컬 데이터로 진행:", e); }  // 2. Supabase 병합 (실패해도 로컬로 진행)
+
+      // 2. 세션 먼저 복원 → 로그인 화면 플래시 없음
       try{
         const saved = localStorage.getItem("luwon_auth");
-        if(!saved) return;
-        const { staffNo, password } = JSON.parse(saved);
-        const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
-        if(!user){ localStorage.removeItem("luwon_auth"); return; }
-        state.currentUser = user;
-        state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
-        $("loginPage").style.display = "none";
-        $("dashboard").style.display = "grid";
-        hydrateUserUI();
-        renderAll();
-        setView("home");
-        loadData();
+        if(saved){
+          const { staffNo, password } = JSON.parse(saved);
+          const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+          if(user){
+            state.currentUser = user;
+            state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
+            $("loginPage").style.display = "none";
+            $("dashboard").style.display = "grid";
+            hydrateUserUI();
+            renderAll();
+            const savedView = (() => { try{ return localStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
+            const safeView = (!isAdminMode() && ["staff","settings","progress"].includes(savedView)) ? "home" : savedView;
+            setView(safeView);
+          } else {
+            localStorage.removeItem("luwon_auth");
+          }
+        }
       }catch(e){ try{ localStorage.removeItem("luwon_auth"); }catch(_){} }
+
+      // 3. Supabase 직원 동기화 (백그라운드)
+      try{ await loadStaffFromSupabase(); }catch(e){ console.warn("Supabase 초기화 실패, 로컬 데이터로 진행:", e); }
+
+      // 4. DB 데이터 로드 (로그인 상태일 때만)
+      if(state.currentUser){
+        try{ loadData(); }catch(e){}
+      }
     }
 
     function $(id){ return document.getElementById(id); }
@@ -2533,6 +2548,7 @@
       state.currentMode = "staff";
       state.currentView = "home";
       try{ localStorage.removeItem("luwon_auth"); }catch(e){}
+      try{ localStorage.removeItem("luwon_view"); }catch(e){}
       $("dashboard").style.display = "none";
       $("loginPage").style.display = "grid";
       $("staffId").value = "";
@@ -2682,6 +2698,7 @@
       if(view === "progress" && !isAdminMode()) return;
 
       state.currentView = view;
+      try{ localStorage.setItem("luwon_view", view); }catch(e){}
       renderMenu();
 
       document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
@@ -3473,6 +3490,7 @@
       if(chkTh) chkTh.classList.remove("hidden");
       if($("btnDeleteAll")) $("btnDeleteAll").classList.toggle("hidden", !admin);
       if($("btnDeleteSel")) $("btnDeleteSel").classList.toggle("hidden", !admin);
+      if($("btnMarkEdu"))   $("btnMarkEdu").classList.toggle("hidden", !admin);
 
       if(!rows.length){
         body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없습니다.</div></td></tr>`;
@@ -3490,10 +3508,10 @@
           ? `<span class="addr-link" onclick="openNaverMap(${addrIdx})">${escapeHtml(l.address)}</span>`
           : "";
 
-        // 점검제외 체크
+        // 점검제외 체크 — 관리자는 DB탭에서 텍스트만 표시 (규칙 관리는 관리자설정에서만)
         const allowed = isCompanyAllowed(l.company);
         const statusCell = admin
-          ? `<button class="edu-toggle-btn ${sc}" onclick="toggleLeadStatus(${l.id})">${escapeHtml(l.status || "미지정")}</button>`
+          ? `<span class="edu-toggle-btn ${sc}" style="cursor:default;">${escapeHtml(l.status || "미지정")}</span>`
           : l.status === "점검제외처리"
             ? allowed
               ? `<button class="edu-toggle-btn edu-fail" onclick="staffToggleLeadStatus(${l.id})" title="점검제외 처리">${escapeHtml(l.status)}</button>`
@@ -3826,6 +3844,7 @@
     async function syncAfterUpload(rows){
       try{
         const inserts = rows.map(row => ({
+          id:         row.id,         // 로컬 id 그대로 사용 → loadData 중복 방지
           type:       row.type || "교육섭외",
           company:    row.company || "",
           address:    row.address || "",
@@ -3922,6 +3941,7 @@
 
           // 엑셀 2행이 테이블 맨 위 → 기존 데이터 위에 정방향으로 삽입
           leads.unshift(...newItems);
+          saveAppData(); // 업로드 즉시 로컬 저장
 
           // 파일 입력 초기화
           input.value = "";
@@ -3929,7 +3949,7 @@
           runHomeSummary();
           loadProgress();
           syncAfterUpload(newItems);
-          alert(`✅ 엑셀 업로드 완료!\n${added}건 누적 추가되었습니다.`);
+          alert(`✅ 엑셀 업로드 완료!\n${added}건 추가되었습니다.`);
         } catch(err){
           alert("엑셀 파일을 읽는 중 오류가 발생했습니다.\n" + err.message);
         }
@@ -3945,6 +3965,7 @@
       if(!confirm(`현재 표시된 데이터 ${cnt}건을 모두 삭제할까요?\n이 작업은 되돌릴 수 없어요.`)) return;
       const ids = getVisibleLeads().map(l => l.id);
       ids.forEach(id => { leads = leads.filter(x => x.id !== id); });
+      saveAppData();
       renderLeads(); runHomeSummary();
       try{
         for(const id of ids){
@@ -3960,6 +3981,7 @@
       if(!checked.length) return alert("삭제할 항목을 먼저 선택해 주세요.");
       if(!confirm(`선택한 ${checked.length}건을 삭제할까요?`)) return;
       checked.forEach(id => { leads = leads.filter(x => x.id !== id); });
+      saveAppData();
       renderLeads(); runHomeSummary();
       try{
         for(const id of checked){
@@ -3967,6 +3989,25 @@
         }
         showLeadMsg(`🗑 ${checked.length}건 삭제 완료!`, "");
       } catch(e){ console.warn(e); }
+    }
+
+    async function markSelectedAsCompleted(){
+      if(!isAdminMode()) return;
+      const checked = Array.from(document.querySelectorAll('.lead-chk:checked')).map(c => Number(c.dataset.id));
+      if(!checked.length) return alert("처리할 항목을 먼저 선택해 주세요.");
+      if(!confirm(`선택한 ${checked.length}건을 교육 이수 처리할까요?`)) return;
+      checked.forEach(id => {
+        const l = leads.find(x => x.id === id);
+        if(l) l.status = "교육 이수";
+      });
+      saveAppData();
+      renderLeads();
+      showLeadMsg(`✅ ${checked.length}건 교육 이수 처리 완료!`, "");
+      try{
+        for(const id of checked){
+          await sbClient.from("education_db").update({ status:"교육 이수" }).eq("id", id);
+        }
+      }catch(e){ console.warn(e); }
     }
 
     function toggleLeadCheckAll(chk){
