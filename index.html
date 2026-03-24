@@ -1019,8 +1019,8 @@
     .sched-modal-nateon{
       background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:12px;
       padding:12px 14px;font-size:12px;color:#475569;line-height:1.7;
-      white-space:pre-wrap;min-height:60px;margin-bottom:16px;
-      font-family:monospace;
+      white-space:pre-wrap;min-height:90px;max-height:180px;
+      overflow-y:auto;margin-bottom:16px;font-family:monospace;
     }
     .sched-modal-footer{
       display:flex;gap:10px;justify-content:flex-end;
@@ -3120,33 +3120,21 @@
     function updateSchedModalNateon(){
       const preview = $("schedNateonPreview");
       if(!preview) return;
-      const company = ($("scheduleCompany")||{}).value||"";
+      const assignee = ($("scheduleAssignee")||{}).value || currentStaffName();
       const date    = ($("scheduleDate")||{}).value||"";
       const time    = ($("scheduleTime")||{}).value||"";
-      const people  = ($("schedulePeople")||{}).value||"";
-      const age     = ($("scheduleAge")||{}).value||"";
-      const subject = ($("scheduleSubject")||{}).value||"";
+      const company = ($("scheduleCompany")||{}).value||"";
       const address = ($("scheduleAddress")||{}).value||"";
-      const manager = ($("scheduleManager")||{}).value||"";
-      const phone   = ($("schedulePhone")||{}).value||"";
-      const memo    = ($("scheduleMemo")||{}).value||"";
+      const people  = ($("schedulePeople")||{}).value||"";
       if(!company && !date){ preview.textContent = "—"; return; }
-      preview.textContent = [
-        company && `📌 ${company}`,
-        address && `📍 ${address}`,
-        (date||time) && `📅 ${date}${time ? " "+time : ""}`,
-        people && `👥 ${people}`,
-        age && `🎂 ${age}`,
-        subject && `📚 ${subject}`,
-        (manager||phone) && `👤 ${manager}${phone ? " "+phone : ""}`,
-        memo && `📝 ${memo}`
-      ].filter(Boolean).join("\n");
+      // 기존 buildNateonPreviewText 와 동일: 업체/인원/날짜(MM-DD)/시간/주소(앞3단어)/섭외자
+      preview.textContent = buildNateonPreviewText({ assignee, date, time, company, address, people });
     }
 
     function copySchedModalNateon(){
       const preview = $("schedNateonPreview");
       if(!preview || preview.textContent === "—") return alert("먼저 업체명이나 날짜를 입력해 주세요.");
-      safeCopy(preview.textContent);
+      safeCopy(preview.textContent.trim());
       alert("✅ 네이트온 양식이 복사되었습니다!");
     }
 
@@ -5679,7 +5667,7 @@
           <input id="scheduleSubject" class="full" placeholder="교육과목">
           <textarea id="scheduleMemo" class="full" placeholder="특이사항"></textarea>
         </div>
-        <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;">네이트온 양식 미리보기</div>
+        <div style="font-size:11px;color:#94a3b8;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;">네이트온 양식 (업체/인원/날짜/시간/주소/섭외자)</div>
         <div class="sched-modal-nateon" id="schedNateonPreview">—</div>
       </div>
       <div class="sched-modal-footer">
