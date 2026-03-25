@@ -467,6 +467,23 @@
     tr:last-child td{border-bottom:0}
     tr:hover td{background:#fafcff}
 
+    /* ── 교육섭외DB 열/행 리사이즈 ── */
+    #leadTable { table-layout: auto; }
+    #leadTable.fixed-layout { table-layout: fixed; }
+    #leadTable thead th { position: relative; user-select: none; }
+    #leadTable tbody tr { position: relative; }
+    #leadTable td { word-break: break-word; white-space: normal; overflow-wrap: break-word; vertical-align: top; }
+    .th-resize-handle {
+      position: absolute; right: 0; top: 0; height: 100%; width: 7px;
+      cursor: col-resize; background: transparent; z-index: 2;
+    }
+    .th-resize-handle:hover, .th-resize-handle.dragging { background: rgba(59,130,246,0.30); }
+    .row-resize-handle {
+      position: absolute; bottom: -2px; left: 0; right: 0; height: 6px;
+      cursor: row-resize; background: transparent; z-index: 3;
+    }
+    .row-resize-handle:hover, .row-resize-handle.dragging { background: rgba(59,130,246,0.18); }
+
     /* ── FORM GRID ── */
     .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
     .form-grid .full{grid-column:1 / -1}
@@ -1926,7 +1943,7 @@
           </div>
 
           <div class="table-wrap">
-            <table style="font-size:12px;">
+            <table id="leadTable" style="font-size:12px;">
               <thead>
                 <tr>
                   <th style="width:36px;text-align:center;color:var(--muted);font-size:11px;">#</th>
@@ -4396,6 +4413,8 @@
 
     let _leadPage = 1;
     const _leadPerPage = 50;
+    let _leadRowHeights = {};      // { leadId: px } — 세션 유지, 새로고침 시 초기화
+    let _leadTableResizeInit = false; // 열 리사이즈 핸들 한 번만 부착
 
     function renderLeads(){
       const body = $("leadTableBody");
@@ -4459,12 +4478,19 @@
           ? `<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`
           : "";
 
-        const cleanBizBadge = l.cleanBiz ? `<span style="display:inline-block;margin-right:4px;padding:1px 7px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:-0.2px;vertical-align:middle;">클린사업장</span>` : "";
-        return `<tr>${numCell}${chkCell}<td title="${escapeHtml(l.company||"")}">${cleanBizBadge}${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(phone)}">${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
+        const cleanBizBadge = l.cleanBiz
+          ? admin
+            ? `<span onclick="toggleCleanBiz(${l.id})" title="클릭하면 클린사업장 취소" style="display:inline-block;margin-right:4px;padding:1px 7px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:-0.2px;vertical-align:middle;cursor:pointer;">클린사업장 ✕</span>`
+            : `<span style="display:inline-block;margin-right:4px;padding:1px 7px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:-0.2px;vertical-align:middle;">클린사업장</span>`
+          : "";
+        const rowResizeHandle = `<div class="row-resize-handle" onmousedown="startLeadRowResize(event,${l.id})"></div>`;
+        return `<tr data-id="${l.id}">${numCell}${chkCell}<td style="position:relative;">${rowResizeHandle}${cleanBizBadge}${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(phone)}">${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
       }).join("");
 
       body.innerHTML = html;  // DOM 업데이트 1회만
       renderLeadPagination(allRows.length, totalPages);
+      applyLeadRowHeights();
+      if(!_leadTableResizeInit){ initLeadTableColResize(); _leadTableResizeInit = true; }
     }
 
     function renderLeadPagination(total, totalPages){
@@ -4998,6 +5024,91 @@
 
     function closeCleanBizModal(){
       $("cleanBizModal").style.display = "none";
+    }
+
+    // ── 클린사업장 배지 토글 (관리자 전용) ─────────────────────────
+    async function toggleCleanBiz(id){
+      if(!isAdminMode()) return;
+      const l = leads.find(x => x.id === id);
+      if(!l) return;
+      const newVal = !l.cleanBiz;
+      const msg = newVal ? "클린사업장으로 등록하시겠습니까?" : "클린사업장 등록을 취소하시겠습니까?";
+      if(!confirm(msg)) return;
+      l.cleanBiz = newVal;
+      try{
+        await sbClient.from("education_db").update({ clean_biz: newVal }).eq("id", id);
+      }catch(e){ console.warn("클린사업장 토글 오류:", e.message); }
+      renderLeads();
+      saveAppData();
+    }
+
+    // ── 교육섭외DB 열(컬럼) 리사이즈 핸들 부착 ──────────────────────
+    function initLeadTableColResize(){
+      const table = $("leadTable");
+      if(!table) return;
+      table.querySelectorAll("thead th").forEach(th => {
+        if(th.querySelector(".th-resize-handle")) return;
+        const handle = document.createElement("div");
+        handle.className = "th-resize-handle";
+        th.appendChild(handle);
+        handle.addEventListener("mousedown", function(e){
+          e.preventDefault(); e.stopPropagation();
+          handle.classList.add("dragging");
+          // 첫 드래그 시 table-layout: fixed 전환 (현재 너비 고정)
+          if(!table.classList.contains("fixed-layout")){
+            table.querySelectorAll("thead th").forEach(t => {
+              t.style.width    = t.offsetWidth + "px";
+              t.style.minWidth = t.offsetWidth + "px";
+            });
+            table.classList.add("fixed-layout");
+          }
+          const startX  = e.pageX;
+          const startW  = th.offsetWidth;
+          function onMove(e){
+            const w = Math.max(30, startW + (e.pageX - startX));
+            th.style.width    = w + "px";
+            th.style.minWidth = w + "px";
+          }
+          function onUp(){
+            handle.classList.remove("dragging");
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup",   onUp);
+          }
+          document.addEventListener("mousemove", onMove);
+          document.addEventListener("mouseup",   onUp);
+        });
+      });
+    }
+
+    // ── 교육섭외DB 행(로우) 리사이즈 ──────────────────────────────
+    function startLeadRowResize(e, id){
+      e.preventDefault(); e.stopPropagation();
+      const tr = document.querySelector(`#leadTable tr[data-id="${id}"]`);
+      if(!tr) return;
+      const handle = e.currentTarget;
+      if(handle) handle.classList.add("dragging");
+      const startY  = e.clientY;
+      const startH  = tr.offsetHeight;
+      function onMove(e){
+        const h = Math.max(32, startH + (e.clientY - startY));
+        tr.style.height = h + "px";
+        _leadRowHeights[id] = h;
+      }
+      function onUp(){
+        if(handle) handle.classList.remove("dragging");
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup",   onUp);
+      }
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup",   onUp);
+    }
+
+    // renderLeads 재호출 후 저장된 행 높이 복원
+    function applyLeadRowHeights(){
+      Object.entries(_leadRowHeights).forEach(([id, h]) => {
+        const tr = document.querySelector(`#leadTable tr[data-id="${id}"]`);
+        if(tr) tr.style.height = h + "px";
+      });
     }
 
     // ── 클린사업장 규칙 관리 (설정 탭) ──────────────────────────────
@@ -6766,10 +6877,18 @@
         const numCell  = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;">${rowNum}</td>`;
         const chkCell  = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>`;
         const actionCell = admin?`<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`:"";
-        return `<tr>${numCell}${chkCell}<td title="${escapeHtml(l.company||"")}">${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(l.phone||"")}">${escapeHtml(l.phone||"")}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
+        const cleanBizBadgeF = l.cleanBiz
+          ? admin
+            ? `<span onclick="toggleCleanBiz(${l.id})" title="클릭하면 클린사업장 취소" style="display:inline-block;margin-right:4px;padding:1px 7px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:-0.2px;vertical-align:middle;cursor:pointer;">클린사업장 ✕</span>`
+            : `<span style="display:inline-block;margin-right:4px;padding:1px 7px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:-0.2px;vertical-align:middle;">클린사업장</span>`
+          : "";
+        const rowResizeHandleF = `<div class="row-resize-handle" onmousedown="startLeadRowResize(event,${l.id})"></div>`;
+        return `<tr data-id="${l.id}">${numCell}${chkCell}<td style="position:relative;">${rowResizeHandleF}${cleanBizBadgeF}${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(l.phone||"")}">${escapeHtml(l.phone||"")}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
       }).join("");
       body.innerHTML = html;
       renderLeadPagination(allRows.length, totalPages);
+      applyLeadRowHeights();
+      if(!_leadTableResizeInit){ initLeadTableColResize(); _leadTableResizeInit = true; }
     }
 
     function crmFilterSchedules(){
