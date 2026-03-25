@@ -2813,11 +2813,7 @@
       insurancePct: 107.5    // 보험 계약금액의 %
     };
 
-    let notices = [
-      { id:1, title:"3월 운영 공지", body:"출근 후 일정 등록 누락 없이 진행해주세요.", tag:"오늘" },
-      { id:2, title:"실적 입력 기준 안내", body:"월 마감 전 누락된 계약 건은 반드시 다시 확인해주세요.", tag:"업데이트" },
-      { id:3, title:"모바일 접속 안내", body:"휴대폰에서도 동일한 주소로 로그인 가능합니다.", tag:"안내" }
-    ];
+    let notices = [];
 
     let staffs = [
       { name:"김성우", no:"0408", role:"admin", branch:"루원지점", rank:"지점장" },
@@ -2828,10 +2824,7 @@
 
     let performances = [];
 
-    let leads = [
-      { id:301, type:"교육섭외", date:"2026-03-10", time:"10:00", company:"예시사업장A", address:"인천 서구 청마로 66-7", manager:"홍길동", phone:"01011112222", people:"5명", age:"40대", subject:"산업안전교육", industry:"음식점", status:"점검제외처리", ownerNo:"0408", ownerName:"김성우", createdAt:"2026-03-10" },
-      { id:302, type:"교육섭외", date:"2026-03-10", time:"14:00", company:"루원케어", address:"서울 서초구 방배로 123", manager:"김민수", phone:"01033334444", people:"3명", age:"30대", subject:"직무교육", industry:"상조", status:"교육 이수", ownerNo:"1218", ownerName:"이상혁", createdAt:"2026-03-10" }
-    ];
+    let leads = [];
 
     // 점검제외 규칙: 사업장명 기준으로 허용/불가 설정 (관리자 전용)
     // { id, company, type: "allowed"|"blocked" }
@@ -2995,6 +2988,7 @@
           sbClient.from("app_settings").upsert({key:"staffRanks",    value:staffRanks},    {onConflict:"key"}),
           sbClient.from("app_settings").upsert({key:"adminRates",    value:adminRates},    {onConflict:"key"}),
           sbClient.from("app_settings").upsert({key:"cleanBizRules", value:cleanBizRules}, {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"notices",       value:notices},       {onConflict:"key"}),
         ]);
       }catch(e){ console.warn("sbSyncAll 오류:", e.message); }
     }
@@ -3023,6 +3017,7 @@
             if(row.key==="staffRanks"    && row.value) Object.assign(staffRanks, row.value);
             if(row.key==="adminRates"    && row.value) Object.assign(adminRates, row.value);
             if(row.key==="cleanBizRules" && Array.isArray(row.value)) cleanBizRules = row.value;
+            if(row.key==="notices"       && Array.isArray(row.value)) notices       = row.value;
           });
         }
         saveAppData();
@@ -7208,10 +7203,13 @@
     ══════════════════════════════════════════════════════════ */
     function crmInitRealtime(){
       try{
-        sbClient.channel("crm-notices-realtime")
-          .on("postgres_changes", { event:"*", schema:"public", table:"notices" }, () => {
-            // notices 테이블 변경 감지 → renderNotices 재호출
-            renderNotices();
+        // app_settings 변경(notices 포함) 감지 → renderNotices 재호출
+        sbClient.channel("crm-appsettings-realtime")
+          .on("postgres_changes", { event:"*", schema:"public", table:"app_settings" }, async (payload) => {
+            if(payload.new?.key === "notices" && Array.isArray(payload.new?.value)){
+              notices = payload.new.value;
+              renderNotices();
+            }
           })
           .subscribe();
       } catch(e){ console.warn("Realtime 구독 실패:", e); }
