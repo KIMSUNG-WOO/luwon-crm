@@ -3056,7 +3056,7 @@
     function tryRestoreSession(){
       if(state.currentUser) return true; // 이미 복원됨
       try{
-        const saved = localStorage.getItem("luwon_auth");
+        const saved = sessionStorage.getItem("luwon_auth");
         if(!saved) return false;
         const { staffNo, password } = JSON.parse(saved);
         const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
@@ -3067,9 +3067,10 @@
         $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
         hydrateUserUI();
         renderAll();
-        const savedView = (() => { try{ return localStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
+        const savedView = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
         const safeView = (!isAdminMode() && ["staff","settings","progress"].includes(savedView)) ? "home" : savedView;
         setView(safeView);
+        setTimeout(loadLeadTableLayout, 0); // 열/행 레이아웃 복원 (DOM 렌더 후)
         return true;
       }catch(e){ return false; }
     }
@@ -3323,7 +3324,7 @@
       state.currentUser = user;
       state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
       clearMsg();
-      try{ localStorage.setItem("luwon_auth", JSON.stringify({ staffNo:user.staffNo, password:user.password })); }catch(e){}
+      try{ sessionStorage.setItem("luwon_auth", JSON.stringify({ staffNo:user.staffNo, password:user.password })); }catch(e){}
 
       $("loginPage").style.display = "none";
       $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
@@ -3334,6 +3335,7 @@
       loadData();
       loadFromSupabase(); // 로그인 후 최신 Supabase 데이터 로드 (백그라운드)
       setupRealtimeSync(); // 실시간 동기화 시작
+      setTimeout(loadLeadTableLayout, 300); // 열/행 레이아웃 복원 (leads 로드 후)
       // 활동 로그 기록
       crmAddLog("ok", "로그인", user.name);
       saveAppData();
@@ -3350,8 +3352,8 @@
       state.currentUser = null;
       state.currentMode = "staff";
       state.currentView = "home";
-      try{ localStorage.removeItem("luwon_auth"); }catch(e){}
-      try{ localStorage.removeItem("luwon_view"); }catch(e){}
+      try{ sessionStorage.removeItem("luwon_auth"); }catch(e){}
+      try{ sessionStorage.removeItem("luwon_view"); }catch(e){}
       $("dashboard").style.display = "none";
       $("loginPage").style.display = "grid";
       $("staffId").value = "";
@@ -3510,7 +3512,7 @@
       if(view === "progress" && !isAdminMode()) return;
 
       state.currentView = view;
-      try{ localStorage.setItem("luwon_view", view); }catch(e){}
+      try{ sessionStorage.setItem("luwon_view", view); }catch(e){}
       renderMenu();
 
       document.querySelectorAll(".view").forEach(v => v.classList.add("hidden"));
@@ -5073,6 +5075,7 @@
             handle.classList.remove("dragging");
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup",   onUp);
+            saveLeadTableLayout(); // 열 너비 사용자별 저장
           }
           document.addEventListener("mousemove", onMove);
           document.addEventListener("mouseup",   onUp);
@@ -5098,9 +5101,45 @@
         if(handle) handle.classList.remove("dragging");
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup",   onUp);
+        saveLeadTableLayout(); // 행 높이 사용자별 저장
       }
       document.addEventListener("mousemove", onMove);
       document.addEventListener("mouseup",   onUp);
+    }
+
+    // ── 열/행 레이아웃 사용자별 저장 / 복원 (localStorage) ──────────
+    function saveLeadTableLayout(){
+      const user = state.currentUser;
+      if(!user) return;
+      try{
+        const table = $("leadTable");
+        const widths = {};
+        if(table) table.querySelectorAll("thead th").forEach((th, i) => { if(th.style.width) widths[i] = th.style.width; });
+        localStorage.setItem("luwon_lead_cols_" + user.staffNo, JSON.stringify(widths));
+        localStorage.setItem("luwon_lead_rows_" + user.staffNo, JSON.stringify(_leadRowHeights));
+      }catch(e){}
+    }
+
+    function loadLeadTableLayout(){
+      const user = state.currentUser;
+      if(!user) return;
+      try{
+        const colStr = localStorage.getItem("luwon_lead_cols_" + user.staffNo);
+        const rowStr = localStorage.getItem("luwon_lead_rows_" + user.staffNo);
+        if(rowStr) _leadRowHeights = JSON.parse(rowStr);
+        if(colStr){
+          const cols = JSON.parse(colStr);
+          if(Object.keys(cols).length){
+            const table = $("leadTable");
+            if(table){
+              table.classList.add("fixed-layout");
+              table.querySelectorAll("thead th").forEach((th, i) => {
+                if(cols[i]){ th.style.width = cols[i]; th.style.minWidth = cols[i]; }
+              });
+            }
+          }
+        }
+      }catch(e){}
     }
 
     // renderLeads 재호출 후 저장된 행 높이 복원
