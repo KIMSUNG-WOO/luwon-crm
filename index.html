@@ -2988,10 +2988,11 @@
         const results = await Promise.allSettled(ops);
         results.forEach((r, i) => { if(r.status==="rejected") console.warn(`sbSyncAll[${tableNames[i]}] 오류:`, r.reason); if(r.value?.error) console.warn(`sbSyncAll[${tableNames[i]}] DB오류:`, r.value.error.message); });
         await Promise.allSettled([
-          sbClient.from("app_settings").upsert({key:"paySettings", value:paySettings}, {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"staffGoals",  value:staffGoals},  {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"staffRanks",  value:staffRanks},  {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"adminRates",  value:adminRates},  {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"paySettings",   value:paySettings},   {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"staffGoals",    value:staffGoals},    {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"staffRanks",    value:staffRanks},    {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"adminRates",    value:adminRates},    {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"cleanBizRules", value:cleanBizRules}, {onConflict:"key"}),
         ]);
       }catch(e){ console.warn("sbSyncAll 오류:", e.message); }
     }
@@ -3015,10 +3016,11 @@
         if(!onlRes.error   && onlRes.data?.length)      onlineEduRules  = onlRes.data.map(r=>({id:r.id, company:r.company}));
         if(!settRes.error  && settRes.data){
           settRes.data.forEach(row => {
-            if(row.key==="paySettings" && row.value) paySettings = row.value;
-            if(row.key==="staffGoals"  && row.value) staffGoals  = row.value;
-            if(row.key==="staffRanks"  && row.value) Object.assign(staffRanks, row.value);
-            if(row.key==="adminRates"  && row.value) Object.assign(adminRates, row.value);
+            if(row.key==="paySettings"   && row.value) paySettings   = row.value;
+            if(row.key==="staffGoals"    && row.value) staffGoals    = row.value;
+            if(row.key==="staffRanks"    && row.value) Object.assign(staffRanks, row.value);
+            if(row.key==="adminRates"    && row.value) Object.assign(adminRates, row.value);
+            if(row.key==="cleanBizRules" && Array.isArray(row.value)) cleanBizRules = row.value;
           });
         }
         saveAppData();
@@ -3132,10 +3134,11 @@
             const { data, error } = await sbClient.from("app_settings").select("*");
             if(!error && data){
               data.forEach(row => {
-                if(row.key==="paySettings" && row.value) paySettings = row.value;
-                if(row.key==="staffGoals"  && row.value) staffGoals  = row.value;
-                if(row.key==="staffRanks"  && row.value) Object.assign(staffRanks, row.value);
-                if(row.key==="adminRates"  && row.value) Object.assign(adminRates, row.value);
+                if(row.key==="paySettings"   && row.value) paySettings   = row.value;
+                if(row.key==="staffGoals"    && row.value) staffGoals    = row.value;
+                if(row.key==="staffRanks"    && row.value) Object.assign(staffRanks, row.value);
+                if(row.key==="adminRates"    && row.value) Object.assign(adminRates, row.value);
+                if(row.key==="cleanBizRules" && Array.isArray(row.value)) cleanBizRules = row.value;
               });
               if(state.currentUser) renderAll();
             }
