@@ -949,8 +949,7 @@
     }
     .memo-btn.has-memo{background:#fef9c3;color:#854d0e;border-color:#fde047}
 
-    #leadTableBody td{padding:6px 8px;font-size:12px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;}
-    #view-lead thead th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px;font-size:11px;}
+    #leadTableBody td{padding:7px 10px;font-size:12px;vertical-align:middle}
     #leadTableBody .edu-toggle-btn{font-size:11px;height:22px;padding:0 8px}
     #leadTableBody .edu-pass{font-size:11px;height:22px;padding:0 8px}
     #leadTableBody .edu-fail{font-size:11px;height:22px;padding:0 8px}
@@ -1906,6 +1905,7 @@
               <button class="crm-search-clear" onclick="crmClearLeadSearch()" title="초기화">✕</button>
             </div>
             <button id="crmLeadExcelBtn" class="ghost-btn hidden" onclick="crmExportLeadExcel()">📥 엑셀 다운로드</button>
+            <button id="btnCleanBiz" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:800;cursor:pointer;" onclick="openCleanBizResult()">🏢 클린사업장 등록</button>
           </div>
 
           <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
@@ -1924,27 +1924,11 @@
           </div>
 
           <div class="table-wrap">
-            <table style="font-size:12px;table-layout:fixed;min-width:1100px;">
-              <colgroup>
-                <col style="width:36px;">       <!-- # -->
-                <col id="leadChkCol" class="hidden" style="width:32px;"> <!-- 체크박스 -->
-                <col style="width:140px;">      <!-- 사업장 -->
-                <col style="width:160px;">      <!-- 주소 -->
-                <col style="width:80px;">       <!-- 키맨 -->
-                <col style="width:80px;">       <!-- 대표자명 -->
-                <col style="width:110px;">      <!-- 연락처 -->
-                <col style="width:46px;">       <!-- 인원 -->
-                <col style="width:70px;">       <!-- 업종 -->
-                <col style="width:60px;">       <!-- 섭외자 -->
-                <col style="width:90px;">       <!-- 점검제외 -->
-                <col style="width:110px;">      <!-- 결과값 -->
-                <col style="width:62px;">       <!-- 메모 -->
-                <col id="leadActionCol" class="hidden" style="width:90px;"> <!-- 수정/삭제 -->
-              </colgroup>
+            <table style="font-size:12px;">
               <thead>
                 <tr>
-                  <th style="text-align:center;color:var(--muted);font-size:11px;">#</th>
-                  <th id="leadChkTh" class="hidden"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
+                  <th style="width:36px;text-align:center;color:var(--muted);font-size:11px;">#</th>
+                  <th id="leadChkTh" class="hidden" style="width:32px;"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
                   <th>사업장</th>
                   <th>주소</th>
                   <th>키맨</th>
@@ -1953,10 +1937,10 @@
                   <th>인원</th>
                   <th>업종</th>
                   <th>섭외자</th>
-                  <th>점검제외</th>
+                  <th>점검제외 체크</th>
                   <th>결과값</th>
                   <th>메모</th>
-                  <th id="leadActionTh" class="hidden">관리</th>
+                  <th id="leadActionTh" class="hidden"></th>
                 </tr>
               </thead>
               <tbody id="leadTableBody"></tbody>
@@ -2046,6 +2030,7 @@
             <button class="tab-btn active" id="settingsTabStaff" onclick="setSettingsTab('staff')">직원 / 사번</button>
             <button class="tab-btn" id="settingsTabPay" onclick="setSettingsTab('pay')">단가 / 수익</button>
             <button class="tab-btn" id="settingsTabInspection" onclick="setSettingsTab('inspection')">점검제외 관리</button>
+            <button class="tab-btn" id="settingsTabCleanBiz" onclick="setSettingsTab('cleanBiz')">클린사업장 관리</button>
             <button class="tab-btn" id="settingsTabSystem" onclick="setSettingsTab('system')">시스템</button>
             <button class="tab-btn" id="settingsTabGoal" onclick="setSettingsTab('goal')">목표 설정</button>
             <button class="tab-btn" id="settingsTabLog" onclick="setSettingsTab('log')">활동 로그</button>
@@ -2281,6 +2266,35 @@
             </div>
           </div>
 
+          <!-- ── 클린사업장 관리 탭 ── -->
+          <div id="settingsPaneCleanBiz" class="hidden">
+            <div class="panel" style="margin-bottom:16px;">
+              <h5 style="margin:0 0 6px;font-size:15px;">🏢 클린사업장 메시지 설정</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">사업장명을 등록하고 클린사업장 등록 버튼 클릭 시 표시할 메시지를 설정하세요. 미등록 사업장은 기본 메시지("클린사업장 등록이 되었습니다 점검제외처리 바랍니다")가 표시됩니다.</p>
+              <div class="form-grid">
+                <input id="cleanBizCompany" placeholder="사업장명 (예: 예시사업장A)">
+                <select id="cleanBizMsgSelect" class="full" style="height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;" onchange="onCleanBizMsgSelect(this)">
+                  <option value="fail">❌ 클린사업장 등록실패 (산화재 신고접수 있음)</option>
+                  <option value="custom">✏️ 직접 입력...</option>
+                </select>
+                <input id="cleanBizMsg" placeholder="메시지 직접 입력" class="full" style="display:none;">
+              </div>
+              <div style="text-align:right;margin-top:12px;">
+                <button class="small-btn" onclick="addCleanBizRule()">+ 등록</button>
+              </div>
+            </div>
+            <div class="panel">
+              <h5 style="margin:0 0 14px;font-size:15px;">클린사업장 예외 메시지 목록</h5>
+              <p style="margin:0 0 12px;font-size:12px;color:var(--muted);">목록에 없는 사업장은 기본 성공 메시지가 표시됩니다.</p>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>사업장명</th><th>표시 메시지</th><th>관리</th></tr></thead>
+                  <tbody id="cleanBizTableBody"><tr><td colspan="3"><div class="empty">등록된 설정이 없습니다.</div></td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
           <!-- [추가] 목표설정 탭 패널 -->
           <div id="settingsPaneGoal" class="hidden">
             <div class="panel" style="margin-bottom:16px;">
@@ -2486,6 +2500,20 @@
   </div>
 
   <!-- 교육섭외 DB 수정 모달 -->
+  <!-- 클린사업장 등록 결과 팝업 -->
+  <div class="modal-backdrop" id="cleanBizModal" onclick="if(event.target===this)closeCleanBizModal()" style="display:none;">
+    <div class="modal-card" style="max-width:480px;">
+      <div class="modal-head">
+        <div><h4>🏢 클린사업장 등록 결과</h4><p>선택된 사업장의 등록 결과를 확인하세요.</p></div>
+        <button class="icon-btn" onclick="closeCleanBizModal()">✕</button>
+      </div>
+      <div id="cleanBizResultBody" style="padding:20px 24px;max-height:400px;overflow-y:auto;"></div>
+      <div style="padding:0 24px 20px;text-align:right;">
+        <button class="small-btn" onclick="closeCleanBizModal()">확인</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="leadEditModal" onclick="if(event.target===this)closeLeadEditModal()">
     <div class="modal-card" style="max-width:580px;">
       <div class="modal-head">
@@ -2813,6 +2841,9 @@
     // { id, company }
     let onlineEduRules = [];
 
+    // 클린사업장 예외 메시지 목록 (관리자 전용) – { id, company, message }
+    let cleanBizRules = [];
+
     // 일정표 관리 데이터 (일정등록 시 자동 생성)
     let itineraries = [];
 
@@ -2844,7 +2875,7 @@
       try{
         const payload = {
           staffs, authUsers, paySettings, staffRanks, adminRates,
-          performances, leads, schedules, itineraries, notices, inspectionRules, onlineEduRules
+          performances, leads, schedules, itineraries, notices, inspectionRules, onlineEduRules, cleanBizRules
         };
         // 추가 데이터 (선언 후 안전하게 포함)
         try{ if(typeof staffGoals  !== "undefined") payload.staffGoals  = staffGoals;  }catch(e){}
@@ -2872,6 +2903,7 @@
         if(d.notices         && Array.isArray(d.notices))        notices         = d.notices;
         if(d.inspectionRules && Array.isArray(d.inspectionRules)) inspectionRules = d.inspectionRules;
         if(d.onlineEduRules  && Array.isArray(d.onlineEduRules))  onlineEduRules  = d.onlineEduRules;
+        if(d.cleanBizRules   && Array.isArray(d.cleanBizRules))   cleanBizRules   = d.cleanBizRules;
         // 추가 데이터 복원
         try{ if(d.staffGoals   && typeof d.staffGoals==="object")  staffGoals   = d.staffGoals;  }catch(e){}
         try{ if(d.activityLogs && Array.isArray(d.activityLogs))   activityLogs = d.activityLogs;}catch(e){}
@@ -2956,10 +2988,11 @@
         const results = await Promise.allSettled(ops);
         results.forEach((r, i) => { if(r.status==="rejected") console.warn(`sbSyncAll[${tableNames[i]}] 오류:`, r.reason); if(r.value?.error) console.warn(`sbSyncAll[${tableNames[i]}] DB오류:`, r.value.error.message); });
         await Promise.allSettled([
-          sbClient.from("app_settings").upsert({key:"paySettings", value:paySettings}, {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"staffGoals",  value:staffGoals},  {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"staffRanks",  value:staffRanks},  {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"adminRates",  value:adminRates},  {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"paySettings",   value:paySettings},   {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"staffGoals",    value:staffGoals},    {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"staffRanks",    value:staffRanks},    {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"adminRates",    value:adminRates},    {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"cleanBizRules", value:cleanBizRules}, {onConflict:"key"}),
         ]);
       }catch(e){ console.warn("sbSyncAll 오류:", e.message); }
     }
@@ -2983,10 +3016,11 @@
         if(!onlRes.error   && onlRes.data?.length)      onlineEduRules  = onlRes.data.map(r=>({id:r.id, company:r.company}));
         if(!settRes.error  && settRes.data){
           settRes.data.forEach(row => {
-            if(row.key==="paySettings" && row.value) paySettings = row.value;
-            if(row.key==="staffGoals"  && row.value) staffGoals  = row.value;
-            if(row.key==="staffRanks"  && row.value) Object.assign(staffRanks, row.value);
-            if(row.key==="adminRates"  && row.value) Object.assign(adminRates, row.value);
+            if(row.key==="paySettings"   && row.value) paySettings   = row.value;
+            if(row.key==="staffGoals"    && row.value) staffGoals    = row.value;
+            if(row.key==="staffRanks"    && row.value) Object.assign(staffRanks, row.value);
+            if(row.key==="adminRates"    && row.value) Object.assign(adminRates, row.value);
+            if(row.key==="cleanBizRules" && Array.isArray(row.value)) cleanBizRules = row.value;
           });
         }
         saveAppData();
@@ -3100,10 +3134,11 @@
             const { data, error } = await sbClient.from("app_settings").select("*");
             if(!error && data){
               data.forEach(row => {
-                if(row.key==="paySettings" && row.value) paySettings = row.value;
-                if(row.key==="staffGoals"  && row.value) staffGoals  = row.value;
-                if(row.key==="staffRanks"  && row.value) Object.assign(staffRanks, row.value);
-                if(row.key==="adminRates"  && row.value) Object.assign(adminRates, row.value);
+                if(row.key==="paySettings"   && row.value) paySettings   = row.value;
+                if(row.key==="staffGoals"    && row.value) staffGoals    = row.value;
+                if(row.key==="staffRanks"    && row.value) Object.assign(staffRanks, row.value);
+                if(row.key==="adminRates"    && row.value) Object.assign(adminRates, row.value);
+                if(row.key==="cleanBizRules" && Array.isArray(row.value)) cleanBizRules = row.value;
               });
               if(state.currentUser) renderAll();
             }
@@ -4902,6 +4937,88 @@
       document.querySelectorAll('.lead-chk').forEach(c => c.checked = chk.checked);
     }
 
+    // ── 클린사업장 등록 ────────────────────────────────────────────
+
+    function openCleanBizResult(){
+      const checked = Array.from(document.querySelectorAll('.lead-chk:checked')).map(c => Number(c.dataset.id));
+      if(!checked.length) return alert("클린사업장으로 등록할 항목을 먼저 선택해 주세요.");
+
+      const DEFAULT_MSG = "클린사업장 등록이 되었습니다 점검제외처리 바랍니다";
+
+      const items = checked.map(id => {
+        const l = leads.find(x => x.id === id);
+        const company = l ? (l.company || "(이름없음)") : "(알 수 없음)";
+        const rule = cleanBizRules.find(r => r.company && company && r.company.trim() === company.trim());
+        const msg = rule ? rule.message : DEFAULT_MSG;
+        const isSuccess = !rule || !msg.includes("실패");
+        return { company, msg, isSuccess };
+      });
+
+      const body = $("cleanBizResultBody");
+      body.innerHTML = items.map(item => `
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);">
+          <span style="font-size:20px;flex-shrink:0;">${item.isSuccess ? "✅" : "❌"}</span>
+          <div>
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px;">${escapeHtml(item.company)}</div>
+            <div style="font-size:13px;color:${item.isSuccess ? "#059669" : "#dc2626"};">${escapeHtml(item.msg)}</div>
+          </div>
+        </div>
+      `).join("");
+
+      $("cleanBizModal").style.display = "flex";
+    }
+
+    function closeCleanBizModal(){
+      $("cleanBizModal").style.display = "none";
+    }
+
+    // ── 클린사업장 규칙 관리 (설정 탭) ──────────────────────────────
+
+    function onCleanBizMsgSelect(sel){
+      $("cleanBizMsg").style.display = sel.value === "custom" ? "" : "none";
+    }
+
+    function addCleanBizRule(){
+      const company = ($("cleanBizCompany").value || "").trim();
+      const sel = $("cleanBizMsgSelect");
+      const PRESET = "클린사업장 등록실패 (산화재 신고접수 있음)";
+      const message = sel.value === "custom"
+        ? ($("cleanBizMsg").value || "").trim()
+        : PRESET;
+      if(!company) return alert("사업장명을 입력하세요.");
+      if(!message) return alert("표시할 메시지를 입력하세요.");
+      const newId = cleanBizRules.length ? Math.max(...cleanBizRules.map(r => r.id)) + 1 : 1;
+      cleanBizRules.push({ id: newId, company, message });
+      $("cleanBizCompany").value = "";
+      $("cleanBizMsg").value = "";
+      $("cleanBizMsgSelect").value = "fail";
+      $("cleanBizMsg").style.display = "none";
+      saveAppData();
+      renderCleanBizRules();
+    }
+
+    function deleteCleanBizRule(id){
+      cleanBizRules = cleanBizRules.filter(r => r.id !== id);
+      saveAppData();
+      renderCleanBizRules();
+    }
+
+    function renderCleanBizRules(){
+      const tbody = $("cleanBizTableBody");
+      if(!tbody) return;
+      if(!cleanBizRules.length){
+        tbody.innerHTML = `<tr><td colspan="3"><div class="empty">등록된 설정이 없습니다.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = cleanBizRules.map(r => `
+        <tr>
+          <td>${escapeHtml(r.company)}</td>
+          <td style="font-size:12px;">${escapeHtml(r.message)}</td>
+          <td><button class="tbl-del-btn" onclick="deleteCleanBizRule(${r.id})">삭제</button></td>
+        </tr>
+      `).join("");
+    }
+
     // ── 메모 ─────────────────────────────────────────────────────
 
     let _memoLeadId = null;
@@ -5712,7 +5829,7 @@
       state.settingsTab = tab;
 
       // ── 모든 탭 버튼 active 상태 갱신 ──
-      const allTabs = ["staff","pay","inspection","system","goal","log","msg"];
+      const allTabs = ["staff","pay","inspection","cleanBiz","system","goal","log","msg"];
       allTabs.forEach(t => {
         const btn = $("settingsTab" + t.charAt(0).toUpperCase() + t.slice(1));
         if(btn) btn.classList.toggle("active", t === tab);
@@ -5722,6 +5839,7 @@
       if($("settingsPaneStaff"))      $("settingsPaneStaff").classList.toggle("hidden",      tab !== "staff");
       if($("settingsPanePay"))        $("settingsPanePay").classList.toggle("hidden",        tab !== "pay");
       if($("settingsPaneInspection")) $("settingsPaneInspection").classList.toggle("hidden", tab !== "inspection");
+      if($("settingsPaneCleanBiz"))   $("settingsPaneCleanBiz").classList.toggle("hidden",   tab !== "cleanBiz");
       if($("settingsPaneSystem"))     $("settingsPaneSystem").classList.toggle("hidden",     tab !== "system");
       if($("settingsPaneGoal"))       $("settingsPaneGoal").classList.toggle("hidden",       tab !== "goal");
       if($("settingsPaneLog"))        $("settingsPaneLog").classList.toggle("hidden",        tab !== "log");
@@ -5731,6 +5849,7 @@
       if(tab === "staff")      renderSettingsStaff();
       if(tab === "pay")        renderPaySummary();
       if(tab === "inspection"){ renderInspectionRules(); renderOnlineEduRules(); }
+      if(tab === "cleanBiz")   renderCleanBizRules();
       if(tab === "system")     renderSystemInfo();
       if(tab === "goal"){
         crmRefreshGoalStaffDropdown();
