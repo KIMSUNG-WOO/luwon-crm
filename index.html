@@ -3128,6 +3128,20 @@
             if(!error && data){ onlineEduRules = data.map(r=>({id:r.id, company:r.company})); if(state.currentUser) renderOnlineEduRules(); }
           }catch(e){}
         })
+        // 쪽지 (새 메시지 도착 시 즉시 반영)
+        .on("postgres_changes", { event:"INSERT", schema:"public", table:"messages" }, async (payload) => {
+          const user = state.currentUser;
+          if(!user) return;
+          // 내 메시지일 때만 처리
+          if(payload.new?.to_staff_no !== user.staffNo) return;
+          try{
+            await msgLoadFromDB();
+            msgRenderBadge();
+            // 쪽지함이 열려 있으면 바로 렌더
+            const panel = $("msgPanel");
+            if(panel && !panel.classList.contains("hidden")) msgRenderPanel();
+          }catch(e){}
+        })
         // 앱 설정 (목표/단가/직급 등)
         .on("postgres_changes", { event:"*", schema:"public", table:"app_settings" }, async () => {
           try{
@@ -7387,6 +7401,7 @@
       await msgLoadFromDB();
       msgRenderBadge();
       msgScheduleEducationCheck();
+      try{ await msgAutoOnLogin(); }catch(e){}
     }
 
     // ── DB에서 내 쪽지 로드 ──
@@ -7597,8 +7612,8 @@
           }
         }
       }
-      // 1분마다 체크
-      setInterval(check, 60000);
+      check(); // 즉시 1회 체크
+      setInterval(check, 60000); // 이후 1분마다
     }
 
     // ── 관리자 직원 쪽지 전송 ──
