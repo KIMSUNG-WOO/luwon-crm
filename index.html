@@ -3096,6 +3096,19 @@
         setupRealtimeSync();
         try{ await msgInit(); }catch(e){}  // 새로고침 후에도 쪽지 로드
       }
+
+      // 7. 최종 화면 복원 ── 모든 비동기 처리 완료 후 실행
+      //    (이 시점엔 patchSetView가 이미 실행되어 setView가 패치된 상태)
+      if(state.currentUser){
+        const _sv = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_e){ return "home"; } })();
+        const _safe = (!isAdminMode() && ["staff","settings","progress"].includes(_sv)) ? "home" : _sv;
+        setView(_safe);
+        setTimeout(loadLeadTableLayout, 250); // 열/행 레이아웃 복원
+      }
+
+      // 8. notices Realtime 구독 + 모바일탭 초기화
+      try{ crmInitRealtime(); }catch(e){}
+      crmUpdateMobTabBar(state.currentView || "home");
     }
 
     // ─── Supabase Realtime 실시간 동기화 (다른 사용자 변경 자동 반영) ───
@@ -6199,10 +6212,14 @@
     $("perfReportStart").value = monthPrefix() + "-01";
     $("perfReportEnd").value = todayStr();
     $("aggDate").value = todayStr();
-    $("scheduleDate").value = tomorrowStr();
-    bindSchedulePreviewEvents();
-    updateNateonPreview();
-    onPerformanceTypeChange();
+    // scheduleDate·scheduleTime 등은 스크립트 블록 이후(line 7982)에 정의되어
+    // 여기서는 null → DOMContentLoaded에서 초기화
+    document.addEventListener("DOMContentLoaded", function(){
+      const sd = $("scheduleDate"); if(sd) sd.value = tomorrowStr();
+      try{ bindSchedulePreviewEvents(); }catch(e){}
+      updateNateonPreview();
+      onPerformanceTypeChange();
+    });
 
     $("calendarModal").addEventListener("click", (e) => {
       if(e.target.id === "calendarModal") closeCalendarModal();
@@ -7541,35 +7558,9 @@
     /* ══════════════════════════════════════════════════════════
        [추가] initApp 패치 - Realtime 구독 + 다크모드 복원 + 탭바 초기화
     ══════════════════════════════════════════════════════════ */
-    (function patchInitApp(){
-      const _orig = initApp;
-      initApp = async function(){
-        await _orig();
-        crmInitRealtime();
-        crmApplyDarkMode();
-
-        // ── 새로고침 후 마지막으로 보던 화면 복원 ──────────────────
-        // _orig() 내부 비동기 흐름이 모두 끝난 뒤 view를 강제 재적용
-        // (중간 renderAll/loadFromSupabase 등이 view를 바꿀 수 있으므로 마지막에 덮어씀)
-        if(state.currentUser){
-          const _sv = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
-          const _safeV = (!isAdminMode() && ["staff","settings","progress"].includes(_sv)) ? "home" : _sv;
-          setView(_safeV);
-          // 열/행 레이아웃은 renderLeads 완료 후 적용
-          setTimeout(loadLeadTableLayout, 200);
-        }
-        // ────────────────────────────────────────────────────────────
-
-        crmUpdateMobTabBar(state.currentView || "home");
-        // 엑셀/차트 버튼 초기 가시성
-        const leadExcelBtn   = $("crmLeadExcelBtn");
-        const schedExcelBtn  = $("crmSchedExcelBtn");
-        const perfExcelBox   = $("crmPerfExcelBox");
-        if(leadExcelBtn)  leadExcelBtn.classList.toggle("hidden",  !isAdminMode());
-        if(schedExcelBtn) schedExcelBtn.classList.toggle("hidden", !isAdminMode());
-        if(perfExcelBox)  perfExcelBox.classList.toggle("hidden",  !isAdminMode());
-      };
-    })();
+    // [참고] patchInitApp은 initApp()이 line 6195에서 먼저 호출되므로
+    // 여기서 initApp을 재정의해도 원본 호출엔 영향 없음.
+    // view 복원·레이아웃·realtime 초기화는 initApp 내부(위 step 7·8)에서 처리.
 
     // 페이지 로드 시 다크모드 즉시 적용 (로그인 전에도)
     crmApplyDarkMode();
