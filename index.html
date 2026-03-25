@@ -2959,7 +2959,7 @@
     function schedToRow(s){ return { id:Number(s.id), assignee:s.assignee||"", date:s.date||"", time:s.time||"", company:s.company||"", manager:s.manager||"", phone:s.phone||"", address:s.address||"", people:s.people||"", gap:s.gap||"", bank:s.bank||"", memo:s.memo||"", created_by:s.createdBy||"", created_by_no:s.createdByNo||"", created_at:s.createdAt||"", progress_status:s.progressStatus||"", progress_etc:s.progressEtc||"" }; }
     function rowToSched(r){ return { id:r.id, assignee:r.assignee, date:r.date, time:r.time, company:r.company, manager:r.manager, phone:r.phone, address:r.address, people:r.people, gap:r.gap, bank:r.bank, memo:r.memo, createdBy:r.created_by, createdByNo:r.created_by_no, createdAt:r.created_at, progressStatus:r.progress_status, progressEtc:r.progress_etc }; }
 
-    function leadToRow(l){ return { id:Number(l.id), type:l.type||"", date:l.date||"", time:l.time||"", company:l.company||"", address:l.address||"", manager:l.manager||"", phone:l.phone||"", people:l.people||"", age:l.age||"", subject:l.subject||"", industry:l.industry||"", status:l.status||"", owner_no:l.ownerNo||"", owner_name:l.ownerName||"", created_at:l.createdAt||"", result:l.result||"", result_date:l.resultDate||"", result_time:l.resultTime||"", memo:l.memo||"", rep_name:l.repName||"" }; }
+    function leadToRow(l){ return { id:Number(l.id), type:l.type||"", date:l.date||"", time:l.time||"", company:l.company||"", address:l.address||"", manager:l.manager||"", phone:l.phone||"", people:l.people||"", age:l.age||"", subject:l.subject||"", industry:l.industry||"", status:l.status||"", owner_no:l.ownerNo||"", owner_name:l.ownerName||"", created_at:l.createdAt||"", result:l.result||"", result_date:l.resultDate||"", result_time:l.resultTime||"", memo:l.memo||"", rep_name:l.repName||"", clean_biz:l.cleanBiz||false }; }
     function rowToLead(r){ return { id:r.id, type:r.type, date:r.date, time:r.time, company:r.company, address:r.address, manager:r.manager, phone:r.phone, people:r.people, age:r.age, subject:r.subject, industry:r.industry, status:r.status, ownerNo:r.owner_no, ownerName:r.owner_name, createdAt:r.created_at, result:r.result, resultDate:r.result_date, resultTime:r.result_time, memo:r.memo, repName:r.rep_name }; }
 
     function perfToRow(p){ return { id:Number(p.id), staff:p.staff||"", staff_no:p.staffNo||"", type:p.type||"", value:String(p.value||""), amount:Number(p.amount||0), take:Number(p.take||0), memo:p.memo||"", date:p.date||"", created_by_no:p.createdByNo||"" }; }
@@ -4459,7 +4459,8 @@
           ? `<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`
           : "";
 
-        return `<tr>${numCell}${chkCell}<td title="${escapeHtml(l.company||"")}">${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(phone)}">${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
+        const cleanBizBadge = l.cleanBiz ? `<span style="display:inline-block;margin-right:4px;padding:1px 7px;border-radius:20px;background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;letter-spacing:-0.2px;vertical-align:middle;">클린사업장</span>` : "";
+        return `<tr>${numCell}${chkCell}<td title="${escapeHtml(l.company||"")}">${cleanBizBadge}${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(phone)}">${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
       }).join("");
 
       body.innerHTML = html;  // DOM 업데이트 1회만
@@ -4729,7 +4730,8 @@
           result:    row.result || "",
           resultDate: row.result_date || "",
           resultTime: row.result_time || "",
-          createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr()
+          createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr(),
+          cleanBiz:  row.clean_biz || false
         }));
 
         saveAppData(); // 최신 상태를 로컬에도 저장
@@ -4762,7 +4764,8 @@
             industry:   row.industry || "",
             status:     row.status || "",
             staff_no:   row.ownerNo || "",
-            staff_name: row.ownerName || ""
+            staff_name: row.ownerName || "",
+            clean_biz:  row.cleanBiz || false
           }]);
         if(error) throw error;
         // 단건 추가 후 Supabase ID로 동기화
@@ -4962,8 +4965,22 @@
         const rule = cleanBizRules.find(r => r.company && company && r.company.trim() === company.trim());
         const msg = rule ? rule.message : DEFAULT_MSG;
         const isSuccess = !rule || !msg.includes("실패");
-        return { company, msg, isSuccess };
+        return { id, company, msg, isSuccess };
       });
+
+      // 성공 항목만 cleanBiz 플래그 저장 & Supabase 업데이트
+      const successIds = items.filter(i => i.isSuccess).map(i => i.id);
+      if(successIds.length){
+        successIds.forEach(id => {
+          const l = leads.find(x => x.id === id);
+          if(l) l.cleanBiz = true;
+        });
+        // Supabase에 비동기 저장
+        sbClient.from("education_db").update({ clean_biz: true }).in("id", successIds)
+          .then(({ error }) => { if(error) console.warn("클린사업장 저장 오류:", error.message); });
+        renderLeads();
+        saveAppData();
+      }
 
       const body = $("cleanBizResultBody");
       body.innerHTML = items.map(item => `
