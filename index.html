@@ -2827,6 +2827,8 @@
         try{ if(typeof activityLogs!== "undefined") payload.activityLogs = activityLogs;}catch(e){}
         localStorage.setItem(APP_DATA_KEY, JSON.stringify(payload));
       }catch(e){}
+      // Supabase 백그라운드 동기화 (fire-and-forget)
+      try{ sbSyncAll(); }catch(e){}
     }
 
     function loadAppData(){
@@ -2900,6 +2902,82 @@
       }catch(e){ console.warn("직원 삭제 오류:", e.message); }
     }
 
+    // ─── Supabase 전체 데이터 동기화 ────────────────────────────────
+
+    // camelCase ↔ snake_case 변환 헬퍼
+    function schedToRow(s){ return { id:Number(s.id), assignee:s.assignee||"", date:s.date||"", time:s.time||"", company:s.company||"", manager:s.manager||"", phone:s.phone||"", address:s.address||"", people:s.people||"", gap:s.gap||"", bank:s.bank||"", memo:s.memo||"", created_by:s.createdBy||"", created_by_no:s.createdByNo||"", created_at:s.createdAt||"", progress_status:s.progressStatus||"", progress_etc:s.progressEtc||"" }; }
+    function rowToSched(r){ return { id:r.id, assignee:r.assignee, date:r.date, time:r.time, company:r.company, manager:r.manager, phone:r.phone, address:r.address, people:r.people, gap:r.gap, bank:r.bank, memo:r.memo, createdBy:r.created_by, createdByNo:r.created_by_no, createdAt:r.created_at, progressStatus:r.progress_status, progressEtc:r.progress_etc }; }
+
+    function leadToRow(l){ return { id:Number(l.id), type:l.type||"", date:l.date||"", time:l.time||"", company:l.company||"", address:l.address||"", manager:l.manager||"", phone:l.phone||"", people:l.people||"", age:l.age||"", subject:l.subject||"", industry:l.industry||"", status:l.status||"", owner_no:l.ownerNo||"", owner_name:l.ownerName||"", created_at:l.createdAt||"", result:l.result||"", result_date:l.resultDate||"", result_time:l.resultTime||"", memo:l.memo||"", rep_name:l.repName||"" }; }
+    function rowToLead(r){ return { id:r.id, type:r.type, date:r.date, time:r.time, company:r.company, address:r.address, manager:r.manager, phone:r.phone, people:r.people, age:r.age, subject:r.subject, industry:r.industry, status:r.status, ownerNo:r.owner_no, ownerName:r.owner_name, createdAt:r.created_at, result:r.result, resultDate:r.result_date, resultTime:r.result_time, memo:r.memo, repName:r.rep_name }; }
+
+    function perfToRow(p){ return { id:Number(p.id), staff:p.staff||"", staff_no:p.staffNo||"", type:p.type||"", value:String(p.value||""), amount:Number(p.amount||0), take:Number(p.take||0), memo:p.memo||"", date:p.date||"", created_by_no:p.createdByNo||"" }; }
+    function rowToPerf(r){ return { id:r.id, staff:r.staff, staffNo:r.staff_no, type:r.type, value:r.value, amount:r.amount, take:r.take, memo:r.memo, date:r.date, createdByNo:r.created_by_no }; }
+
+    function itinToRow(i){ return { id:Math.floor(Number(i.id)), schedule_id:String(i.scheduleId||""), company:i.company||"", address:i.address||"", biz_phone:i.bizPhone||"", manager:i.manager||"", manager_phone:i.managerPhone||"", date:i.date||"", time:i.time||"", people:i.people||"", age:i.age||"", assignee:i.assignee||"", sub_code:i.subCode||"", subject:i.subject||"", industry:i.industry||"", education_place:i.educationPlace||"", foreigner_count:i.foreignerCount||"", support_content:i.supportContent||"", etc_note:i.etcNote||"", special_note:i.specialNote||"", created_by_no:i.createdByNo||"", created_at:i.createdAt||"" }; }
+    function rowToItin(r){ return { id:r.id, scheduleId:r.schedule_id, company:r.company, address:r.address, bizPhone:r.biz_phone, manager:r.manager, managerPhone:r.manager_phone, date:r.date, time:r.time, people:r.people, age:r.age, assignee:r.assignee, subCode:r.sub_code, subject:r.subject, industry:r.industry, educationPlace:r.education_place, foreignerCount:r.foreigner_count, supportContent:r.support_content, etcNote:r.etc_note, specialNote:r.special_note, createdByNo:r.created_by_no, createdAt:r.created_at }; }
+
+    // 전체 배열 Supabase upsert (fire-and-forget)
+    async function sbSyncAll(){
+      try{
+        // leads는 education_db 테이블에서 별도 관리 (insertData/loadData)
+        const ops = [
+          schedules.length    ? sbClient.from("schedules").upsert(schedules.map(schedToRow), {onConflict:"id"})                                                             : null,
+          performances.length ? sbClient.from("performances").upsert(performances.map(perfToRow), {onConflict:"id"})                                                        : null,
+          itineraries.length  ? sbClient.from("itineraries").upsert(itineraries.map(itinToRow), {onConflict:"id"})                                                          : null,
+          inspectionRules.length  ? sbClient.from("inspection_rules").upsert(inspectionRules.map(r=>({id:Number(r.id),company:r.company,type:r.type})), {onConflict:"id"}) : null,
+          onlineEduRules.length   ? sbClient.from("online_edu_rules").upsert(onlineEduRules.map(r=>({id:Number(r.id),company:r.company})), {onConflict:"id"})              : null,
+        ].filter(Boolean);
+        await Promise.allSettled(ops);
+        await Promise.allSettled([
+          sbClient.from("app_settings").upsert({key:"paySettings", value:paySettings}, {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"staffGoals",  value:staffGoals},  {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"staffRanks",  value:staffRanks},  {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"adminRates",  value:adminRates},  {onConflict:"key"}),
+        ]);
+      }catch(e){ console.warn("sbSyncAll 오류:", e.message); }
+    }
+
+    // Supabase에서 전체 데이터 로드 (앱 시작/로그인 시 호출)
+    async function loadFromSupabase(){
+      try{
+        // leads는 loadData()가 education_db에서 별도 로드
+        const [schedRes, perfRes, itinRes, inspRes, onlRes, settRes] = await Promise.all([
+          sbClient.from("schedules").select("*"),
+          sbClient.from("performances").select("*"),
+          sbClient.from("itineraries").select("*"),
+          sbClient.from("inspection_rules").select("*"),
+          sbClient.from("online_edu_rules").select("*"),
+          sbClient.from("app_settings").select("*"),
+        ]);
+        if(!schedRes.error && schedRes.data?.length)    schedules       = schedRes.data.map(rowToSched);
+        if(!perfRes.error  && perfRes.data?.length)     performances    = perfRes.data.map(rowToPerf);
+        if(!itinRes.error  && itinRes.data?.length)     itineraries     = itinRes.data.map(rowToItin);
+        if(!inspRes.error  && inspRes.data?.length)     inspectionRules = inspRes.data.map(r=>({id:r.id, company:r.company, type:r.type}));
+        if(!onlRes.error   && onlRes.data?.length)      onlineEduRules  = onlRes.data.map(r=>({id:r.id, company:r.company}));
+        if(!settRes.error  && settRes.data){
+          settRes.data.forEach(row => {
+            if(row.key==="paySettings" && row.value) paySettings = row.value;
+            if(row.key==="staffGoals"  && row.value) staffGoals  = row.value;
+            if(row.key==="staffRanks"  && row.value) Object.assign(staffRanks, row.value);
+            if(row.key==="adminRates"  && row.value) Object.assign(adminRates, row.value);
+          });
+        }
+        saveAppData();
+        if(state.currentUser) renderAll();
+        console.log("✅ Supabase 데이터 로드 완료");
+      }catch(e){ console.warn("loadFromSupabase 오류:", e.message); }
+    }
+
+    // Supabase 단건 삭제
+    async function sbDeleteRecord(table, id){
+      try{
+        const numId = Number(id);
+        const { error } = await sbClient.from(table).delete().eq("id", isNaN(numId) ? id : numId);
+        if(error) throw error;
+      }catch(e){ console.warn(`sbDeleteRecord(${table}, ${id}) 오류:`, e.message); }
+    }
+
     // ─── 앱 초기화 (세션 즉시 복원 → Supabase 백그라운드 동기화) ───
     async function initApp(){
       try{ loadAppData(); }catch(e){}          // 1. localStorage 캐시
@@ -2929,10 +3007,38 @@
       // 3. Supabase 직원 동기화 (백그라운드)
       try{ await loadStaffFromSupabase(); }catch(e){ console.warn("Supabase 초기화 실패, 로컬 데이터로 진행:", e); }
 
-      // 4. DB 데이터 로드 (로그인 상태일 때만)
+      // 4. Supabase 전체 데이터 로드 (직원/설정 포함 최신 데이터)
+      try{ await loadFromSupabase(); }catch(e){ console.warn("Supabase 데이터 로드 실패:", e); }
+
+      // 5. 로그인 상태면 추가 로컬 렌더링
       if(state.currentUser){
         try{ loadData(); }catch(e){}
+        setupRealtimeSync();
       }
+    }
+
+    // ─── Supabase Realtime 실시간 동기화 (다른 사용자 변경 자동 반영) ───
+    let _realtimeChannel = null;
+    function setupRealtimeSync(){
+      if(_realtimeChannel) return; // 중복 방지
+      _realtimeChannel = sbClient
+        .channel("crm-realtime")
+        .on("postgres_changes", { event:"*", schema:"public", table:"education_db" }, () => {
+          try{ loadData(); }catch(e){}
+        })
+        .on("postgres_changes", { event:"*", schema:"public", table:"schedules" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("schedules").select("*");
+            if(!error && data?.length){ schedules = data.map(rowToSched); saveAppData(); if(state.currentUser){ renderSchedules(); renderCalendar(); loadAggregate(); } }
+          }catch(e){}
+        })
+        .on("postgres_changes", { event:"*", schema:"public", table:"performances" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("performances").select("*");
+            if(!error && data?.length){ performances = data.map(rowToPerf); saveAppData(); if(state.currentUser){ renderPerformances(); loadAggregate(); } }
+          }catch(e){}
+        })
+        .subscribe();
     }
 
     function $(id){ return document.getElementById(id); }
@@ -3092,6 +3198,8 @@
       renderAll();
       setView("home");
       loadData();
+      loadFromSupabase(); // 로그인 후 최신 Supabase 데이터 로드 (백그라운드)
+      setupRealtimeSync(); // 실시간 동기화 시작
       // 활동 로그 기록
       crmAddLog("ok", "로그인", user.name);
       saveAppData();
@@ -3760,6 +3868,10 @@
     function deleteScheduleById(id){
       const ok = confirm("이 일정을 삭제할까요?\n(연결된 일정표도 함께 삭제됩니다.)");
       if(!ok) return;
+      // 연결된 일정표 ID 미리 수집 후 Supabase 삭제
+      const linkedItins = itineraries.filter(x => String(x.scheduleId) === String(id));
+      linkedItins.forEach(i => sbDeleteRecord("itineraries", i.id));
+      sbDeleteRecord("schedules", id);
       schedules   = schedules.filter(x => x.id !== id);
       // 일정표 관리에서도 연동 삭제 (scheduleId로 연결)
       itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
@@ -4059,6 +4171,7 @@
     function deletePerformanceRow(id){
       const ok = confirm("이 실적을 삭제할까?");
       if(!ok) return;
+      sbDeleteRecord("performances", id);
       performances = performances.filter(x => x.id !== id);
       renderPerformances();
       saveAppData();
@@ -5039,6 +5152,7 @@
     function deleteItinerary(id){
       if(!isAdminMode()) return;
       if(!confirm("이 일정표를 삭제할까? 복구 불가!")) return;
+      sbDeleteRecord("itineraries", id);
       itineraries = itineraries.filter(x => String(x.id) !== String(id));
       renderItineraries();
       saveAppData();
@@ -5620,6 +5734,7 @@
       const rule = inspectionRules.find(r => r.id === id);
       if(!rule) return;
       if(!confirm(`[${rule.company}] 규칙을 삭제할까요?`)) return;
+      sbDeleteRecord("inspection_rules", id);
       inspectionRules = inspectionRules.filter(r => r.id !== id);
       saveAppData();
       renderInspectionRules();
@@ -5664,6 +5779,7 @@
       const rule = onlineEduRules.find(r => r.id === id);
       if(!rule) return;
       if(!confirm(`[${rule.company}] 온라인 교육 허용을 해제할까요?`)) return;
+      sbDeleteRecord("online_edu_rules", id);
       onlineEduRules = onlineEduRules.filter(r => r.id !== id);
       saveAppData();
       renderOnlineEduRules();
