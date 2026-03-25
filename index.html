@@ -2273,7 +2273,11 @@
               <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">사업장명을 등록하고 클린사업장 등록 버튼 클릭 시 표시할 메시지를 설정하세요. 미등록 사업장은 기본 메시지("클린사업장 등록이 되었습니다 점검제외처리 바랍니다")가 표시됩니다.</p>
               <div class="form-grid">
                 <input id="cleanBizCompany" placeholder="사업장명 (예: 예시사업장A)">
-                <input id="cleanBizMsg" placeholder="표시할 메시지 (예: 클린사업장 등록실패 (산화재 신고접수 있음))" class="full">
+                <select id="cleanBizMsgSelect" class="full" style="height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;" onchange="onCleanBizMsgSelect(this)">
+                  <option value="fail">❌ 클린사업장 등록실패 (산화재 신고접수 있음)</option>
+                  <option value="custom">✏️ 직접 입력...</option>
+                </select>
+                <input id="cleanBizMsg" placeholder="메시지 직접 입력" class="full" style="display:none;">
               </div>
               <div style="text-align:right;margin-top:12px;">
                 <button class="small-btn" onclick="addCleanBizRule()">+ 등록</button>
@@ -4968,15 +4972,25 @@
 
     // ── 클린사업장 규칙 관리 (설정 탭) ──────────────────────────────
 
+    function onCleanBizMsgSelect(sel){
+      $("cleanBizMsg").style.display = sel.value === "custom" ? "" : "none";
+    }
+
     function addCleanBizRule(){
       const company = ($("cleanBizCompany").value || "").trim();
-      const message = ($("cleanBizMsg").value || "").trim();
+      const sel = $("cleanBizMsgSelect");
+      const PRESET = "클린사업장 등록실패 (산화재 신고접수 있음)";
+      const message = sel.value === "custom"
+        ? ($("cleanBizMsg").value || "").trim()
+        : PRESET;
       if(!company) return alert("사업장명을 입력하세요.");
       if(!message) return alert("표시할 메시지를 입력하세요.");
       const newId = cleanBizRules.length ? Math.max(...cleanBizRules.map(r => r.id)) + 1 : 1;
       cleanBizRules.push({ id: newId, company, message });
       $("cleanBizCompany").value = "";
       $("cleanBizMsg").value = "";
+      $("cleanBizMsgSelect").value = "fail";
+      $("cleanBizMsg").style.display = "none";
       saveAppData();
       renderCleanBizRules();
     }
