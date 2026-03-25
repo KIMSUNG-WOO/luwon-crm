@@ -3070,7 +3070,6 @@
         const savedView = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
         const safeView = (!isAdminMode() && ["staff","settings","progress"].includes(savedView)) ? "home" : savedView;
         setView(safeView);
-        setTimeout(loadLeadTableLayout, 0); // 열/행 레이아웃 복원 (DOM 렌더 후)
         return true;
       }catch(e){ return false; }
     }
@@ -3335,7 +3334,6 @@
       loadData();
       loadFromSupabase(); // 로그인 후 최신 Supabase 데이터 로드 (백그라운드)
       setupRealtimeSync(); // 실시간 동기화 시작
-      setTimeout(loadLeadTableLayout, 300); // 열/행 레이아웃 복원 (leads 로드 후)
       // 활동 로그 기록
       crmAddLog("ok", "로그인", user.name);
       saveAppData();
@@ -7549,6 +7547,19 @@
         await _orig();
         crmInitRealtime();
         crmApplyDarkMode();
+
+        // ── 새로고침 후 마지막으로 보던 화면 복원 ──────────────────
+        // _orig() 내부 비동기 흐름이 모두 끝난 뒤 view를 강제 재적용
+        // (중간 renderAll/loadFromSupabase 등이 view를 바꿀 수 있으므로 마지막에 덮어씀)
+        if(state.currentUser){
+          const _sv = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
+          const _safeV = (!isAdminMode() && ["staff","settings","progress"].includes(_sv)) ? "home" : _sv;
+          setView(_safeV);
+          // 열/행 레이아웃은 renderLeads 완료 후 적용
+          setTimeout(loadLeadTableLayout, 200);
+        }
+        // ────────────────────────────────────────────────────────────
+
         crmUpdateMobTabBar(state.currentView || "home");
         // 엑셀/차트 버튼 초기 가시성
         const leadExcelBtn   = $("crmLeadExcelBtn");
