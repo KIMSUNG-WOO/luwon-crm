@@ -3082,6 +3082,7 @@
       if(state.currentUser){
         try{ loadData(); }catch(e){}
         setupRealtimeSync();
+        try{ await msgInit(); }catch(e){}  // 새로고침 후에도 쪽지 로드
       }
     }
 
@@ -3135,14 +3136,13 @@
           const user = state.currentUser;
           if(!user) return;
           // 내 메시지일 때만 처리
-          if(payload.new?.to_staff_no !== user.staffNo) return;
+          if(String(payload.new?.to_staff_no) !== String(user.staffNo)) return;
           try{
             await msgLoadFromDB();
             msgRenderBadge();
-            // 쪽지함이 열려 있으면 바로 렌더
             const panel = $("msgPanel");
             if(panel && !panel.classList.contains("hidden")) msgRenderPanel();
-          }catch(e){}
+          }catch(e){ console.error("쪽지 Realtime 처리 오류:", e); }
         })
         // 앱 설정 (목표/단가/직급 등)
         .on("postgres_changes", { event:"*", schema:"public", table:"app_settings" }, async () => {
@@ -3326,7 +3326,7 @@
       crmAddLog("ok", "로그인", user.name);
       saveAppData();
       // 쪽지함 초기화 (로그인 후)
-      setTimeout(() => { try{ msgInit(); }catch(e){} }, 1200);
+      msgInit().catch(e => console.error("쪽지 초기화 오류:", e));
     }
 
     function logout(){
@@ -7421,8 +7421,6 @@
     async function msgLoadFromDB(){
       const user = state.currentUser;
       if(!user) return;
-      // msgList 초기화 안전 가드 (TDZ 방지)
-      if(typeof msgList === "undefined") return;
       try{
         const { data, error } = await sbClient
           .from("messages")
@@ -7430,9 +7428,9 @@
           .eq("to_staff_no", user.staffNo)
           .order("created_at", { ascending: false })
           .limit(100);
-        if(error) throw error;
+        if(error){ console.error("쪽지 로드 오류:", error); return; }
         msgList = data || [];
-      } catch(e){ console.warn("쪽지 로드 오류:", e.message); }
+      } catch(e){ console.error("쪽지 로드 예외:", e); }
     }
 
     // ── 쪽지 배지 업데이트 ──
@@ -7531,7 +7529,7 @@
           msgRenderBadge();
         }
         return data;
-      } catch(e){ console.warn("쪽지 발송 오류:", e.message); return null; }
+      } catch(e){ console.error("쪽지 발송 오류:", e); return null; }
     }
 
     // ── 전체 직원 쪽지 발송 (관리자) ──
