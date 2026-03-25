@@ -949,7 +949,8 @@
     }
     .memo-btn.has-memo{background:#fef9c3;color:#854d0e;border-color:#fde047}
 
-    #leadTableBody td{padding:7px 10px;font-size:12px;vertical-align:middle}
+    #leadTableBody td{padding:6px 8px;font-size:12px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0;}
+    #view-lead thead th{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:8px;font-size:11px;}
     #leadTableBody .edu-toggle-btn{font-size:11px;height:22px;padding:0 8px}
     #leadTableBody .edu-pass{font-size:11px;height:22px;padding:0 8px}
     #leadTableBody .edu-fail{font-size:11px;height:22px;padding:0 8px}
@@ -1923,11 +1924,27 @@
           </div>
 
           <div class="table-wrap">
-            <table style="font-size:12px;">
+            <table style="font-size:12px;table-layout:fixed;min-width:1100px;">
+              <colgroup>
+                <col style="width:36px;">       <!-- # -->
+                <col id="leadChkCol" class="hidden" style="width:32px;"> <!-- 체크박스 -->
+                <col style="width:140px;">      <!-- 사업장 -->
+                <col style="width:160px;">      <!-- 주소 -->
+                <col style="width:80px;">       <!-- 키맨 -->
+                <col style="width:80px;">       <!-- 대표자명 -->
+                <col style="width:110px;">      <!-- 연락처 -->
+                <col style="width:46px;">       <!-- 인원 -->
+                <col style="width:70px;">       <!-- 업종 -->
+                <col style="width:60px;">       <!-- 섭외자 -->
+                <col style="width:90px;">       <!-- 점검제외 -->
+                <col style="width:110px;">      <!-- 결과값 -->
+                <col style="width:62px;">       <!-- 메모 -->
+                <col id="leadActionCol" class="hidden" style="width:90px;"> <!-- 수정/삭제 -->
+              </colgroup>
               <thead>
                 <tr>
-                  <th style="width:36px;text-align:center;color:var(--muted);font-size:11px;">#</th>
-                  <th id="leadChkTh" class="hidden" style="width:32px;"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
+                  <th style="text-align:center;color:var(--muted);font-size:11px;">#</th>
+                  <th id="leadChkTh" class="hidden"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
                   <th>사업장</th>
                   <th>주소</th>
                   <th>키맨</th>
@@ -1936,10 +1953,10 @@
                   <th>인원</th>
                   <th>업종</th>
                   <th>섭외자</th>
-                  <th>점검제외 체크</th>
+                  <th>점검제외</th>
                   <th>결과값</th>
                   <th>메모</th>
-                  <th id="leadActionTh" class="hidden"></th>
+                  <th id="leadActionTh" class="hidden">관리</th>
                 </tr>
               </thead>
               <tbody id="leadTableBody"></tbody>
@@ -2812,6 +2829,13 @@
     let staffGoals = {};
     // 활동 로그 (최대 200건)
     let activityLogs = [];
+
+    // [차트/검색] 후반부에 선언되던 변수들 - TDZ 방지를 위해 상단으로 이동
+    let _crmBarChart    = null;
+    let _crmLineChart   = null;
+    let _crmMarginChart = null;
+    let _crmLeadSearchTerm  = "";
+    let _crmSchedSearchTerm = "";
 
     // ─── 앱 데이터 localStorage 저장/복원 ───
     const APP_DATA_KEY = "luwon_app_data";
@@ -4389,7 +4413,7 @@
           ? `<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`
           : "";
 
-        return `<tr>${numCell}${chkCell}<td>${escapeHtml(l.company||"")}</td><td>${addrCell}</td><td>${escapeHtml(l.manager||"")}</td><td>${escapeHtml(l.repName||"")}</td><td>${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td>${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
+        return `<tr>${numCell}${chkCell}<td title="${escapeHtml(l.company||"")}">${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(phone)}">${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
       }).join("");
 
       body.innerHTML = html;  // DOM 업데이트 1회만
@@ -4631,7 +4655,8 @@
         const { data, error } = await sbClient
           .from("education_db")
           .select("*")
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true }); // 동일 업로드 배치 내 엑셀 행 순서 유지
 
         if(error) throw error;
 
@@ -6423,9 +6448,7 @@
     /* ══════════════════════════════════════════════════════════
        [추가] 기능 1: Chart.js 차트 - 실적 현황 시각화
     ══════════════════════════════════════════════════════════ */
-    let _crmBarChart   = null;
-    let _crmLineChart  = null;
-    let _crmMarginChart = null;
+    // _crmBarChart, _crmLineChart, _crmMarginChart → 상단에 선언됨 (TDZ 방지)
 
     function crmUpdateCharts(){
       if(typeof Chart === "undefined") return;
@@ -6532,10 +6555,8 @@
     }
 
     /* ══════════════════════════════════════════════════════════
-       [추가] 기능 2: 전체 검색 기능
+       [추가] 기능 2: 전체 검색 기능 (변수는 상단에 선언됨)
     ══════════════════════════════════════════════════════════ */
-    let _crmLeadSearchTerm  = "";
-    let _crmSchedSearchTerm = "";
 
     function crmFilterLeads(){
       _crmLeadSearchTerm = (($("leadSearchInput")||{}).value||"").toLowerCase().trim();
@@ -6578,7 +6599,7 @@
       const start = (_leadPage-1)*_leadPerPage;
       const rows  = allRows.slice(start, start+_leadPerPage);
       const RESULT_OPTIONS = ["","부재","결번","확인후연락","일정픽스","교육 이수 완료","기타"];
-      const html = rows.map(l => {
+      const html = rows.map((l, idx) => {
         const sc = l.status==="교육 이수"?"edu-pass":l.status==="점검제외처리"?"edu-fail":"";
         const addrCell = l.address?`<span class="addr-link" onclick="openNaverMap(leads.findIndex(x=>x.id===${l.id}))">${escapeHtml(l.address)}</span>`:"";
         const allowed  = isCompanyAllowed(l.company);
@@ -6594,9 +6615,11 @@
         const resultCell = `<td><select class="result-select" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>${resultLabel}</td>`;
         const hasMemo = !!(l.memo&&l.memo.trim());
         const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})">${hasMemo?"📝 메모":"메모"}</button></td>`;
+        const rowNum   = start + idx + 1;
+        const numCell  = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;">${rowNum}</td>`;
         const chkCell  = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>`;
         const actionCell = admin?`<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`:"";
-        return `<tr>${chkCell}<td>${escapeHtml(l.company||"")}</td><td>${addrCell}</td><td>${escapeHtml(l.manager||"")}</td><td>${escapeHtml(l.repName||"")}</td><td>${escapeHtml(l.phone||"")}</td><td>${escapeHtml(l.people||"")}</td><td>${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
+        return `<tr>${numCell}${chkCell}<td title="${escapeHtml(l.company||"")}">${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(l.phone||"")}">${escapeHtml(l.phone||"")}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
       }).join("");
       body.innerHTML = html;
       renderLeadPagination(allRows.length, totalPages);
