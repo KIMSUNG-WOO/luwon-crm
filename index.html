@@ -468,21 +468,39 @@
     tr:hover td{background:#fafcff}
 
     /* ── 교육섭외DB 열/행 리사이즈 ── */
-    #leadTable { table-layout: auto; }
+    #leadTable { table-layout: auto; border-collapse: collapse; }
     #leadTable.fixed-layout { table-layout: fixed; }
-    #leadTable thead th { position: relative; user-select: none; }
-    #leadTable tbody tr { position: relative; }
-    #leadTable td { word-break: break-word; white-space: normal; overflow-wrap: break-word; vertical-align: top; }
+
+    /* 열 구분 테두리 */
+    #leadTable thead th {
+      position: relative; user-select: none;
+      border-right: 1px solid #d1d5db;
+    }
+    #leadTable thead th:last-child { border-right: none; }
+    #leadTable tbody td {
+      word-break: break-word; white-space: normal; overflow-wrap: break-word;
+      vertical-align: top; border-right: 1px solid #e9ecf0;
+    }
+    #leadTable tbody td:last-child { border-right: none; }
+
+    /* 행 구분 테두리 */
+    #leadTable tbody tr { position: relative; border-bottom: 1px solid #e9ecf0; }
+
+    /* 열 리사이즈 핸들 — 얇은 실선으로 표시 */
     .th-resize-handle {
-      position: absolute; right: 0; top: 0; height: 100%; width: 7px;
-      cursor: col-resize; background: transparent; z-index: 2;
+      position: absolute; right: -1px; top: 20%; height: 60%; width: 4px;
+      cursor: col-resize; background: #c9d0d8; border-radius: 2px; z-index: 2;
     }
-    .th-resize-handle:hover, .th-resize-handle.dragging { background: rgba(59,130,246,0.30); }
+    .th-resize-handle:hover { background: #3b82f6; top: 5%; height: 90%; }
+    .th-resize-handle.dragging { background: #2563eb; top: 0; height: 100%; }
+
+    /* 행 리사이즈 핸들 — 하단 얇은 실선 */
     .row-resize-handle {
-      position: absolute; bottom: -2px; left: 0; right: 0; height: 6px;
-      cursor: row-resize; background: transparent; z-index: 3;
+      position: absolute; bottom: 0; left: 8%; right: 8%; height: 4px;
+      cursor: row-resize; background: transparent; z-index: 3; border-radius: 2px;
     }
-    .row-resize-handle:hover, .row-resize-handle.dragging { background: rgba(59,130,246,0.18); }
+    .row-resize-handle:hover { background: #c9d0d8; left: 3%; right: 3%; }
+    .row-resize-handle.dragging { background: #2563eb; left: 0; right: 0; }
 
     /* ── FORM GRID ── */
     .form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
@@ -3103,7 +3121,6 @@
         const _sv = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_e){ return "home"; } })();
         const _safe = (!isAdminMode() && ["staff","settings","progress"].includes(_sv)) ? "home" : _sv;
         setView(_safe);
-        setTimeout(loadLeadTableLayout, 250); // 열/행 레이아웃 복원
       }
 
       // 8. notices Realtime 구독 + 모바일탭 초기화
@@ -4502,8 +4519,12 @@
 
       body.innerHTML = html;  // DOM 업데이트 1회만
       renderLeadPagination(allRows.length, totalPages);
+      if(!_leadTableResizeInit){
+        loadLeadTableLayout();    // 저장된 열/행 레이아웃 먼저 적용
+        initLeadTableColResize(); // 핸들 부착 + fixed-layout (저장분 있으면 스킵)
+        _leadTableResizeInit = true;
+      }
       applyLeadRowHeights();
-      if(!_leadTableResizeInit){ initLeadTableColResize(); _leadTableResizeInit = true; }
     }
 
     function renderLeadPagination(total, totalPages){
@@ -5059,6 +5080,17 @@
     function initLeadTableColResize(){
       const table = $("leadTable");
       if(!table) return;
+
+      // 핸들 부착 즉시 fixed-layout 전환 → 드래그 시 튀는 현상 완전 제거
+      // (저장된 레이아웃이 있으면 loadLeadTableLayout이 이미 fixed-layout 설정함)
+      if(!table.classList.contains("fixed-layout")){
+        table.querySelectorAll("thead th").forEach(t => {
+          t.style.width    = t.offsetWidth + "px";
+          t.style.minWidth = t.offsetWidth + "px";
+        });
+        table.classList.add("fixed-layout");
+      }
+
       table.querySelectorAll("thead th").forEach(th => {
         if(th.querySelector(".th-resize-handle")) return;
         const handle = document.createElement("div");
@@ -5067,18 +5099,10 @@
         handle.addEventListener("mousedown", function(e){
           e.preventDefault(); e.stopPropagation();
           handle.classList.add("dragging");
-          // 첫 드래그 시 table-layout: fixed 전환 (현재 너비 고정)
-          if(!table.classList.contains("fixed-layout")){
-            table.querySelectorAll("thead th").forEach(t => {
-              t.style.width    = t.offsetWidth + "px";
-              t.style.minWidth = t.offsetWidth + "px";
-            });
-            table.classList.add("fixed-layout");
-          }
-          const startX  = e.pageX;
-          const startW  = th.offsetWidth;
+          const startX = e.pageX;
+          const startW = th.offsetWidth;
           function onMove(e){
-            const w = Math.max(30, startW + (e.pageX - startX));
+            const w = Math.max(40, startW + (e.pageX - startX));
             th.style.width    = w + "px";
             th.style.minWidth = w + "px";
           }
@@ -5086,7 +5110,7 @@
             handle.classList.remove("dragging");
             document.removeEventListener("mousemove", onMove);
             document.removeEventListener("mouseup",   onUp);
-            saveLeadTableLayout(); // 열 너비 사용자별 저장
+            saveLeadTableLayout();
           }
           document.addEventListener("mousemove", onMove);
           document.addEventListener("mouseup",   onUp);
@@ -6941,8 +6965,12 @@
       }).join("");
       body.innerHTML = html;
       renderLeadPagination(allRows.length, totalPages);
+      if(!_leadTableResizeInit){
+        loadLeadTableLayout();
+        initLeadTableColResize();
+        _leadTableResizeInit = true;
+      }
       applyLeadRowHeights();
-      if(!_leadTableResizeInit){ initLeadTableColResize(); _leadTableResizeInit = true; }
     }
 
     function crmFilterSchedules(){
