@@ -691,11 +691,19 @@
     .msg-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;
       background:#ef4444;color:#fff;font-size:10px;font-weight:900;
       display:inline-flex;align-items:center;justify-content:center;padding:0 4px;}
-    .msg-panel{position:absolute;bottom:44px;left:0;right:0;z-index:2000;
+    .msg-panel{
+      position:fixed;z-index:9999;
+      width:300px;
+      bottom:80px;left:12px;
       background:var(--panel);border:1.5px solid var(--line);border-radius:16px;
-      box-shadow:0 8px 32px rgba(0,0,0,.25);min-width:280px;max-width:320px;}
+      box-shadow:0 8px 32px rgba(0,0,0,.25);
+      overflow:hidden;
+    }
     .msg-panel-head{display:flex;justify-content:space-between;align-items:center;
-      padding:14px 16px 10px;border-bottom:1px solid var(--line);}
+      padding:12px 14px 10px;border-bottom:1px solid var(--line);
+      flex-wrap:nowrap;gap:8px;min-width:0;}
+    .msg-panel-head > span{font-weight:800;font-size:14px;flex-shrink:0;}
+    .msg-panel-head > div{display:flex;gap:6px;align-items:center;flex-shrink:0;}
     .msg-action-btn{height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line);
       background:var(--bg);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;}
     .msg-action-btn:hover{color:var(--text);}
@@ -1319,35 +1327,9 @@
     .crm-goal-badge.done{background:#dcfce7;color:#059669;border-color:#86efac}
     .crm-goal-badge.warn{background:#fef9c3;color:#854d0e;border-color:#fde047}
 
-    /* ══════════════════════════════════════
-       [추가] 모바일 하단 탭바 (max-width:768px)
-    ══════════════════════════════════════ */
-    #crmMobTabBar{
-      display:none;
-    }
     @media(max-width:768px){
-      #crmMobTabBar{
-        display:flex;
-        position:fixed;bottom:0;left:0;right:0;
-        height:58px;z-index:1050;
-        background:#0f172a;
-        border-top:1px solid rgba(255,255,255,.08);
-        align-items:stretch;
-        box-shadow:0 -4px 20px rgba(0,0,0,.3);
-      }
-      #crmMobTabBar .crm-tab-item{
-        flex:1;display:flex;flex-direction:column;
-        align-items:center;justify-content:center;gap:3px;
-        cursor:pointer;border:none;background:transparent;
-        color:#475569;font-size:9px;font-weight:700;
-        font-family:inherit;transition:color .15s;
-        padding:0;letter-spacing:.3px;
-      }
-      #crmMobTabBar .crm-tab-item .crm-tab-icon{font-size:19px;line-height:1}
-      #crmMobTabBar .crm-tab-item.active{color:#3b82f6}
-      #crmMobTabBar .crm-tab-item:active{opacity:.7}
-      /* 하단 탭바 높이만큼 main 패딩 추가 */
-      .main{ padding-bottom:68px !important; }
+      /* 모바일 쪽지함 패널: 화면 전체 너비 */
+      .msg-panel{ left:8px;right:8px;width:auto;bottom:16px; }
     }
   </style>
 </head>
@@ -2023,6 +2005,18 @@
           </div>
         </div>
 
+        <!-- ── 지정목표 뷰 (직원용) ── -->
+        <div class="view hidden" id="view-goals">
+          <div class="section-head">
+            <div>
+              <h4>지정 목표</h4>
+              <p>관리자가 설정한 나의 목표와 달성률입니다.</p>
+            </div>
+            <button class="small-btn" onclick="renderGoals()">🔄 새로고침</button>
+          </div>
+          <div id="goalsContent"><div class="empty">목표 데이터를 불러오는 중...</div></div>
+        </div>
+
         <div class="view hidden" id="view-settings">
           <div class="section-head">
             <div>
@@ -2273,8 +2267,8 @@
           <!-- [추가] 목표설정 탭 패널 -->
           <div id="settingsPaneGoal" class="hidden">
             <div class="panel" style="margin-bottom:16px;">
-              <h5 style="margin:0 0 6px;font-size:15px;">🎯 직원별 월간 목표 설정</h5>
-              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원별 월 콜 목표와 일정 목표를 설정합니다. 홈 화면 카드에서 달성률을 확인할 수 있습니다.</p>
+              <h5 style="margin:0 0 6px;font-size:15px;">🎯 직원별 목표 설정</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원별 금일·이번달 목표를 설정합니다. 직원 홈 화면 및 지정목표 메뉴에서 달성률을 확인합니다.</p>
               <div style="margin-bottom:14px;">
                 <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">직원 선택</label>
                 <select id="crmGoalStaffSelect" onchange="crmOnGoalStaffChange()"
@@ -2282,26 +2276,34 @@
                   <option value="">-- 직원 선택 --</option>
                 </select>
               </div>
-              <div class="form-grid" id="crmGoalFields" style="opacity:.4;pointer-events:none;max-width:400px;">
+              <div class="form-grid" id="crmGoalFields" style="opacity:.4;pointer-events:none;max-width:560px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
                 <div>
-                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">월 콜 목표 (건)</label>
-                  <input id="crmGoalCalls" type="number" min="0" placeholder="예: 100">
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">📞 금일 목표 콜량 (건)</label>
+                  <input id="crmGoalCalls" type="number" min="0" placeholder="예: 50">
                 </div>
                 <div>
-                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">월 일정 목표 (건)</label>
-                  <input id="crmGoalScheds" type="number" min="0" placeholder="예: 20">
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">📅 금일 목표 섭외건수 (건)</label>
+                  <input id="crmGoalDailyScheds" type="number" min="0" placeholder="예: 5">
+                </div>
+                <div>
+                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">🗓 이번달 목표 섭외건수 (건)</label>
+                  <input id="crmGoalScheds" type="number" min="0" placeholder="예: 50">
                 </div>
               </div>
-              <div style="text-align:right;margin-top:12px;max-width:400px;">
+              <div style="text-align:right;margin-top:12px;max-width:560px;">
                 <button class="small-btn" onclick="crmSaveGoal()">목표 저장</button>
               </div>
             </div>
-            <div class="panel">
-              <h5 style="margin:0 0 14px;font-size:15px;">목표 목록</h5>
+            <!-- 직원별 조회 -->
+            <div class="panel" style="margin-bottom:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h5 style="font-size:15px;">👥 직원별 목표 현황</h5>
+                <button class="small-btn" onclick="crmRenderGoalTable()">🔄 조회</button>
+              </div>
               <div class="table-wrap">
                 <table>
-                  <thead><tr><th>직원명</th><th>월 콜 목표</th><th>월 일정 목표</th></tr></thead>
-                  <tbody id="crmGoalTableBody"><tr><td colspan="3"><div class="empty">설정된 목표가 없습니다.</div></td></tr></tbody>
+                  <thead><tr><th>직원명</th><th>금일 콜 목표</th><th>금일 섭외 목표</th><th>이번달 섭외 목표</th><th>현황</th></tr></thead>
+                  <tbody id="crmGoalTableBody"><tr><td colspan="5"><div class="empty">설정된 목표가 없습니다.</div></td></tr></tbody>
                 </table>
               </div>
             </div>
@@ -2311,8 +2313,11 @@
           <div id="settingsPaneLog" class="hidden">
             <div class="panel">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                <h5 style="font-size:15px;">📋 최근 활동 로그 (최대 50건)</h5>
-                <button class="ghost-btn" style="font-size:12px;height:32px;padding:0 12px;" onclick="crmClearLogs()">로그 초기화</button>
+                <h5 style="font-size:15px;">📋 활동 로그 · 접속 현황 (최대 50건)</h5>
+                <div style="display:flex;gap:8px;">
+                  <button class="small-btn" onclick="crmRenderLogs()">🔄 새로고침</button>
+                  <button class="ghost-btn" style="font-size:12px;height:32px;padding:0 12px;" onclick="crmClearLogs()">초기화</button>
+                </div>
               </div>
               <div id="crmLogListBox"><div class="empty">활동 로그가 없습니다.</div></div>
             </div>
@@ -2408,6 +2413,7 @@
 
       </div>
     </main>
+
   </section>
 
   <!-- 메모 모달 -->
@@ -2821,6 +2827,8 @@
         try{ if(typeof activityLogs!== "undefined") payload.activityLogs = activityLogs;}catch(e){}
         localStorage.setItem(APP_DATA_KEY, JSON.stringify(payload));
       }catch(e){}
+      // Supabase 백그라운드 동기화 (fire-and-forget)
+      try{ sbSyncAll(); }catch(e){}
     }
 
     function loadAppData(){
@@ -2894,39 +2902,190 @@
       }catch(e){ console.warn("직원 삭제 오류:", e.message); }
     }
 
-    // ─── 앱 초기화 (세션 즉시 복원 → Supabase 백그라운드 동기화) ───
+    // ─── Supabase 전체 데이터 동기화 ────────────────────────────────
+
+    // camelCase ↔ snake_case 변환 헬퍼
+    function schedToRow(s){ return { id:Number(s.id), assignee:s.assignee||"", date:s.date||"", time:s.time||"", company:s.company||"", manager:s.manager||"", phone:s.phone||"", address:s.address||"", people:s.people||"", gap:s.gap||"", bank:s.bank||"", memo:s.memo||"", created_by:s.createdBy||"", created_by_no:s.createdByNo||"", created_at:s.createdAt||"", progress_status:s.progressStatus||"", progress_etc:s.progressEtc||"" }; }
+    function rowToSched(r){ return { id:r.id, assignee:r.assignee, date:r.date, time:r.time, company:r.company, manager:r.manager, phone:r.phone, address:r.address, people:r.people, gap:r.gap, bank:r.bank, memo:r.memo, createdBy:r.created_by, createdByNo:r.created_by_no, createdAt:r.created_at, progressStatus:r.progress_status, progressEtc:r.progress_etc }; }
+
+    function leadToRow(l){ return { id:Number(l.id), type:l.type||"", date:l.date||"", time:l.time||"", company:l.company||"", address:l.address||"", manager:l.manager||"", phone:l.phone||"", people:l.people||"", age:l.age||"", subject:l.subject||"", industry:l.industry||"", status:l.status||"", owner_no:l.ownerNo||"", owner_name:l.ownerName||"", created_at:l.createdAt||"", result:l.result||"", result_date:l.resultDate||"", result_time:l.resultTime||"", memo:l.memo||"", rep_name:l.repName||"" }; }
+    function rowToLead(r){ return { id:r.id, type:r.type, date:r.date, time:r.time, company:r.company, address:r.address, manager:r.manager, phone:r.phone, people:r.people, age:r.age, subject:r.subject, industry:r.industry, status:r.status, ownerNo:r.owner_no, ownerName:r.owner_name, createdAt:r.created_at, result:r.result, resultDate:r.result_date, resultTime:r.result_time, memo:r.memo, repName:r.rep_name }; }
+
+    function perfToRow(p){ return { id:Number(p.id), staff:p.staff||"", staff_no:p.staffNo||"", type:p.type||"", value:String(p.value||""), amount:Number(p.amount||0), take:Number(p.take||0), memo:p.memo||"", date:p.date||"", created_by_no:p.createdByNo||"" }; }
+    function rowToPerf(r){ return { id:r.id, staff:r.staff, staffNo:r.staff_no, type:r.type, value:r.value, amount:r.amount, take:r.take, memo:r.memo, date:r.date, createdByNo:r.created_by_no }; }
+
+    function itinToRow(i){ return { id:Math.floor(Number(i.id)), schedule_id:String(i.scheduleId||""), company:i.company||"", address:i.address||"", biz_phone:i.bizPhone||"", manager:i.manager||"", manager_phone:i.managerPhone||"", date:i.date||"", time:i.time||"", people:i.people||"", age:i.age||"", assignee:i.assignee||"", sub_code:i.subCode||"", subject:i.subject||"", industry:i.industry||"", education_place:i.educationPlace||"", foreigner_count:i.foreignerCount||"", support_content:i.supportContent||"", etc_note:i.etcNote||"", special_note:i.specialNote||"", created_by_no:i.createdByNo||"", created_at:i.createdAt||"" }; }
+    function rowToItin(r){ return { id:r.id, scheduleId:r.schedule_id, company:r.company, address:r.address, bizPhone:r.biz_phone, manager:r.manager, managerPhone:r.manager_phone, date:r.date, time:r.time, people:r.people, age:r.age, assignee:r.assignee, subCode:r.sub_code, subject:r.subject, industry:r.industry, educationPlace:r.education_place, foreignerCount:r.foreigner_count, supportContent:r.support_content, etcNote:r.etc_note, specialNote:r.special_note, createdByNo:r.created_by_no, createdAt:r.created_at }; }
+
+    // 전체 배열 Supabase upsert (fire-and-forget)
+    async function sbSyncAll(){
+      try{
+        // leads는 education_db 테이블에서 별도 관리 (insertData/loadData)
+        const ops = [
+          schedules.length    ? sbClient.from("schedules").upsert(schedules.map(schedToRow), {onConflict:"id"})                                                             : null,
+          performances.length ? sbClient.from("performances").upsert(performances.map(perfToRow), {onConflict:"id"})                                                        : null,
+          itineraries.length  ? sbClient.from("itineraries").upsert(itineraries.map(itinToRow), {onConflict:"id"})                                                          : null,
+          inspectionRules.length  ? sbClient.from("inspection_rules").upsert(inspectionRules.map(r=>({id:Number(r.id),company:r.company,type:r.type})), {onConflict:"id"}) : null,
+          onlineEduRules.length   ? sbClient.from("online_edu_rules").upsert(onlineEduRules.map(r=>({id:Number(r.id),company:r.company})), {onConflict:"id"})              : null,
+        ].filter(Boolean);
+        const tableNames = ["schedules","performances","itineraries","inspection_rules","online_edu_rules"];
+        const results = await Promise.allSettled(ops);
+        results.forEach((r, i) => { if(r.status==="rejected") console.warn(`sbSyncAll[${tableNames[i]}] 오류:`, r.reason); if(r.value?.error) console.warn(`sbSyncAll[${tableNames[i]}] DB오류:`, r.value.error.message); });
+        await Promise.allSettled([
+          sbClient.from("app_settings").upsert({key:"paySettings", value:paySettings}, {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"staffGoals",  value:staffGoals},  {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"staffRanks",  value:staffRanks},  {onConflict:"key"}),
+          sbClient.from("app_settings").upsert({key:"adminRates",  value:adminRates},  {onConflict:"key"}),
+        ]);
+      }catch(e){ console.warn("sbSyncAll 오류:", e.message); }
+    }
+
+    // Supabase에서 전체 데이터 로드 (앱 시작/로그인 시 호출)
+    async function loadFromSupabase(){
+      try{
+        // leads는 loadData()가 education_db에서 별도 로드
+        const [schedRes, perfRes, itinRes, inspRes, onlRes, settRes] = await Promise.all([
+          sbClient.from("schedules").select("*"),
+          sbClient.from("performances").select("*"),
+          sbClient.from("itineraries").select("*"),
+          sbClient.from("inspection_rules").select("*"),
+          sbClient.from("online_edu_rules").select("*"),
+          sbClient.from("app_settings").select("*"),
+        ]);
+        if(!schedRes.error && schedRes.data?.length)    schedules       = schedRes.data.map(rowToSched);
+        if(!perfRes.error  && perfRes.data?.length)     performances    = perfRes.data.map(rowToPerf);
+        if(!itinRes.error  && itinRes.data?.length)     itineraries     = itinRes.data.map(rowToItin);
+        if(!inspRes.error  && inspRes.data?.length)     inspectionRules = inspRes.data.map(r=>({id:r.id, company:r.company, type:r.type}));
+        if(!onlRes.error   && onlRes.data?.length)      onlineEduRules  = onlRes.data.map(r=>({id:r.id, company:r.company}));
+        if(!settRes.error  && settRes.data){
+          settRes.data.forEach(row => {
+            if(row.key==="paySettings" && row.value) paySettings = row.value;
+            if(row.key==="staffGoals"  && row.value) staffGoals  = row.value;
+            if(row.key==="staffRanks"  && row.value) Object.assign(staffRanks, row.value);
+            if(row.key==="adminRates"  && row.value) Object.assign(adminRates, row.value);
+          });
+        }
+        saveAppData();
+        if(state.currentUser) renderAll();
+        console.log("✅ Supabase 데이터 로드 완료");
+      }catch(e){ console.warn("loadFromSupabase 오류:", e.message); }
+    }
+
+    // Supabase 단건 삭제
+    async function sbDeleteRecord(table, id){
+      try{
+        const numId = Number(id);
+        const { error } = await sbClient.from(table).delete().eq("id", isNaN(numId) ? id : numId);
+        if(error) throw error;
+      }catch(e){ console.warn(`sbDeleteRecord(${table}, ${id}) 오류:`, e.message); }
+    }
+
+    // ─── 세션 복원 공통 함수 ───
+    function tryRestoreSession(){
+      if(state.currentUser) return true; // 이미 복원됨
+      try{
+        const saved = localStorage.getItem("luwon_auth");
+        if(!saved) return false;
+        const { staffNo, password } = JSON.parse(saved);
+        const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+        if(!user) return false;
+        state.currentUser = user;
+        state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
+        $("loginPage").style.display = "none";
+        $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
+        hydrateUserUI();
+        renderAll();
+        const savedView = (() => { try{ return localStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
+        const safeView = (!isAdminMode() && ["staff","settings","progress"].includes(savedView)) ? "home" : savedView;
+        setView(safeView);
+        return true;
+      }catch(e){ return false; }
+    }
+
+    // ─── 앱 초기화 ───
     async function initApp(){
       try{ loadAppData(); }catch(e){}          // 1. localStorage 캐시
 
-      // 2. 세션 먼저 복원 → 로그인 화면 플래시 없음
-      try{
-        const saved = localStorage.getItem("luwon_auth");
-        if(saved){
-          const { staffNo, password } = JSON.parse(saved);
-          const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
-          if(user){
-            state.currentUser = user;
-            state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
-            $("loginPage").style.display = "none";
-            $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
-            hydrateUserUI();
-            renderAll();
-            const savedView = (() => { try{ return localStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
-            const safeView = (!isAdminMode() && ["staff","settings","progress"].includes(savedView)) ? "home" : savedView;
-            setView(safeView);
-          } else {
-            localStorage.removeItem("luwon_auth");
-          }
-        }
-      }catch(e){ try{ localStorage.removeItem("luwon_auth"); }catch(_){} }
+      // 2. localStorage 기반 즉시 세션 복원 (플래시 없음)
+      const restoredFromLocal = tryRestoreSession();
 
-      // 3. Supabase 직원 동기화 (백그라운드)
-      try{ await loadStaffFromSupabase(); }catch(e){ console.warn("Supabase 초기화 실패, 로컬 데이터로 진행:", e); }
+      // 3. Supabase 직원 동기화 (authUsers 최신화)
+      try{ await loadStaffFromSupabase(); }catch(e){ console.warn("직원 동기화 실패:", e); }
 
-      // 4. DB 데이터 로드 (로그인 상태일 때만)
+      // 4. localStorage 복원 실패 시 Supabase 직원 데이터로 재시도
+      if(!restoredFromLocal) tryRestoreSession();
+
+      // 5. Supabase 전체 데이터 로드
+      try{ await loadFromSupabase(); }catch(e){ console.warn("Supabase 데이터 로드 실패:", e); }
+
+      // 6. 로그인 상태면 leads 로드 + 실시간 동기화 시작
       if(state.currentUser){
         try{ loadData(); }catch(e){}
+        setupRealtimeSync();
       }
+    }
+
+    // ─── Supabase Realtime 실시간 동기화 (다른 사용자 변경 자동 반영) ───
+    let _realtimeChannel = null;
+    function setupRealtimeSync(){
+      if(_realtimeChannel) return; // 중복 방지
+      _realtimeChannel = sbClient
+        .channel("crm-realtime")
+        // 교육섭외 DB
+        .on("postgres_changes", { event:"*", schema:"public", table:"education_db" }, () => {
+          try{ loadData(); }catch(e){}
+        })
+        // 일정
+        .on("postgres_changes", { event:"*", schema:"public", table:"schedules" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("schedules").select("*");
+            if(!error && data){ schedules = data.map(rowToSched); if(state.currentUser){ renderSchedules(); renderCalendar(); loadAggregate(); } }
+          }catch(e){}
+        })
+        // 실적
+        .on("postgres_changes", { event:"*", schema:"public", table:"performances" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("performances").select("*");
+            if(!error && data){ performances = data.map(rowToPerf); if(state.currentUser){ renderPerformances(); loadAggregate(); } }
+          }catch(e){}
+        })
+        // 일정표
+        .on("postgres_changes", { event:"*", schema:"public", table:"itineraries" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("itineraries").select("*");
+            if(!error && data){ itineraries = data.map(rowToItin); if(state.currentUser) renderItineraries(); }
+          }catch(e){}
+        })
+        // 점검제외 규칙
+        .on("postgres_changes", { event:"*", schema:"public", table:"inspection_rules" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("inspection_rules").select("*");
+            if(!error && data){ inspectionRules = data.map(r=>({id:r.id, company:r.company, type:r.type})); if(state.currentUser) renderInspectionRules(); }
+          }catch(e){}
+        })
+        // 온라인 교육 규칙
+        .on("postgres_changes", { event:"*", schema:"public", table:"online_edu_rules" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("online_edu_rules").select("*");
+            if(!error && data){ onlineEduRules = data.map(r=>({id:r.id, company:r.company})); if(state.currentUser) renderOnlineEduRules(); }
+          }catch(e){}
+        })
+        // 앱 설정 (목표/단가/직급 등)
+        .on("postgres_changes", { event:"*", schema:"public", table:"app_settings" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("app_settings").select("*");
+            if(!error && data){
+              data.forEach(row => {
+                if(row.key==="paySettings" && row.value) paySettings = row.value;
+                if(row.key==="staffGoals"  && row.value) staffGoals  = row.value;
+                if(row.key==="staffRanks"  && row.value) Object.assign(staffRanks, row.value);
+                if(row.key==="adminRates"  && row.value) Object.assign(adminRates, row.value);
+              });
+              if(state.currentUser) renderAll();
+            }
+          }catch(e){}
+        })
+        .subscribe();
     }
 
     function $(id){ return document.getElementById(id); }
@@ -3086,11 +3245,21 @@
       renderAll();
       setView("home");
       loadData();
+      loadFromSupabase(); // 로그인 후 최신 Supabase 데이터 로드 (백그라운드)
+      setupRealtimeSync(); // 실시간 동기화 시작
+      // 활동 로그 기록
+      crmAddLog("ok", "로그인", user.name);
+      saveAppData();
       // 쪽지함 초기화 (로그인 후)
       setTimeout(() => { try{ msgInit(); }catch(e){} }, 1200);
     }
 
     function logout(){
+      // 활동 로그 기록 (사용자 정보가 사라지기 전에 기록)
+      if(state.currentUser){
+        crmAddLog("warn", "로그아웃", state.currentUser.name);
+        saveAppData();
+      }
       state.currentUser = null;
       state.currentMode = "staff";
       state.currentView = "home";
@@ -3206,6 +3375,7 @@
         ["aggregate","📌","익일취합"],
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
+        ["goals","🎯","지정목표"],
         ["lead","🗂","교육섭외 DB"],
         ["itinerary","📋","일정표 관리"]
       ];
@@ -3271,7 +3441,8 @@
         staff:["직원관리","직원 정보를 관리하는 화면입니다."],
         lead:["교육섭외 DB","교육 사업장 데이터베이스 화면입니다."],
         itinerary:["일정표 관리","등록된 교육섭외 일정표를 관리하는 화면입니다."],
-        settings:["관리자설정","관리자용 설정 화면입니다."]
+        settings:["관리자설정","관리자용 설정 화면입니다."],
+        goals:["지정목표","관리자가 설정한 나의 목표와 달성률을 확인합니다."]
       };
 
       $("pageTitle").textContent = titles[view][0];
@@ -3281,6 +3452,7 @@
 
       applyRoleUI();
       renderAll();
+      if(view === "goals") renderGoals();
     }
 
     function runHomeSummary(){
@@ -3743,6 +3915,10 @@
     function deleteScheduleById(id){
       const ok = confirm("이 일정을 삭제할까요?\n(연결된 일정표도 함께 삭제됩니다.)");
       if(!ok) return;
+      // 연결된 일정표 ID 미리 수집 후 Supabase 삭제
+      const linkedItins = itineraries.filter(x => String(x.scheduleId) === String(id));
+      linkedItins.forEach(i => sbDeleteRecord("itineraries", i.id));
+      sbDeleteRecord("schedules", id);
       schedules   = schedules.filter(x => x.id !== id);
       // 일정표 관리에서도 연동 삭제 (scheduleId로 연결)
       itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
@@ -4042,6 +4218,7 @@
     function deletePerformanceRow(id){
       const ok = confirm("이 실적을 삭제할까?");
       if(!ok) return;
+      sbDeleteRecord("performances", id);
       performances = performances.filter(x => x.id !== id);
       renderPerformances();
       saveAppData();
@@ -5022,6 +5199,7 @@
     function deleteItinerary(id){
       if(!isAdminMode()) return;
       if(!confirm("이 일정표를 삭제할까? 복구 불가!")) return;
+      sbDeleteRecord("itineraries", id);
       itineraries = itineraries.filter(x => String(x.id) !== String(id));
       renderItineraries();
       saveAppData();
@@ -5507,20 +5685,40 @@
 
     function setSettingsTab(tab){
       state.settingsTab = tab;
-      $("settingsTabStaff").classList.toggle("active", tab === "staff");
-      $("settingsTabPay").classList.toggle("active", tab === "pay");
-      $("settingsTabInspection").classList.toggle("active", tab === "inspection");
-      $("settingsTabSystem").classList.toggle("active", tab === "system");
 
-      $("settingsPaneStaff").classList.toggle("hidden", tab !== "staff");
-      $("settingsPanePay").classList.toggle("hidden", tab !== "pay");
-      $("settingsPaneInspection").classList.toggle("hidden", tab !== "inspection");
-      $("settingsPaneSystem").classList.toggle("hidden", tab !== "system");
+      // ── 모든 탭 버튼 active 상태 갱신 ──
+      const allTabs = ["staff","pay","inspection","system","goal","log","msg"];
+      allTabs.forEach(t => {
+        const btn = $("settingsTab" + t.charAt(0).toUpperCase() + t.slice(1));
+        if(btn) btn.classList.toggle("active", t === tab);
+      });
 
+      // ── 모든 패널 hidden 토글 ──
+      if($("settingsPaneStaff"))      $("settingsPaneStaff").classList.toggle("hidden",      tab !== "staff");
+      if($("settingsPanePay"))        $("settingsPanePay").classList.toggle("hidden",        tab !== "pay");
+      if($("settingsPaneInspection")) $("settingsPaneInspection").classList.toggle("hidden", tab !== "inspection");
+      if($("settingsPaneSystem"))     $("settingsPaneSystem").classList.toggle("hidden",     tab !== "system");
+      if($("settingsPaneGoal"))       $("settingsPaneGoal").classList.toggle("hidden",       tab !== "goal");
+      if($("settingsPaneLog"))        $("settingsPaneLog").classList.toggle("hidden",        tab !== "log");
+      if($("settingsPaneMsg"))        $("settingsPaneMsg").classList.toggle("hidden",        tab !== "msg");
+
+      // ── 탭별 렌더 함수 호출 ──
       if(tab === "staff")      renderSettingsStaff();
       if(tab === "pay")        renderPaySummary();
       if(tab === "inspection"){ renderInspectionRules(); renderOnlineEduRules(); }
       if(tab === "system")     renderSystemInfo();
+      if(tab === "goal"){
+        crmRefreshGoalStaffDropdown();
+        crmRenderGoalTable();
+      }
+      if(tab === "log")  crmRenderLogs();
+      if(tab === "msg"){
+        const sel = $("msgAdminToNo");
+        if(sel){
+          sel.innerHTML = `<option value="all">📢 전체 직원</option>` +
+            staffs.map(s => `<option value="${escapeHtml(s.no)}">${escapeHtml(s.name)}</option>`).join("");
+        }
+      }
     }
 
     // ══════════════════════════════════════════════════
@@ -5583,6 +5781,7 @@
       const rule = inspectionRules.find(r => r.id === id);
       if(!rule) return;
       if(!confirm(`[${rule.company}] 규칙을 삭제할까요?`)) return;
+      sbDeleteRecord("inspection_rules", id);
       inspectionRules = inspectionRules.filter(r => r.id !== id);
       saveAppData();
       renderInspectionRules();
@@ -5627,6 +5826,7 @@
       const rule = onlineEduRules.find(r => r.id === id);
       if(!rule) return;
       if(!confirm(`[${rule.company}] 온라인 교육 허용을 해제할까요?`)) return;
+      sbDeleteRecord("online_edu_rules", id);
       onlineEduRules = onlineEduRules.filter(r => r.id !== id);
       saveAppData();
       renderOnlineEduRules();
@@ -6598,15 +6798,17 @@
       if(!no){
         fields.style.opacity = ".4";
         fields.style.pointerEvents = "none";
-        if($("crmGoalCalls"))  $("crmGoalCalls").value  = "";
-        if($("crmGoalScheds")) $("crmGoalScheds").value = "";
+        if($("crmGoalCalls"))        $("crmGoalCalls").value        = "";
+        if($("crmGoalDailyScheds"))  $("crmGoalDailyScheds").value  = "";
+        if($("crmGoalScheds"))       $("crmGoalScheds").value       = "";
         return;
       }
       fields.style.opacity = "1";
       fields.style.pointerEvents = "auto";
       const g = staffGoals[no] || {};
-      if($("crmGoalCalls"))  $("crmGoalCalls").value  = g.calls  !== undefined ? g.calls  : "";
-      if($("crmGoalScheds")) $("crmGoalScheds").value = g.scheds !== undefined ? g.scheds : "";
+      if($("crmGoalCalls"))       $("crmGoalCalls").value       = g.calls       !== undefined ? g.calls       : "";
+      if($("crmGoalDailyScheds")) $("crmGoalDailyScheds").value = g.dailyScheds !== undefined ? g.dailyScheds : "";
+      if($("crmGoalScheds"))      $("crmGoalScheds").value      = g.scheds      !== undefined ? g.scheds      : "";
     }
 
     function crmSaveGoal(){
@@ -6614,8 +6816,9 @@
       const no = ($("crmGoalStaffSelect")||{}).value||"";
       if(!no) return alert("직원을 선택해 주세요.");
       staffGoals[no] = {
-        calls:  Number(($("crmGoalCalls")||{}).value)||0,
-        scheds: Number(($("crmGoalScheds")||{}).value)||0
+        calls:       Number(($("crmGoalCalls")||{}).value)||0,
+        dailyScheds: Number(($("crmGoalDailyScheds")||{}).value)||0,
+        scheds:      Number(($("crmGoalScheds")||{}).value)||0
       };
       saveAppData();
       crmRenderGoalTable();
@@ -6628,16 +6831,33 @@
       if(!tbody) return;
       const nos = Object.keys(staffGoals);
       if(!nos.length){
-        tbody.innerHTML = `<tr><td colspan="3"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
         return;
       }
+      const today = todayStr();
+      const month = monthPrefix();
       tbody.innerHTML = nos.map(no => {
         const s = staffs.find(x => x.no === no);
         const g = staffGoals[no];
+        const name = escapeHtml(s ? s.name : no);
+        // 현황: 이번달 등록 일정 수
+        const curMonthScheds = schedules.filter(sc =>
+          String(sc.createdAt||"").startsWith(month) && sc.createdByNo === no
+        ).length;
+        const pct = g.scheds > 0 ? Math.min(100, Math.round(curMonthScheds / g.scheds * 100)) : 0;
+        const pctColor = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
+        const bar = g.scheds > 0
+          ? `<div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;min-width:80px;">
+               <div style="height:100%;width:${pct}%;background:${pctColor};border-radius:4px;"></div>
+             </div>
+             <div style="font-size:11px;color:${pctColor};font-weight:700;">${curMonthScheds}/${g.scheds} (${pct}%)</div>`
+          : `<span style="color:var(--muted);font-size:11px;">미설정</span>`;
         return `<tr>
-          <td>${escapeHtml(s ? s.name : no)}</td>
-          <td>${g.calls}건</td>
-          <td>${g.scheds}건</td>
+          <td>${name}</td>
+          <td style="text-align:center;">${g.calls||0}건</td>
+          <td style="text-align:center;">${g.dailyScheds||0}건</td>
+          <td style="text-align:center;">${g.scheds||0}건</td>
+          <td>${bar}</td>
         </tr>`;
       }).join("");
     }
@@ -6688,30 +6908,78 @@
     function crmAddLog(level, action, detail){
       // level: "info" | "ok" | "warn" | "danger"
       const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")} ${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
-      activityLogs.unshift({ level, action, detail: detail||"", time: timeStr, user: state.currentUser ? state.currentUser.name : "" });
+      const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
+      const device  = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "📱모바일" : "🖥️PC";
+      const detailFull = [detail, device].filter(Boolean).join(" · ");
+      activityLogs.unshift({
+        level,
+        action,
+        detail: detailFull,
+        time: timeStr,
+        user: state.currentUser ? state.currentUser.name : (detail||""),
+        online: true  // 기록 시점에는 온라인
+      });
       if(activityLogs.length > 50) activityLogs = activityLogs.slice(0,50);
-      // saveAppData는 호출하는 쪽에서 이미 호출하므로 여기선 생략 (무한루프 방지)
+      // saveAppData는 호출하는 쪽에서 이미 호출
     }
 
     function crmRenderLogs(){
       const box = $("crmLogListBox");
       if(!box) return;
+
+      // ── 직원별 마지막 로그 상태 계산 ──
+      const staffStatus = {}; // { staffName: { action, time, isOnline } }
+      activityLogs.forEach(log => {
+        if(!log.user) return;
+        if(!staffStatus[log.user]){
+          staffStatus[log.user] = {
+            action:   log.action,
+            time:     log.time,
+            isOnline: log.action === "로그인"
+          };
+        }
+      });
+
+      // ── 상단: 등록된 모든 직원 접속 현황 ──
+      let statusHtml = "";
+      if(staffs.length){
+        const cards = staffs.map(s => {
+          const st       = staffStatus[s.name];
+          const isOnline = st ? st.isOnline : false;
+          const lastTime = st ? st.time : "";
+          const statusTxt= st ? (isOnline ? "접속중" : "오프라인") : "기록없음";
+          const dotColor = isOnline ? "#059669" : (st ? "#ef4444" : "#94a3b8");
+          const shadow   = isOnline ? "box-shadow:0 0 5px #059669;" : "";
+          const dot      = `<span style="flex-shrink:0;width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;margin-right:6px;${shadow}"></span>`;
+          const timeStr  = lastTime ? ` <span style="color:var(--muted);font-size:10px;">${escapeHtml(lastTime)}</span>` : "";
+          return `<div style="display:flex;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12px;">
+            ${dot}<b style="margin-right:4px;">${escapeHtml(s.name)}</b>
+            <span style="color:${dotColor};font-weight:700;">${statusTxt}</span>${timeStr}
+          </div>`;
+        }).join("");
+        statusHtml = `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;">👥 직원별 접속 현황 (전체 ${staffs.length}명)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">${cards}</div>
+        </div>`;
+      }
+
       if(!activityLogs.length){
-        box.innerHTML = `<div class="empty">활동 로그가 없습니다.</div>`;
+        box.innerHTML = statusHtml + `<div class="empty">활동 로그가 없습니다.</div>`;
         return;
       }
-      box.innerHTML = activityLogs.map(log => `
-        <div class="crm-log-item">
-          <span class="crm-log-badge ${log.level||"info"}">${escapeHtml(log.level||"info")}</span>
+      const actionLabel = { "로그인":"ok", "로그아웃":"warn" };
+      box.innerHTML = statusHtml + activityLogs.map(log => {
+        const lvl = actionLabel[log.action] || log.level || "info";
+        return `<div class="crm-log-item">
+          <span class="crm-log-badge ${lvl}">${escapeHtml(log.action||log.level||"info")}</span>
           <div class="crm-log-text">
             <b>${escapeHtml(log.action)}</b>
             ${log.detail ? `<span style="color:var(--muted);"> · ${escapeHtml(log.detail)}</span>` : ""}
             ${log.user ? `<span style="color:var(--muted);font-size:11px;"> [${escapeHtml(log.user)}]</span>` : ""}
           </div>
           <span class="crm-log-time">${escapeHtml(log.time)}</span>
-        </div>
-      `).join("");
+        </div>`;
+      }).join("");
     }
 
     function crmClearLogs(){
@@ -6720,6 +6988,61 @@
       activityLogs = [];
       saveAppData();
       crmRenderLogs();
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       직원용 지정목표 뷰 렌더링
+    ══════════════════════════════════════════════════════════ */
+    function renderGoals(){
+      const el = $("goalsContent");
+      if(!el) return;
+      const user = state.currentUser;
+      if(!user){ el.innerHTML = `<div class="panel"><div class="empty">로그인 후 확인 가능합니다.</div></div>`; return; }
+      const no   = user.staffNo;
+      const goal = staffGoals[no];
+      if(!goal || (!goal.calls && !goal.dailyScheds && !goal.scheds)){
+        el.innerHTML = `<div class="panel"><div class="empty">📋 관리자가 아직 목표를 설정하지 않았습니다.</div></div>`;
+        return;
+      }
+      const today = todayStr();
+      const month = monthPrefix();
+
+      // 금일 콜량: 오늘 등록한 일정 수 (createdAt = today, createdByNo = no)
+      const todayCalls  = schedules.filter(s => (s.createdAt||"") === today && s.createdByNo === no).length;
+      // 금일 섭외건수: 오늘 등록한 일정 수 (동일 기준 – 콜과 별개로 UI 표시)
+      const todayScheds = schedules.filter(s => (s.createdAt||"") === today && s.createdByNo === no).length;
+      // 이번달 섭외건수
+      const monthScheds = schedules.filter(s => String(s.createdAt||"").startsWith(month) && s.createdByNo === no).length;
+
+      const items = [
+        { label:"📞 금일 목표 콜량",      current:todayCalls,  target:goal.calls||0 },
+        { label:"📅 금일 목표 섭외건수",   current:todayScheds, target:goal.dailyScheds||0 },
+        { label:"🗓 이번달 목표 섭외건수", current:monthScheds, target:goal.scheds||0 }
+      ].filter(i => i.target > 0);
+
+      if(!items.length){
+        el.innerHTML = `<div class="panel"><div class="empty">설정된 목표 항목이 없습니다.</div></div>`;
+        return;
+      }
+
+      el.innerHTML = items.map(item => {
+        const pct   = Math.min(100, Math.round(item.current / item.target * 100));
+        const color = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
+        const label = pct >= 100 ? "달성!" : pct >= 50 ? "절반 이상" : "진행 중";
+        return `<div class="panel" style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div style="font-size:15px;font-weight:700;">${item.label}</div>
+            <div style="font-size:22px;font-weight:900;color:${color};">${pct}%</div>
+          </div>
+          <div style="height:14px;background:var(--line2);border-radius:8px;overflow:hidden;margin-bottom:8px;">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:8px;transition:width .6s ease;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;color:var(--muted);">현재 <b style="color:var(--text);">${item.current}건</b> / 목표 <b style="color:var(--text);">${item.target}건</b></span>
+            <span style="font-size:12px;font-weight:700;color:${color};background:${color}18;padding:3px 10px;border-radius:999px;">${label}</span>
+          </div>
+        </div>`;
+      }).join("");
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -6793,83 +7116,9 @@
       if(settingsBtn) settingsBtn.style.opacity = isAdminMode() ? "1" : ".4";
     }
 
-    /* ══════════════════════════════════════════════════════════
-       [추가] saveAppData / loadAppData 확장 - activityLogs, staffGoals 포함
-       기존 함수를 덮어쓰지 않고 래퍼 방식으로 처리 (원본 유지 후 이후 호출에서 자동 포함)
-    ══════════════════════════════════════════════════════════ */
-    // 기존 saveAppData의 JSON에 activityLogs, staffGoals 추가를 위해 원본 참조 후 재정의
-    (function patchSaveLoadAppData(){
-      const _origSave = saveAppData;
-      const _origLoad = loadAppData;
+    /* saveAppData / loadAppData 는 상단에서 통합 처리됨 (activityLogs, staffGoals, sbSyncAll 포함) */
 
-      saveAppData = function(){
-        try{
-          localStorage.setItem(APP_DATA_KEY, JSON.stringify({
-            staffs, authUsers, paySettings, staffRanks, adminRates,
-            performances, leads, schedules, itineraries, notices,
-            inspectionRules, onlineEduRules, activityLogs, staffGoals
-          }));
-        }catch(e){}
-      };
-
-      loadAppData = function(){
-        try{
-          const raw = localStorage.getItem(APP_DATA_KEY);
-          if(!raw) return;
-          const d = JSON.parse(raw);
-          if(d.staffs          && Array.isArray(d.staffs))          staffs          = d.staffs;
-          if(d.authUsers       && Array.isArray(d.authUsers))        authUsers       = d.authUsers;
-          if(d.paySettings     && typeof d.paySettings==="object")   paySettings     = d.paySettings;
-          if(d.staffRanks      && typeof d.staffRanks==="object")    staffRanks      = d.staffRanks;
-          if(d.adminRates      && typeof d.adminRates==="object")    Object.assign(adminRates, d.adminRates);
-          if(d.performances    && Array.isArray(d.performances))     performances    = d.performances;
-          if(d.leads           && Array.isArray(d.leads))            leads           = d.leads;
-          if(d.schedules       && Array.isArray(d.schedules))        schedules       = d.schedules;
-          if(d.itineraries     && Array.isArray(d.itineraries))      itineraries     = d.itineraries;
-          if(d.notices         && Array.isArray(d.notices))          notices         = d.notices;
-          if(d.inspectionRules && Array.isArray(d.inspectionRules))  inspectionRules = d.inspectionRules;
-          if(d.onlineEduRules  && Array.isArray(d.onlineEduRules))   onlineEduRules  = d.onlineEduRules;
-          if(d.activityLogs    && Array.isArray(d.activityLogs))     activityLogs    = d.activityLogs;
-          if(d.staffGoals      && typeof d.staffGoals==="object")    staffGoals      = d.staffGoals;
-        }catch(e){}
-      };
-    })();
-
-    /* ══════════════════════════════════════════════════════════
-       [추가] setSettingsTab 확장 - goal, log 탭 처리
-    ══════════════════════════════════════════════════════════ */
-    (function patchSetSettingsTab(){
-      const _orig = setSettingsTab;
-      setSettingsTab = function(tab){
-        _orig(tab);
-        // 추가 탭 처리
-        const goalPaneEl = $("settingsPaneGoal");
-        const logPaneEl  = $("settingsPaneLog");
-        const goalTabEl  = $("settingsTabGoal");
-        const logTabEl   = $("settingsTabLog");
-
-        const msgPaneEl = $("settingsPaneMsg");
-        const msgTabEl  = $("settingsTabMsg");
-
-        if(goalPaneEl) goalPaneEl.classList.toggle("hidden", tab !== "goal");
-        if(logPaneEl)  logPaneEl.classList.toggle("hidden",  tab !== "log");
-        if(msgPaneEl)  msgPaneEl.classList.toggle("hidden",  tab !== "msg");
-        if(goalTabEl)  goalTabEl.classList.toggle("active",  tab === "goal");
-        if(logTabEl)   logTabEl.classList.toggle("active",   tab === "log");
-        if(msgTabEl)   msgTabEl.classList.toggle("active",   tab === "msg");
-
-        if(tab === "goal"){ crmRefreshGoalStaffDropdown(); crmRenderGoalTable(); }
-        if(tab === "log")  crmRenderLogs();
-        if(tab === "msg"){
-          // 수신자 드롭다운 갱신
-          const sel = $("msgAdminToNo");
-          if(sel){
-            sel.innerHTML = `<option value="all">📢 전체 직원</option>` +
-              staffs.map(s=>`<option value="${escapeHtml(s.no)}">${escapeHtml(s.name)}</option>`).join("");
-          }
-        }
-      };
-    })();
+    /* setSettingsTab 은 line 5527에서 goal/log/msg 포함 통합 처리됨 */
 
     /* ══════════════════════════════════════════════════════════
        [추가] setView 패치 - 탭바 업데이트 + 차트 + 엑셀 버튼
@@ -7002,6 +7251,8 @@
     async function msgLoadFromDB(){
       const user = state.currentUser;
       if(!user) return;
+      // msgList 초기화 안전 가드 (TDZ 방지)
+      if(typeof msgList === "undefined") return;
       try{
         const { data, error } = await sbClient
           .from("messages")
@@ -7276,25 +7527,6 @@
       <div class="sched-modal-body" id="homeDetailBody" style="padding:16px 20px 20px;"></div>
     </div>
   </div>
-
-  <!-- [추가] 모바일 하단 탭바 -->
-  <nav id="crmMobTabBar">
-    <button class="crm-tab-item active" data-view="home" onclick="setView('home')">
-      <span class="crm-tab-icon">🏠</span>홈
-    </button>
-    <button class="crm-tab-item" data-view="lead" onclick="setView('lead')">
-      <span class="crm-tab-icon">📋</span>DB
-    </button>
-    <button class="crm-tab-item" data-view="schedule" onclick="setView('schedule')">
-      <span class="crm-tab-icon">📅</span>일정
-    </button>
-    <button class="crm-tab-item" data-view="performance-report" onclick="setView('performance-report')">
-      <span class="crm-tab-icon">📈</span>실적
-    </button>
-    <button class="crm-tab-item" data-view="settings" id="crmMobTabSettings" onclick="if(window.isAdminMode && isAdminMode())setView('settings')">
-      <span class="crm-tab-icon">⚙️</span>설정
-    </button>
-  </nav>
 
   <!-- ── 일정등록 모달 ── -->
   <div class="sched-modal-overlay" id="schedModalOverlay" onclick="onSchedOverlayClick(event)">
