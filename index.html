@@ -2863,12 +2863,14 @@
     // 활동 로그 (최대 200건)
     let activityLogs = [];
 
-    // [차트/검색] 후반부에 선언되던 변수들 - TDZ 방지를 위해 상단으로 이동
+    // [TDZ 방지] 후반부에 선언되던 변수들을 상단으로 이동
     let _crmBarChart    = null;
     let _crmLineChart   = null;
     let _crmMarginChart = null;
     let _crmLeadSearchTerm  = "";
     let _crmSchedSearchTerm = "";
+    let msgList         = [];
+    let msgLastChecked  = null;
 
     // ─── 앱 데이터 localStorage 저장/복원 ───
     const APP_DATA_KEY = "luwon_app_data";
@@ -7395,8 +7397,7 @@
     ══════════════════════════════════════════════════════════ */
 
     // 쪽지 데이터 (Supabase messages 테이블과 동기화)
-    let msgList = [];
-    let msgLastChecked = null; // 마지막 로그인 시 공지 체크 시간
+    // msgList, msgLastChecked → TDZ 방지를 위해 상단으로 이동됨
 
     // ── 쪽지함 초기화 (로그인 후 호출) ──
     async function msgInit(){
