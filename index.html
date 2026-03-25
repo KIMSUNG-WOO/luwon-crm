@@ -6810,37 +6810,39 @@
       const box = $("crmLogListBox");
       if(!box) return;
 
-      // ── 직원별 마지막 상태 계산 ──
-      const staffStatus = {};  // { staffName: { action, time, isOnline } }
+      // ── 직원별 마지막 로그 상태 계산 ──
+      const staffStatus = {}; // { staffName: { action, time, isOnline } }
       activityLogs.forEach(log => {
         if(!log.user) return;
         if(!staffStatus[log.user]){
           staffStatus[log.user] = {
-            action: log.action,
-            time:   log.time,
+            action:   log.action,
+            time:     log.time,
             isOnline: log.action === "로그인"
           };
         }
       });
 
-      // ── 상단: 접속 현황 테이블 ──
-      const statusKeys = Object.keys(staffStatus);
+      // ── 상단: 등록된 모든 직원 접속 현황 ──
       let statusHtml = "";
-      if(statusKeys.length){
+      if(staffs.length){
+        const cards = staffs.map(s => {
+          const st       = staffStatus[s.name];
+          const isOnline = st ? st.isOnline : false;
+          const lastTime = st ? st.time : "";
+          const statusTxt= st ? (isOnline ? "접속중" : "오프라인") : "기록없음";
+          const dotColor = isOnline ? "#059669" : (st ? "#ef4444" : "#94a3b8");
+          const shadow   = isOnline ? "box-shadow:0 0 5px #059669;" : "";
+          const dot      = `<span style="flex-shrink:0;width:8px;height:8px;border-radius:50%;background:${dotColor};display:inline-block;margin-right:6px;${shadow}"></span>`;
+          const timeStr  = lastTime ? ` <span style="color:var(--muted);font-size:10px;">${escapeHtml(lastTime)}</span>` : "";
+          return `<div style="display:flex;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:12px;">
+            ${dot}<b style="margin-right:4px;">${escapeHtml(s.name)}</b>
+            <span style="color:${dotColor};font-weight:700;">${statusTxt}</span>${timeStr}
+          </div>`;
+        }).join("");
         statusHtml = `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px;">
-          <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;">👥 직원별 최근 접속 현황</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;">
-            ${statusKeys.map(name => {
-              const s = staffStatus[name];
-              const dot = s.isOnline
-                ? `<span style="width:8px;height:8px;border-radius:50%;background:#059669;display:inline-block;margin-right:5px;box-shadow:0 0 4px #059669;"></span>`
-                : `<span style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;margin-right:5px;"></span>`;
-              const status = s.isOnline ? "접속중" : "오프라인";
-              return `<div style="display:flex;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:12px;">
-                ${dot}<b>${escapeHtml(name)}</b>&nbsp;<span style="color:var(--muted);">${status} · ${escapeHtml(s.time||"")}</span>
-              </div>`;
-            }).join("")}
-          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;">👥 직원별 접속 현황 (전체 ${staffs.length}명)</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">${cards}</div>
         </div>`;
       }
 
