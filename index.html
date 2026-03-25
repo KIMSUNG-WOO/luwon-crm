@@ -1469,23 +1469,6 @@
       </div>
 
       <div class="menu" id="menuBox"></div>
-      <!-- 쪽지함 버튼 + 패널 -->
-      <div class="msg-wrap" style="padding:8px 16px 4px;position:relative;">
-        <button class="msg-icon-btn" onclick="msgTogglePanel()">
-          📬 쪽지함
-          <span class="msg-badge" id="msgBadge" style="display:none;"></span>
-        </button>
-        <div class="msg-panel hidden" id="msgPanel">
-          <div class="msg-panel-head">
-            <span style="font-weight:800;font-size:14px;">📬 쪽지함</span>
-            <div style="display:flex;gap:6px;align-items:center;">
-              <button class="msg-action-btn" onclick="msgMarkAllRead()">전체 읽음</button>
-              <button class="msg-action-btn" onclick="msgClosePanel()">✕</button>
-            </div>
-          </div>
-          <div id="msgListBody" style="max-height:320px;overflow-y:auto;"></div>
-        </div>
-      </div>
       <button class="logout" onclick="logout()">로그아웃</button>
     </aside>
 
@@ -1502,6 +1485,23 @@
             <button class="mode-btn" id="adminModeBtn" onclick="switchMode('admin')">관리자 모드</button>
           </div>
           <button id="darkModeToggleBtn" title="다크모드 전환" onclick="crmToggleDarkMode()">🌙</button>
+          <!-- 쪽지함 버튼 (상단) -->
+          <div style="position:relative;">
+            <button class="msg-icon-btn" onclick="msgTogglePanel()" style="display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:18px;border:1px solid var(--line);background:var(--panel);font-size:13px;font-weight:700;cursor:pointer;position:relative;">
+              📬 <span id="topbarUserName" style="font-size:13px;"></span> 쪽지함
+              <span class="msg-badge" id="msgBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:999px;font-size:10px;font-weight:800;min-width:16px;height:16px;display:none;align-items:center;justify-content:center;padding:0 3px;"></span>
+            </button>
+            <div class="msg-panel hidden" id="msgPanel" style="position:absolute;top:calc(100% + 8px);right:0;width:340px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.13);z-index:9999;">
+              <div class="msg-panel-head" style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px 10px;border-bottom:1px solid var(--line);">
+                <span style="font-weight:800;font-size:14px;">📬 쪽지함</span>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <button class="msg-action-btn" onclick="msgMarkAllRead()">전체 읽음</button>
+                  <button class="msg-action-btn" onclick="msgClosePanel()">✕</button>
+                </div>
+              </div>
+              <div id="msgListBody" style="max-height:360px;overflow-y:auto;"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -3357,6 +3357,7 @@
 
       $("profileName").textContent   = user.name;
       $("profileRank").textContent   = rank;
+      if($("topbarUserName")) $("topbarUserName").textContent = user.name;
       $("profileRank").className     = `profile-rank ${rankColor}`;
       $("profileBranch").textContent = user.branch || "루원지점";
 
@@ -7402,6 +7403,17 @@
       msgRenderBadge();
       msgScheduleEducationCheck();
       try{ await msgAutoOnLogin(); }catch(e){}
+      // 30초마다 폴링 (Realtime 미작동 시 백업)
+      setInterval(async () => {
+        if(!state.currentUser) return;
+        const prevUnread = msgList.filter(m => !m.is_read).length;
+        await msgLoadFromDB();
+        msgRenderBadge();
+        const newUnread = msgList.filter(m => !m.is_read).length;
+        // 새 쪽지 도착 시 패널 열려있으면 갱신
+        const panel = $("msgPanel");
+        if(panel && !panel.classList.contains("hidden")) msgRenderPanel();
+      }, 30000);
     }
 
     // ── DB에서 내 쪽지 로드 ──
@@ -7432,12 +7444,14 @@
     }
 
     // ── 쪽지함 패널 열기/닫기 ──
-    function msgTogglePanel(){
+    async function msgTogglePanel(){
       const panel = $("msgPanel");
       if(!panel) return;
       const isOpen = !panel.classList.contains("hidden");
       if(isOpen){ panel.classList.add("hidden"); return; }
       panel.classList.remove("hidden");
+      await msgLoadFromDB(); // 열 때마다 최신 데이터 로드
+      msgRenderBadge();
       msgRenderPanel();
     }
 
