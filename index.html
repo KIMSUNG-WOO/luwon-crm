@@ -2382,8 +2382,8 @@
               </div>
               <div class="table-wrap">
                 <table>
-                  <thead><tr><th>수신자</th><th>제목</th><th>내용</th><th>읽음</th><th>발송시각</th></tr></thead>
-                  <tbody id="msgAdminTableBody"><tr><td colspan="5"><div class="empty">조회 버튼을 눌러주세요.</div></td></tr></tbody>
+                  <thead><tr><th>보낸사람</th><th>받는사람</th><th>제목</th><th>내용</th><th>읽음</th><th>발송시각</th></tr></thead>
+                  <tbody id="msgAdminTableBody"><tr><td colspan="6"><div class="empty">조회 버튼을 눌러주세요.</div></td></tr></tbody>
                 </table>
               </div>
             </div>
@@ -7479,15 +7479,26 @@
         const isRead = m.is_read;
         const dt = m.created_at ? new Date(m.created_at).toLocaleString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
         const typeIcon = { notice:"📢", schedule:"📅", education:"🎓", general:"✉️" }[m.type] || "✉️";
-        const canReply = !!m.from_staff_no; // 발신자가 있을 때만 답장 가능
+        const canReply = !!m.from_staff_no;
+        // 발신자 이름 찾기
+        const senderStaff = m.from_staff_no ? (staffs.find(s => s.no === m.from_staff_no) || authUsers.find(u => u.staffNo === m.from_staff_no)) : null;
+        const senderName = senderStaff ? (senderStaff.name) : (m.from_staff_no ? m.from_staff_no : null);
+        // 수신자 이름 찾기
+        const toStaff = m.to_staff_no ? (staffs.find(s => s.no === m.to_staff_no) || authUsers.find(u => u.staffNo === m.to_staff_no)) : null;
+        const toName = toStaff ? toStaff.name : m.to_staff_no;
+        const isReply = (m.title||"").startsWith("↩ 답장:");
         return `<div class="msg-item ${isRead?"msg-read":""}" onclick="msgMarkRead(${m.id})" ondblclick="msgOpenReply(${m.id})" title="${canReply?'더블클릭으로 답장':''}">
           <div class="msg-item-head">
             <span class="msg-type-icon">${typeIcon}</span>
-            <span class="msg-title">${escapeHtml(m.title||"")}</span>
+            <span class="msg-title" style="flex:1;">${escapeHtml(m.title||"")}</span>
             <span class="msg-time">${dt}</span>
           </div>
-          ${m.body ? `<div class="msg-body">${escapeHtml(m.body)}</div>` : ""}
-          ${canReply ? `<div style="font-size:10px;color:var(--muted);margin-top:2px;">↩ 더블클릭하여 답장</div>` : ""}
+          <div style="font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:8px;">
+            ${senderName ? `<span>📤 보낸사람: <b style="color:var(--text);">${escapeHtml(senderName)}</b></span>` : "<span>📤 시스템</span>"}
+            <span>📥 받는사람: <b style="color:var(--text);">${escapeHtml(toName||"")}</b></span>
+          </div>
+          ${m.body ? `<div class="msg-body" style="margin-top:4px;">${escapeHtml(m.body)}</div>` : ""}
+          ${canReply && !isReply ? `<div style="font-size:10px;color:#3b82f6;margin-top:4px;">↩ 더블클릭하여 답장</div>` : ""}
           <div id="msgReplyBox_${m.id}" style="display:none;margin-top:8px;" onclick="event.stopPropagation()">
             <textarea id="msgReplyText_${m.id}" rows="2" placeholder="답장 내용을 입력하세요..." style="width:100%;border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box;"></textarea>
             <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:4px;">
@@ -7709,14 +7720,19 @@
           return;
         }
         tbody.innerHTML = data.map(m => {
-          const s = staffs.find(x => x.no === m.to_staff_no);
+          const toStaff   = staffs.find(x => x.no === m.to_staff_no)   || authUsers.find(u => u.staffNo === m.to_staff_no);
+          const fromStaff = staffs.find(x => x.no === m.from_staff_no) || authUsers.find(u => u.staffNo === m.from_staff_no);
+          const toName    = toStaff   ? toStaff.name   : (m.to_staff_no   || "-");
+          const fromName  = fromStaff ? fromStaff.name : (m.from_staff_no ? m.from_staff_no : "시스템");
           const dt = m.created_at ? new Date(m.created_at).toLocaleString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
-          return `<tr>
-            <td>${escapeHtml(s?.name||m.to_staff_no)}</td>
+          const isReply = (m.title||"").startsWith("↩ 답장:");
+          return `<tr style="${isReply?"background:#f0fdf4;":""}">
+            <td style="font-weight:700;">${escapeHtml(fromName)}</td>
+            <td>${escapeHtml(toName)}</td>
             <td>${escapeHtml(m.title||"")}</td>
-            <td>${escapeHtml((m.body||"").slice(0,30))}</td>
+            <td style="font-size:11px;color:var(--muted);">${escapeHtml((m.body||"").slice(0,30))}</td>
             <td><span style="color:${m.is_read?"#059669":"#dc2626"};font-weight:700;">${m.is_read?"✅읽음":"⏳안읽음"}</span></td>
-            <td>${dt}</td>
+            <td style="font-size:11px;">${dt}</td>
           </tr>`;
         }).join("");
       } catch(e){ console.warn("쪽지 조회 오류:", e.message); }
