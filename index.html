@@ -2928,7 +2928,9 @@
           inspectionRules.length  ? sbClient.from("inspection_rules").upsert(inspectionRules.map(r=>({id:Number(r.id),company:r.company,type:r.type})), {onConflict:"id"}) : null,
           onlineEduRules.length   ? sbClient.from("online_edu_rules").upsert(onlineEduRules.map(r=>({id:Number(r.id),company:r.company})), {onConflict:"id"})              : null,
         ].filter(Boolean);
-        await Promise.allSettled(ops);
+        const tableNames = ["schedules","performances","itineraries","inspection_rules","online_edu_rules"];
+        const results = await Promise.allSettled(ops);
+        results.forEach((r, i) => { if(r.status==="rejected") console.warn(`sbSyncAll[${tableNames[i]}] 오류:`, r.reason); if(r.value?.error) console.warn(`sbSyncAll[${tableNames[i]}] DB오류:`, r.value.error.message); });
         await Promise.allSettled([
           sbClient.from("app_settings").upsert({key:"paySettings", value:paySettings}, {onConflict:"key"}),
           sbClient.from("app_settings").upsert({key:"staffGoals",  value:staffGoals},  {onConflict:"key"}),
@@ -2978,39 +2980,45 @@
       }catch(e){ console.warn(`sbDeleteRecord(${table}, ${id}) 오류:`, e.message); }
     }
 
-    // ─── 앱 초기화 (세션 즉시 복원 → Supabase 백그라운드 동기화) ───
+    // ─── 세션 복원 공통 함수 ───
+    function tryRestoreSession(){
+      if(state.currentUser) return true; // 이미 복원됨
+      try{
+        const saved = localStorage.getItem("luwon_auth");
+        if(!saved) return false;
+        const { staffNo, password } = JSON.parse(saved);
+        const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+        if(!user) return false;
+        state.currentUser = user;
+        state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
+        $("loginPage").style.display = "none";
+        $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
+        hydrateUserUI();
+        renderAll();
+        const savedView = (() => { try{ return localStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
+        const safeView = (!isAdminMode() && ["staff","settings","progress"].includes(savedView)) ? "home" : savedView;
+        setView(safeView);
+        return true;
+      }catch(e){ return false; }
+    }
+
+    // ─── 앱 초기화 ───
     async function initApp(){
       try{ loadAppData(); }catch(e){}          // 1. localStorage 캐시
 
-      // 2. 세션 먼저 복원 → 로그인 화면 플래시 없음
-      try{
-        const saved = localStorage.getItem("luwon_auth");
-        if(saved){
-          const { staffNo, password } = JSON.parse(saved);
-          const user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
-          if(user){
-            state.currentUser = user;
-            state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
-            $("loginPage").style.display = "none";
-            $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
-            hydrateUserUI();
-            renderAll();
-            const savedView = (() => { try{ return localStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
-            const safeView = (!isAdminMode() && ["staff","settings","progress"].includes(savedView)) ? "home" : savedView;
-            setView(safeView);
-          } else {
-            localStorage.removeItem("luwon_auth");
-          }
-        }
-      }catch(e){ try{ localStorage.removeItem("luwon_auth"); }catch(_){} }
+      // 2. localStorage 기반 즉시 세션 복원 (플래시 없음)
+      const restoredFromLocal = tryRestoreSession();
 
-      // 3. Supabase 직원 동기화 (백그라운드)
-      try{ await loadStaffFromSupabase(); }catch(e){ console.warn("Supabase 초기화 실패, 로컬 데이터로 진행:", e); }
+      // 3. Supabase 직원 동기화 (authUsers 최신화)
+      try{ await loadStaffFromSupabase(); }catch(e){ console.warn("직원 동기화 실패:", e); }
 
-      // 4. Supabase 전체 데이터 로드 (직원/설정 포함 최신 데이터)
+      // 4. localStorage 복원 실패 시 Supabase 직원 데이터로 재시도
+      if(!restoredFromLocal) tryRestoreSession();
+
+      // 5. Supabase 전체 데이터 로드
       try{ await loadFromSupabase(); }catch(e){ console.warn("Supabase 데이터 로드 실패:", e); }
 
-      // 5. 로그인 상태면 추가 로컬 렌더링
+      // 6. 로그인 상태면 leads 로드 + 실시간 동기화 시작
       if(state.currentUser){
         try{ loadData(); }catch(e){}
         setupRealtimeSync();
@@ -3023,19 +3031,58 @@
       if(_realtimeChannel) return; // 중복 방지
       _realtimeChannel = sbClient
         .channel("crm-realtime")
+        // 교육섭외 DB
         .on("postgres_changes", { event:"*", schema:"public", table:"education_db" }, () => {
           try{ loadData(); }catch(e){}
         })
+        // 일정
         .on("postgres_changes", { event:"*", schema:"public", table:"schedules" }, async () => {
           try{
             const { data, error } = await sbClient.from("schedules").select("*");
-            if(!error && data?.length){ schedules = data.map(rowToSched); saveAppData(); if(state.currentUser){ renderSchedules(); renderCalendar(); loadAggregate(); } }
+            if(!error && data){ schedules = data.map(rowToSched); if(state.currentUser){ renderSchedules(); renderCalendar(); loadAggregate(); } }
           }catch(e){}
         })
+        // 실적
         .on("postgres_changes", { event:"*", schema:"public", table:"performances" }, async () => {
           try{
             const { data, error } = await sbClient.from("performances").select("*");
-            if(!error && data?.length){ performances = data.map(rowToPerf); saveAppData(); if(state.currentUser){ renderPerformances(); loadAggregate(); } }
+            if(!error && data){ performances = data.map(rowToPerf); if(state.currentUser){ renderPerformances(); loadAggregate(); } }
+          }catch(e){}
+        })
+        // 일정표
+        .on("postgres_changes", { event:"*", schema:"public", table:"itineraries" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("itineraries").select("*");
+            if(!error && data){ itineraries = data.map(rowToItin); if(state.currentUser) renderItineraries(); }
+          }catch(e){}
+        })
+        // 점검제외 규칙
+        .on("postgres_changes", { event:"*", schema:"public", table:"inspection_rules" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("inspection_rules").select("*");
+            if(!error && data){ inspectionRules = data.map(r=>({id:r.id, company:r.company, type:r.type})); if(state.currentUser) renderInspectionRules(); }
+          }catch(e){}
+        })
+        // 온라인 교육 규칙
+        .on("postgres_changes", { event:"*", schema:"public", table:"online_edu_rules" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("online_edu_rules").select("*");
+            if(!error && data){ onlineEduRules = data.map(r=>({id:r.id, company:r.company})); if(state.currentUser) renderOnlineEduRules(); }
+          }catch(e){}
+        })
+        // 앱 설정 (목표/단가/직급 등)
+        .on("postgres_changes", { event:"*", schema:"public", table:"app_settings" }, async () => {
+          try{
+            const { data, error } = await sbClient.from("app_settings").select("*");
+            if(!error && data){
+              data.forEach(row => {
+                if(row.key==="paySettings" && row.value) paySettings = row.value;
+                if(row.key==="staffGoals"  && row.value) staffGoals  = row.value;
+                if(row.key==="staffRanks"  && row.value) Object.assign(staffRanks, row.value);
+                if(row.key==="adminRates"  && row.value) Object.assign(adminRates, row.value);
+              });
+              if(state.currentUser) renderAll();
+            }
           }catch(e){}
         })
         .subscribe();
@@ -7069,47 +7116,7 @@
       if(settingsBtn) settingsBtn.style.opacity = isAdminMode() ? "1" : ".4";
     }
 
-    /* ══════════════════════════════════════════════════════════
-       [추가] saveAppData / loadAppData 확장 - activityLogs, staffGoals 포함
-       기존 함수를 덮어쓰지 않고 래퍼 방식으로 처리 (원본 유지 후 이후 호출에서 자동 포함)
-    ══════════════════════════════════════════════════════════ */
-    // 기존 saveAppData의 JSON에 activityLogs, staffGoals 추가를 위해 원본 참조 후 재정의
-    (function patchSaveLoadAppData(){
-      const _origSave = saveAppData;
-      const _origLoad = loadAppData;
-
-      saveAppData = function(){
-        try{
-          localStorage.setItem(APP_DATA_KEY, JSON.stringify({
-            staffs, authUsers, paySettings, staffRanks, adminRates,
-            performances, leads, schedules, itineraries, notices,
-            inspectionRules, onlineEduRules, activityLogs, staffGoals
-          }));
-        }catch(e){}
-      };
-
-      loadAppData = function(){
-        try{
-          const raw = localStorage.getItem(APP_DATA_KEY);
-          if(!raw) return;
-          const d = JSON.parse(raw);
-          if(d.staffs          && Array.isArray(d.staffs))          staffs          = d.staffs;
-          if(d.authUsers       && Array.isArray(d.authUsers))        authUsers       = d.authUsers;
-          if(d.paySettings     && typeof d.paySettings==="object")   paySettings     = d.paySettings;
-          if(d.staffRanks      && typeof d.staffRanks==="object")    staffRanks      = d.staffRanks;
-          if(d.adminRates      && typeof d.adminRates==="object")    Object.assign(adminRates, d.adminRates);
-          if(d.performances    && Array.isArray(d.performances))     performances    = d.performances;
-          if(d.leads           && Array.isArray(d.leads))            leads           = d.leads;
-          if(d.schedules       && Array.isArray(d.schedules))        schedules       = d.schedules;
-          if(d.itineraries     && Array.isArray(d.itineraries))      itineraries     = d.itineraries;
-          if(d.notices         && Array.isArray(d.notices))          notices         = d.notices;
-          if(d.inspectionRules && Array.isArray(d.inspectionRules))  inspectionRules = d.inspectionRules;
-          if(d.onlineEduRules  && Array.isArray(d.onlineEduRules))   onlineEduRules  = d.onlineEduRules;
-          if(d.activityLogs    && Array.isArray(d.activityLogs))     activityLogs    = d.activityLogs;
-          if(d.staffGoals      && typeof d.staffGoals==="object")    staffGoals      = d.staffGoals;
-        }catch(e){}
-      };
-    })();
+    /* saveAppData / loadAppData 는 상단에서 통합 처리됨 (activityLogs, staffGoals, sbSyncAll 포함) */
 
     /* setSettingsTab 은 line 5527에서 goal/log/msg 포함 통합 처리됨 */
 
@@ -7244,6 +7251,8 @@
     async function msgLoadFromDB(){
       const user = state.currentUser;
       if(!user) return;
+      // msgList 초기화 안전 가드 (TDZ 방지)
+      if(typeof msgList === "undefined") return;
       try{
         const { data, error } = await sbClient
           .from("messages")
