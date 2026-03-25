@@ -1327,37 +1327,9 @@
     .crm-goal-badge.done{background:#dcfce7;color:#059669;border-color:#86efac}
     .crm-goal-badge.warn{background:#fef9c3;color:#854d0e;border-color:#fde047}
 
-    /* ══════════════════════════════════════
-       [추가] 모바일 하단 탭바 (max-width:768px)
-    ══════════════════════════════════════ */
-    #crmMobTabBar{
-      display:none;
-    }
     @media(max-width:768px){
-      #crmMobTabBar{
-        display:flex;
-        position:fixed;bottom:0;left:0;right:0;
-        height:58px;z-index:1050;
-        background:#0f172a;
-        border-top:1px solid rgba(255,255,255,.08);
-        align-items:stretch;
-        box-shadow:0 -4px 20px rgba(0,0,0,.3);
-      }
-      #crmMobTabBar .crm-tab-item{
-        flex:1;display:flex;flex-direction:column;
-        align-items:center;justify-content:center;gap:3px;
-        cursor:pointer;border:none;background:transparent;
-        color:#475569;font-size:9px;font-weight:700;
-        font-family:inherit;transition:color .15s;
-        padding:0;letter-spacing:.3px;
-      }
-      #crmMobTabBar .crm-tab-item .crm-tab-icon{font-size:19px;line-height:1}
-      #crmMobTabBar .crm-tab-item.active{color:#3b82f6}
-      #crmMobTabBar .crm-tab-item:active{opacity:.7}
-      /* 하단 탭바 높이만큼 main 패딩 추가 */
-      .main{ padding-bottom:68px !important; }
       /* 모바일 쪽지함 패널: 화면 전체 너비 */
-      .msg-panel{ left:8px;right:8px;width:auto;bottom:72px; }
+      .msg-panel{ left:8px;right:8px;width:auto;bottom:16px; }
     }
   </style>
 </head>
@@ -2442,24 +2414,6 @@
       </div>
     </main>
 
-    <!-- 모바일 하단 탭바 — dashboard 안에 있어야 로그인 전에 안 보임 -->
-    <nav id="crmMobTabBar">
-      <button class="crm-tab-item active" data-view="home" onclick="setView('home')">
-        <span class="crm-tab-icon">🏠</span>홈
-      </button>
-      <button class="crm-tab-item" data-view="lead" onclick="setView('lead')">
-        <span class="crm-tab-icon">📋</span>DB
-      </button>
-      <button class="crm-tab-item" data-view="schedule" onclick="setView('schedule')">
-        <span class="crm-tab-icon">📅</span>일정
-      </button>
-      <button class="crm-tab-item" data-view="performance-report" onclick="setView('performance-report')">
-        <span class="crm-tab-icon">📈</span>실적
-      </button>
-      <button class="crm-tab-item" data-view="settings" id="crmMobTabSettings" onclick="if(window.isAdminMode && isAdminMode())setView('settings')">
-        <span class="crm-tab-icon">⚙️</span>설정
-      </button>
-    </nav>
   </section>
 
   <!-- 메모 모달 -->
