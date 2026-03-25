@@ -7479,13 +7479,22 @@
         const isRead = m.is_read;
         const dt = m.created_at ? new Date(m.created_at).toLocaleString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
         const typeIcon = { notice:"📢", schedule:"📅", education:"🎓", general:"✉️" }[m.type] || "✉️";
-        return `<div class="msg-item ${isRead?"msg-read":""}" onclick="msgMarkRead(${m.id})">
+        const canReply = !!m.from_staff_no; // 발신자가 있을 때만 답장 가능
+        return `<div class="msg-item ${isRead?"msg-read":""}" onclick="msgMarkRead(${m.id})" ondblclick="msgOpenReply(${m.id})" title="${canReply?'더블클릭으로 답장':''}">
           <div class="msg-item-head">
             <span class="msg-type-icon">${typeIcon}</span>
             <span class="msg-title">${escapeHtml(m.title||"")}</span>
             <span class="msg-time">${dt}</span>
           </div>
           ${m.body ? `<div class="msg-body">${escapeHtml(m.body)}</div>` : ""}
+          ${canReply ? `<div style="font-size:10px;color:var(--muted);margin-top:2px;">↩ 더블클릭하여 답장</div>` : ""}
+          <div id="msgReplyBox_${m.id}" style="display:none;margin-top:8px;" onclick="event.stopPropagation()">
+            <textarea id="msgReplyText_${m.id}" rows="2" placeholder="답장 내용을 입력하세요..." style="width:100%;border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px;font-family:inherit;resize:none;box-sizing:border-box;"></textarea>
+            <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:4px;">
+              <button class="msg-action-btn" onclick="msgCancelReply(${m.id})">취소</button>
+              <button class="msg-action-btn" style="background:#3b82f6;color:#fff;" onclick="msgSendReply(${m.id},'${escapeHtml(m.from_staff_no||"")}','${escapeHtml(m.title||"")}')">답장 보내기</button>
+            </div>
+          </div>
         </div>`;
       }).join("");
     }
@@ -7512,6 +7521,37 @@
       try{
         await sbClient.from("messages").update({ is_read: true }).in("id", unreadIds);
       } catch(e){}
+    }
+
+    // ── 답장 열기/닫기 ──
+    function msgOpenReply(id){
+      const box = $("msgReplyBox_" + id);
+      if(!box) return;
+      // 다른 답장창 닫기
+      document.querySelectorAll('[id^="msgReplyBox_"]').forEach(el => {
+        if(el.id !== "msgReplyBox_" + id) el.style.display = "none";
+      });
+      box.style.display = box.style.display === "none" ? "block" : "none";
+      if(box.style.display === "block"){
+        const ta = $("msgReplyText_" + id);
+        if(ta) ta.focus();
+      }
+    }
+
+    function msgCancelReply(id){
+      const box = $("msgReplyBox_" + id);
+      if(box) box.style.display = "none";
+    }
+
+    async function msgSendReply(id, toStaffNo, origTitle){
+      const ta = $("msgReplyText_" + id);
+      const body = (ta?.value || "").trim();
+      if(!body) return alert("답장 내용을 입력해 주세요.");
+      const title = `↩ 답장: ${origTitle}`;
+      await msgSend({ toStaffNo, title, body, type:"general", fromStaffNo: state.currentUser?.staffNo });
+      ta.value = "";
+      msgCancelReply(id);
+      alert("✅ 답장을 보냈습니다.");
     }
 
     // ── 쪽지 생성 (DB 저장) ──
