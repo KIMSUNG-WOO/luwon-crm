@@ -4392,7 +4392,7 @@
       if($("btnDeleteAll")) $("btnDeleteAll").classList.toggle("hidden", !admin);
       if($("btnDeleteSel")) $("btnDeleteSel").classList.toggle("hidden", !admin);
       if($("btnMarkEdu"))   $("btnMarkEdu").classList.toggle("hidden", !admin);
-      if($("btnCleanBiz"))  $("btnCleanBiz").classList.toggle("hidden", !admin);
+      if($("btnCleanBiz"))  $("btnCleanBiz").classList.remove("hidden");
 
       if(!allRows.length){
         body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없습니다.</div></td></tr>`;
@@ -4934,7 +4934,6 @@
     // ── 클린사업장 등록 ────────────────────────────────────────────
 
     function openCleanBizResult(){
-      if(!isAdminMode()) return;
       const checked = Array.from(document.querySelectorAll('.lead-chk:checked')).map(c => Number(c.dataset.id));
       if(!checked.length) return alert("클린사업장으로 등록할 항목을 먼저 선택해 주세요.");
 
