@@ -2378,12 +2378,16 @@
             <div class="panel">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                 <h5 style="font-size:15px;">📋 쪽지 발송 이력</h5>
-                <button class="ghost-btn" style="font-size:12px;height:32px;padding:0 12px;" onclick="msgAdminViewAll()">조회</button>
+                <div style="display:flex;gap:6px;">
+                  <button class="ghost-btn" style="font-size:12px;height:32px;padding:0 12px;" onclick="msgAdminViewAll()">조회</button>
+                  <button class="ghost-btn" style="font-size:12px;height:32px;padding:0 12px;border-color:#fecdd3;color:#e11d48;" onclick="msgAdminDeleteSel()">☑ 선택삭제</button>
+                  <button class="ghost-btn" style="font-size:12px;height:32px;padding:0 12px;border-color:#fecdd3;color:#e11d48;" onclick="msgAdminDeleteAll()">🗑 전체삭제</button>
+                </div>
               </div>
               <div class="table-wrap">
                 <table>
-                  <thead><tr><th>보낸사람</th><th>받는사람</th><th>제목</th><th>내용</th><th>읽음</th><th>발송시각</th></tr></thead>
-                  <tbody id="msgAdminTableBody"><tr><td colspan="6"><div class="empty">조회 버튼을 눌러주세요.</div></td></tr></tbody>
+                  <thead><tr><th style="width:32px;"><input type="checkbox" id="msgAdminChkAll" onchange="document.querySelectorAll('.msg-admin-chk').forEach(c=>c.checked=this.checked)"></th><th>보낸사람</th><th>받는사람</th><th>제목</th><th>내용</th><th>읽음</th><th>발송시각</th></tr></thead>
+                  <tbody id="msgAdminTableBody"><tr><td colspan="7"><div class="empty">조회 버튼을 눌러주세요.</div></td></tr></tbody>
                 </table>
               </div>
             </div>
@@ -7727,6 +7731,7 @@
           const dt = m.created_at ? new Date(m.created_at).toLocaleString("ko-KR",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}) : "";
           const isReply = (m.title||"").startsWith("↩ 답장:");
           return `<tr style="${isReply?"background:#f0fdf4;":""}">
+            <td><input type="checkbox" class="msg-admin-chk" value="${m.id}"></td>
             <td style="font-weight:700;">${escapeHtml(fromName)}</td>
             <td>${escapeHtml(toName)}</td>
             <td>${escapeHtml(m.title||"")}</td>
@@ -7736,6 +7741,32 @@
           </tr>`;
         }).join("");
       } catch(e){ console.warn("쪽지 조회 오류:", e.message); }
+    }
+
+    // ── 쪽지 선택삭제 ──
+    async function msgAdminDeleteSel(){
+      const ids = Array.from(document.querySelectorAll('.msg-admin-chk:checked')).map(c => Number(c.value));
+      if(!ids.length) return alert("삭제할 쪽지를 선택해 주세요.");
+      if(!confirm(`선택한 ${ids.length}건을 삭제할까요?`)) return;
+      try{
+        const { error } = await sbClient.from("messages").delete().in("id", ids);
+        if(error) throw error;
+        alert("삭제 완료!");
+        msgAdminViewAll();
+      } catch(e){ alert("삭제 오류: " + e.message); }
+    }
+
+    // ── 쪽지 전체삭제 ──
+    async function msgAdminDeleteAll(){
+      if(!confirm("쪽지 전체를 삭제할까요? 복구할 수 없습니다.")) return;
+      try{
+        const { error } = await sbClient.from("messages").delete().neq("id", 0);
+        if(error) throw error;
+        msgList = [];
+        msgRenderBadge();
+        alert("전체 삭제 완료!");
+        msgAdminViewAll();
+      } catch(e){ alert("삭제 오류: " + e.message); }
     }
 
     // ── 공지 등록 시 전직원 쪽지 발송 ──
