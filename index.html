@@ -1905,6 +1905,7 @@
               <button class="crm-search-clear" onclick="crmClearLeadSearch()" title="초기화">✕</button>
             </div>
             <button id="crmLeadExcelBtn" class="ghost-btn hidden" onclick="crmExportLeadExcel()">📥 엑셀 다운로드</button>
+            <button id="btnCleanBiz" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:800;cursor:pointer;" onclick="openCleanBizResult()">🏢 클린사업장 등록</button>
           </div>
 
           <div class="toolbar" style="flex-wrap:wrap;gap:8px;">
@@ -1919,7 +1920,6 @@
               <button id="btnDeleteAll" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteAllLeads()">🗑 전체삭제</button>
               <button id="btnDeleteSel" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteSelectedLeads()">☑ 선택삭제</button>
               <button id="btnMarkEdu" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #bbf7d0;background:#f0fdf4;color:#15803d;font-size:13px;font-weight:800;cursor:pointer;" onclick="markSelectedAsCompleted()">✅ 선택 교육이수처리</button>
-              <button id="btnCleanBiz" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;font-size:13px;font-weight:800;cursor:pointer;" onclick="openCleanBizResult()">🏢 선택 클린사업장 등록</button>
             </div>
           </div>
 
@@ -4396,7 +4396,6 @@
       if($("btnDeleteAll")) $("btnDeleteAll").classList.toggle("hidden", !admin);
       if($("btnDeleteSel")) $("btnDeleteSel").classList.toggle("hidden", !admin);
       if($("btnMarkEdu"))   $("btnMarkEdu").classList.toggle("hidden", !admin);
-      if($("btnCleanBiz"))  $("btnCleanBiz").classList.remove("hidden");
 
       if(!allRows.length){
         body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없습니다.</div></td></tr>`;
