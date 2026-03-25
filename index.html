@@ -7609,44 +7609,35 @@
       const myTomSchs = schedules.filter(s => s.date === tomorrow &&
         (s.ownerNo === user.staffNo || s.ownerName === user.name || s.assignee === user.name));
       if(myTomSchs.length > 0){
-        // 오늘 이미 발송한 쪽지가 있는지 확인
-        const alreadySent = msgList.some(m =>
-          m.type === "schedule" && m.title.includes("익일") &&
-          (m.created_at || "").slice(0,10) === today
-        );
-        if(!alreadySent){
+        // 오늘 날짜 기준으로 이미 발송했는지 확인 (msgList 삭제해도 재발송 안 함)
+        const schedSentKey = "luwon_sched_notice_" + user.staffNo;
+        const schedSentDate = localStorage.getItem(schedSentKey) || "";
+        if(schedSentDate !== today){
           await msgSend({
             toStaffNo: user.staffNo,
             title: `📅 내일 일정 ${myTomSchs.length}건 있습니다`,
             body: myTomSchs.map(s=>`${s.time||""} ${s.company||""}`).join("\n"),
             type: "schedule"
           });
+          try{ localStorage.setItem(schedSentKey, today); }catch(_){}
         }
       }
 
-      // 2. 신규 공지 쪽지 (마지막 로그인 이후)
-      const lastLogin = localStorage.getItem("luwon_last_login_" + user.staffNo) || "2000-01-01";
-      const newNotices = notices.filter(n => {
-        const id = n.id || 0;
-        return String(id) > lastLogin;
-      });
-      // 시간 기반으로 비교하기 위해 notices에 createdAt이 있으면 사용
-      const recentNotices = notices.filter(n =>
-        !msgList.some(m => m.type==="notice" && m.title.includes(n.title||""))
-      ).slice(0, 3);
-      for(const n of recentNotices){
-        const alreadySent = msgList.some(m=>m.type==="notice" && m.title.includes(n.title||""));
-        if(!alreadySent){
-          await msgSend({
-            toStaffNo: user.staffNo,
-            title: `📢 공지: ${n.title}`,
-            body: (n.body||"").slice(0,100),
-            type: "notice"
-          });
-          break; // 한 번에 1건만
-        }
+      // 2. 신규 공지 쪽지 - 이미 발송한 공지 ID를 localStorage에 기록해서 중복 방지
+      const sentKey = "luwon_sent_notices_" + user.staffNo;
+      let sentIds = [];
+      try{ sentIds = JSON.parse(localStorage.getItem(sentKey) || "[]"); }catch(_){}
+      const newNotices = notices.filter(n => n.id && !sentIds.includes(n.id));
+      for(const n of newNotices.slice(0, 3)){
+        await msgSend({
+          toStaffNo: user.staffNo,
+          title: `📢 공지: ${n.title}`,
+          body: (n.body||"").slice(0,100),
+          type: "notice"
+        });
+        sentIds.push(n.id);
       }
-      localStorage.setItem("luwon_last_login_" + user.staffNo, Date.now().toString());
+      try{ localStorage.setItem(sentKey, JSON.stringify(sentIds)); }catch(_){}
     }
 
     // ── 교육 1시간 전 알림 체크 (반복 실행) ──
