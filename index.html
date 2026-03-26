@@ -5104,11 +5104,14 @@
         handle.addEventListener("mousedown", function(e){
           e.preventDefault(); e.stopPropagation();
           handle.classList.add("dragging");
-          const startX = e.pageX;
-          // getBoundingClientRect: table-layout:fixed 상태에서 실제 렌더 너비 = CSS 너비
+          const startX = e.clientX;
+          // 클릭 시점에 style.width를 렌더된 실제 너비로 즉시 동기화 → 첫 이동 시 점프 없음
           const startW = th.getBoundingClientRect().width;
+          th.style.width = startW + "px";
           function onMove(ev){
-            const w = Math.max(10, startW + (ev.pageX - startX)); // 브라우저 실제 최소 ~13px
+            const delta = ev.clientX - startX;
+            if(delta === 0) return;
+            const w = Math.max(13, startW + delta);
             th.style.width = w + "px";
           }
           function onUp(){
