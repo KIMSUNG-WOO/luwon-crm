@@ -4109,7 +4109,7 @@
 
       $("homeValue1").textContent = schedules.filter(s => s.createdAt === today).length;
       // 콜량: 결과값이 빈값(선택) 이 아닌 건수
-      $("homeValue2").textContent = leads.filter(l => l.result && l.result !== "").length;
+      $("homeValue2").textContent = leads.filter(l => l.result && l.result !== "" && l.resultDate === today).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month)).length;
     }
@@ -4132,7 +4132,7 @@
 
       $("homeValue1").textContent = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
       // 콜량: 내 DB 중 결과값 입력된 건수
-      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "").length;
+      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && l.resultDate === today).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month) && s.createdByNo === no).length;
     }
@@ -5805,12 +5805,13 @@
         $("resultFixModal").classList.add("show");
       } else {
         l.result = value;
-        l.resultDate = "";
+        const rDate = (value && value !== "") ? todayStr() : "";
+        l.resultDate = rDate;
         l.resultTime = "";
         renderLeads();
         runHomeSummary(); // 콜량 카운터 즉시 반영
         crmAddLog("info", "결과값 변경", `${l.company||""} → ${value||"선택"}`);
-        sbClient.from("education_db").update({ result: value, result_date: "", result_time: "" }).eq("id", l.id).then(({error}) => { if(error) console.warn(error); });
+        sbClient.from("education_db").update({ result: value, result_date: rDate, result_time: "" }).eq("id", l.id).then(({error}) => { if(error) console.warn(error); });
       }
     }
 
