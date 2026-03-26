@@ -3032,8 +3032,9 @@
             if(row.key==="staffGoals"    && row.value) staffGoals    = row.value;
             if(row.key==="staffRanks"    && row.value) Object.assign(staffRanks, row.value);
             if(row.key==="adminRates"    && row.value) Object.assign(adminRates, row.value);
-            if(row.key==="cleanBizRules" && Array.isArray(row.value)) cleanBizRules = row.value;
-            if(row.key==="notices"       && Array.isArray(row.value)) notices       = row.value;
+            if(row.key==="cleanBizRules"  && Array.isArray(row.value)) cleanBizRules  = row.value;
+            if(row.key==="notices"        && Array.isArray(row.value)) notices        = row.value;
+            if(row.key==="activityLogs"   && Array.isArray(row.value)) activityLogs   = row.value;
           });
         }
         saveAppData();
@@ -3177,7 +3178,8 @@
                 if(row.key==="staffGoals"    && row.value) staffGoals    = row.value;
                 if(row.key==="staffRanks"    && row.value) Object.assign(staffRanks, row.value);
                 if(row.key==="adminRates"    && row.value) Object.assign(adminRates, row.value);
-                if(row.key==="cleanBizRules" && Array.isArray(row.value)) cleanBizRules = row.value;
+                if(row.key==="cleanBizRules"  && Array.isArray(row.value)) cleanBizRules  = row.value;
+                if(row.key==="activityLogs"   && Array.isArray(row.value)){ activityLogs = row.value; crmRenderLogs(); }
               });
               if(state.currentUser) renderAll();
             }
@@ -5271,6 +5273,8 @@
         l.resultDate = "";
         l.resultTime = "";
         renderLeads();
+        runHomeSummary(); // 콜량 카운터 즉시 반영
+        crmAddLog("info", "결과값 변경", `${l.company||""} → ${value||"선택"}`);
         sbClient.from("education_db").update({ result: value, result_date: "", result_time: "" }).eq("id", l.id).then(({error}) => { if(error) console.warn(error); });
       }
     }
@@ -7167,8 +7171,10 @@
         user: state.currentUser ? state.currentUser.name : (detail||""),
         online: true  // 기록 시점에는 온라인
       });
-      if(activityLogs.length > 50) activityLogs = activityLogs.slice(0,50);
-      // saveAppData는 호출하는 쪽에서 이미 호출
+      if(activityLogs.length > 200) activityLogs = activityLogs.slice(0,200);
+      // Supabase에 즉시 저장 → 모든 기기(관리자 포함)에서 실시간으로 로그 확인 가능
+      try{ sbClient.from("app_settings").upsert({key:"activityLogs", value:activityLogs},{onConflict:"key"}); }catch(_){}
+      saveAppData();
     }
 
     function crmRenderLogs(){
