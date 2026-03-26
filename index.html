@@ -467,24 +467,37 @@
     tr:last-child td{border-bottom:0}
     tr:hover td{background:#fafcff}
 
-    /* ── 교육섭외DB 열/행 리사이즈 ── */
-    #leadTable { table-layout: auto; border-collapse: collapse; }
-    #leadTable.fixed-layout { table-layout: fixed; }
-
-    /* 열 구분 테두리 */
+    /* ── 교육섭외DB 열/행 리사이즈 (Excel 방식) ── */
+    #leadTable {
+      table-layout: fixed;   /* 열 너비를 th 기준으로 고정 — 내용이 길어도 열 안 늘어남 */
+      border-collapse: collapse;
+      min-width: 0;
+    }
+    /* 헤더: 넘치는 텍스트 숨김, 리사이즈 핸들용 relative */
+    /* padding을 작게 설정 → 열을 아주 좁게까지 줄일 수 있음 (전역 th { padding:11px 14px } 덮어쓰기) */
     #leadTable thead th {
-      position: relative; user-select: none;
+      position: relative;
+      user-select: none;
+      overflow: hidden;
+      white-space: nowrap;
       border-right: 1px solid #d1d5db;
+      padding: 8px 6px;
     }
     #leadTable thead th:last-child { border-right: none; }
+    /* 바디 셀: 엑셀처럼 한 줄 고정, 넘치면 말줄임표로 자름 */
     #leadTable tbody td {
-      word-break: break-word; white-space: normal; overflow-wrap: break-word;
-      vertical-align: top; border-right: 1px solid #e9ecf0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      max-width: 0;          /* fixed layout에서 overflow:hidden이 동작하려면 필요 */
+      vertical-align: middle;
+      border-right: 1px solid #e9ecf0;
     }
     #leadTable tbody td:last-child { border-right: none; }
-
     /* 행 구분 테두리 */
     #leadTable tbody tr { position: relative; border-bottom: 1px solid #e9ecf0; }
+    /* 주소 링크도 말줄임 처리 */
+    #leadTable tbody td .addr-link { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 100%; }
 
     /* 열 리사이즈 핸들 — 얇은 실선으로 표시 */
     .th-resize-handle {
@@ -984,7 +997,7 @@
     }
     .memo-btn.has-memo{background:#fef9c3;color:#854d0e;border-color:#fde047}
 
-    #leadTableBody td{padding:7px 10px;font-size:12px;vertical-align:middle}
+    #leadTableBody td{padding:5px 6px;font-size:12px;vertical-align:middle}
     #leadTableBody .edu-toggle-btn{font-size:11px;height:22px;padding:0 8px}
     #leadTableBody .edu-pass{font-size:11px;height:22px;padding:0 8px}
     #leadTableBody .edu-fail{font-size:11px;height:22px;padding:0 8px}
@@ -1965,19 +1978,19 @@
               <thead>
                 <tr>
                   <th style="width:36px;text-align:center;color:var(--muted);font-size:11px;">#</th>
-                  <th id="leadChkTh" class="hidden" style="width:32px;"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
-                  <th>사업장</th>
-                  <th>주소</th>
-                  <th>키맨</th>
-                  <th>대표자명</th>
-                  <th>연락처</th>
-                  <th>인원</th>
-                  <th>업종</th>
-                  <th>섭외자</th>
-                  <th>점검제외 체크</th>
-                  <th>결과값</th>
-                  <th>메모</th>
-                  <th id="leadActionTh" class="hidden"></th>
+                  <th id="leadChkTh" class="hidden" style="width:28px;"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
+                  <th style="width:110px;">사업장</th>
+                  <th style="width:130px;">주소</th>
+                  <th style="width:65px;">키맨</th>
+                  <th style="width:65px;">대표자명</th>
+                  <th style="width:95px;">연락처</th>
+                  <th style="width:38px;">인원</th>
+                  <th style="width:75px;">업종</th>
+                  <th style="width:65px;">섭외자</th>
+                  <th style="width:80px;">점검제외 체크</th>
+                  <th style="width:105px;">결과값</th>
+                  <th style="width:50px;">메모</th>
+                  <th id="leadActionTh" class="hidden" style="width:95px;"></th>
                 </tr>
               </thead>
               <tbody id="leadTableBody"></tbody>
@@ -4520,9 +4533,8 @@
       body.innerHTML = html;  // DOM 업데이트 1회만
       renderLeadPagination(allRows.length, totalPages);
       if(!_leadTableResizeInit){
-        loadLeadTableLayout();    // 저장된 열/행 레이아웃 먼저 적용
-        initLeadTableColResize(); // 핸들 부착 + fixed-layout (저장분 있으면 스킵)
-        _leadTableResizeInit = true;
+        loadLeadTableLayout();                  // 저장된 열 너비 복원
+        if(initLeadTableColResize()) _leadTableResizeInit = true; // 뷰가 보일 때만 완료 표시
       }
       applyLeadRowHeights();
     }
@@ -5079,20 +5091,13 @@
     // ── 교육섭외DB 열(컬럼) 리사이즈 핸들 부착 ──────────────────────
     function initLeadTableColResize(){
       const table = $("leadTable");
-      if(!table) return;
-
-      // 핸들 부착 즉시 fixed-layout 전환 → 드래그 시 튀는 현상 완전 제거
-      // (저장된 레이아웃이 있으면 loadLeadTableLayout이 이미 fixed-layout 설정함)
-      if(!table.classList.contains("fixed-layout")){
-        table.querySelectorAll("thead th").forEach(t => {
-          t.style.width    = t.offsetWidth + "px";
-          t.style.minWidth = t.offsetWidth + "px";
-        });
-        table.classList.add("fixed-layout");
-      }
+      if(!table) return false;
+      // 뷰가 hidden 상태면 getBoundingClientRect().width = 0 → 핸들 부착 불가, 재시도 필요
+      const firstTh = table.querySelector("thead th");
+      if(!firstTh || firstTh.getBoundingClientRect().width === 0) return false;
 
       table.querySelectorAll("thead th").forEach(th => {
-        if(th.querySelector(".th-resize-handle")) return;
+        if(th.querySelector(".th-resize-handle")) return; // 이미 부착됨
         const handle = document.createElement("div");
         handle.className = "th-resize-handle";
         th.appendChild(handle);
@@ -5100,11 +5105,11 @@
           e.preventDefault(); e.stopPropagation();
           handle.classList.add("dragging");
           const startX = e.pageX;
-          const startW = th.offsetWidth;
-          function onMove(e){
-            const w = Math.max(40, startW + (e.pageX - startX));
-            th.style.width    = w + "px";
-            th.style.minWidth = w + "px";
+          // getBoundingClientRect: table-layout:fixed 상태에서 실제 렌더 너비 = CSS 너비
+          const startW = th.getBoundingClientRect().width;
+          function onMove(ev){
+            const w = Math.max(10, startW + (ev.pageX - startX)); // 브라우저 실제 최소 ~13px
+            th.style.width = w + "px";
           }
           function onUp(){
             handle.classList.remove("dragging");
@@ -5116,6 +5121,7 @@
           document.addEventListener("mouseup",   onUp);
         });
       });
+      return true;
     }
 
     // ── 교육섭외DB 행(로우) 리사이즈 ──────────────────────────────
@@ -5125,10 +5131,10 @@
       if(!tr) return;
       const handle = e.currentTarget;
       if(handle) handle.classList.add("dragging");
-      const startY  = e.clientY;
-      const startH  = tr.offsetHeight;
-      function onMove(e){
-        const h = Math.max(32, startH + (e.clientY - startY));
+      const startY = e.clientY;
+      const startH = tr.getBoundingClientRect().height;
+      function onMove(ev){
+        const h = Math.max(10, startH + (ev.clientY - startY));
         tr.style.height = h + "px";
         _leadRowHeights[id] = h;
       }
@@ -5136,7 +5142,7 @@
         if(handle) handle.classList.remove("dragging");
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup",   onUp);
-        saveLeadTableLayout(); // 행 높이 사용자별 저장
+        saveLeadTableLayout();
       }
       document.addEventListener("mousemove", onMove);
       document.addEventListener("mouseup",   onUp);
@@ -5149,7 +5155,8 @@
       try{
         const table = $("leadTable");
         const widths = {};
-        if(table) table.querySelectorAll("thead th").forEach((th, i) => { if(th.style.width) widths[i] = th.style.width; });
+        // 0px 너비는 저장하지 않음 (hidden 상태에서 잘못 캡처된 값 방지)
+        if(table) table.querySelectorAll("thead th").forEach((th, i) => { if(th.style.width && parseFloat(th.style.width) > 0) widths[i] = th.style.width; });
         localStorage.setItem("luwon_lead_cols_" + user.staffNo, JSON.stringify(widths));
         localStorage.setItem("luwon_lead_rows_" + user.staffNo, JSON.stringify(_leadRowHeights));
       }catch(e){}
@@ -5164,14 +5171,17 @@
         if(rowStr) _leadRowHeights = JSON.parse(rowStr);
         if(colStr){
           const cols = JSON.parse(colStr);
-          if(Object.keys(cols).length){
-            const table = $("leadTable");
-            if(table){
-              table.classList.add("fixed-layout");
-              table.querySelectorAll("thead th").forEach((th, i) => {
-                if(cols[i]){ th.style.width = cols[i]; th.style.minWidth = cols[i]; }
-              });
-            }
+          // 저장된 값이 모두 0px이면 이전 버전의 깨진 데이터 → 삭제 후 무시
+          const validVals = Object.values(cols).filter(v => parseFloat(v) > 0);
+          if(!validVals.length){
+            localStorage.removeItem("luwon_lead_cols_" + user.staffNo);
+            return;
+          }
+          const table = $("leadTable");
+          if(table){
+            table.querySelectorAll("thead th").forEach((th, i) => {
+              if(cols[i] && parseFloat(cols[i]) > 0) th.style.width = cols[i];
+            });
           }
         }
       }catch(e){}
@@ -6967,8 +6977,7 @@
       renderLeadPagination(allRows.length, totalPages);
       if(!_leadTableResizeInit){
         loadLeadTableLayout();
-        initLeadTableColResize();
-        _leadTableResizeInit = true;
+        if(initLeadTableColResize()) _leadTableResizeInit = true;
       }
       applyLeadRowHeights();
     }
