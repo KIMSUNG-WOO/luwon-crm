@@ -469,8 +469,9 @@
 
     /* ── 교육섭외DB 열/행 리사이즈 (Excel 방식) ── */
     #leadTable {
-      table-layout: fixed;   /* 열 너비를 th 기준으로 고정 — 내용이 길어도 열 안 늘어남 */
+      table-layout: fixed;
       border-collapse: collapse;
+      width: max-content;    /* 전역 width:100% 덮어쓰기 — 열 합계만큼만 차지, 서로 관여 안 함 */
       min-width: 0;
     }
     /* 헤더: 넘치는 텍스트 숨김, 리사이즈 핸들용 relative */
@@ -5084,6 +5085,7 @@
             if(delta === 0) return;
             const w = Math.max(0, startW + delta);
             th.style.width = w + "px";
+            syncLeadTableWidth(); // 테이블 총 너비 동기화 → 다른 열 불변
           }
           function onUp(){
             handle.classList.remove("dragging");
@@ -5095,7 +5097,19 @@
           document.addEventListener("mouseup",   onUp);
         });
       });
+      syncLeadTableWidth(); // 초기화 완료 후 총 너비 고정
       return true;
+    }
+
+    // ── 테이블 전체 너비를 열 합계로 동기화 → 각 열이 독립적으로 동작 ──
+    function syncLeadTableWidth(){
+      const table = $("leadTable");
+      if(!table) return;
+      let total = 0;
+      table.querySelectorAll("thead th").forEach(th => {
+        total += th.getBoundingClientRect().width;
+      });
+      if(total > 0) table.style.width = total + "px";
     }
 
     // ── 교육섭외DB 행(로우) 리사이즈 ──────────────────────────────
@@ -5156,6 +5170,7 @@
             table.querySelectorAll("thead th").forEach((th, i) => {
               if(cols[i] && parseFloat(cols[i]) > 0) th.style.width = cols[i];
             });
+            syncLeadTableWidth(); // 저장된 너비 복원 후 총 너비 고정
           }
         }
       }catch(e){}
