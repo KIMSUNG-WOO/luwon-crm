@@ -1,6 +1,6 @@
 {
-  "name": "LUWON.APP",
-  "short_name": "LUWON.APP",
+  "name": "LUWON CRM",
+  "short_name": "루원CRM",
   "description": "루원 TM 운영 전산 시스템",
   "start_url": "./",
   "scope": "./",

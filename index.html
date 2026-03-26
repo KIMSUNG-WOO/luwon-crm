@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>LUWON.APP</title>
+  <title>LUWON CRM</title>
   <!-- 파비콘 -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Inter,Arial,sans-serif' font-size='38' font-weight='900' fill='white' letter-spacing='-1'%3EL%3C/text%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Inter,Arial,sans-serif' font-size='110' font-weight='900' fill='white'%3EL%3C/text%3E%3C/svg%3E">
@@ -29,7 +29,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     /* ══════════════════════════════════════
-       LUWON.APP — Modern Professional Theme
+       LUWON CRM — Modern Professional Theme
     ══════════════════════════════════════ */
     :root{
       --bg:#f0f4f8;
@@ -894,8 +894,6 @@
       }
       .sidebar.mob-open{ transform:translateX(0); box-shadow:8px 0 40px rgba(0,0,0,.45); }
       .sidebar .mode-toggle{ display:flex!important; margin-top:8px; margin-bottom:4px; }
-      /* 사이드바 하단 여백 — 탭바에 가려지지 않도록 */
-      .sidebar{ padding-bottom:calc(72px + env(safe-area-inset-bottom))!important; }
 
       /* 모바일 모드 토글 */
       .mob-mode-wrap{
@@ -1044,16 +1042,12 @@
     /* ══════════════════════════════════════
        모바일 하단 탭바 (Bottom Tab Bar)
     ══════════════════════════════════════ */
-    /* 탭바: 기본 완전 숨김 — JS로만 표시 */
     #crmMobTabBar{
-      display:none!important;
-    }
-    #crmMobTabBar.crm-tab-visible{
-      display:flex!important;
+      display:none;
     }
     @media(max-width:768px){
       /* 하단 탭바 — 앱처럼 고정 */
-      #crmMobTabBar.crm-tab-visible{
+      #crmMobTabBar{
         display:flex!important;
         position:fixed;bottom:0;left:0;right:0;
         height:62px;z-index:1003;
@@ -1130,12 +1124,8 @@
         box-shadow:var(--shadow-xs);
       }
 
-      /* 로그인 페이지 모바일 전용 - 세련되게 + 스크롤 차단 */
+      /* 로그인 페이지 모바일 전용 - 세련되게 */
       .login-page{
-        position:fixed!important;
-        inset:0;
-        z-index:9999;
-        overflow-y:auto;
         background:#080e1c;
         grid-template-columns:1fr;
       }
@@ -1143,7 +1133,6 @@
         border-radius:0;
         box-shadow:none;
         background:transparent;
-        min-height:100vh;
       }
       .lf-body{
         background:rgba(255,255,255,.97);
@@ -1782,7 +1771,7 @@
     <div class="splash-logo-wrap">
       <span class="splash-logo-letter">L</span>
     </div>
-    <div class="splash-brand">LUWON.APP</div>
+    <div class="splash-brand">LUWON CRM</div>
     <div class="splash-sub">TM 운영 전산 시스템</div>
     <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
     <div class="splash-dots">
@@ -1799,7 +1788,7 @@
       <div class="brand">
         <div class="logo-wrap"><div class="logo">L</div></div>
         <div>
-          <h1>LUWON.APP</h1>
+          <h1>LUWON CRM</h1>
           <p>루원지점 TM 운영 전산</p>
         </div>
       </div>
@@ -1831,13 +1820,13 @@
       <!-- 모바일 전용 로고 영역 -->
       <div class="mob-login-hero">
         <div class="mob-login-logo-wrap">L</div>
-        <div class="mob-login-brand">LUWON.APP</div>
+        <div class="mob-login-brand">LUWON CRM</div>
         <div class="mob-login-sub">TM 운영 전산 시스템</div>
       </div>
       <div class="lf-top">
         <div class="lf-logo">
           <div class="logo-wrap"><div class="logo">L</div></div>
-          <span>LUWON.APP</span>
+          <span>LUWON CRM</span>
         </div>
         <span class="secure">🔐 보안 로그인</span>
       </div>
@@ -1891,7 +1880,7 @@
     <!-- 모바일 상단 헤더 -->
     <header class="mob-header" id="mobHeader">
       <div class="mob-logo-wrap" onclick="setView('home')" style="cursor:pointer;"><div class="logo">L</div></div>
-      <div class="mob-brand-name" onclick="setView('home')" style="cursor:pointer;">LUWON.APP</div>
+      <div class="mob-brand-name" onclick="setView('home')" style="cursor:pointer;">LUWON CRM</div>
       <div class="mob-page-title" id="mobPageTitle">홈</div>
       <div class="mob-mode-wrap hidden" id="mobModeWrap">
         <button class="mob-mode-btn" id="mobStaffModeBtn" onclick="switchMode('staff')">직원</button>
@@ -1906,7 +1895,7 @@
       <div class="side-brand" onclick="setView('home')" style="cursor:pointer;" title="홈으로 이동">
         <div class="logo-wrap"><div class="logo">L</div></div>
         <div>
-          <strong>LUWON.APP</strong>
+          <strong>LUWON CRM</strong>
           <span>TM 운영 전산</span>
         </div>
       </div>
@@ -3591,7 +3580,6 @@
         state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
         $("loginPage").style.display = "none";
         $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
-        document.getElementById("crmMobTabBar")?.classList.add("crm-tab-visible");
         hydrateUserUI();
         renderAll();
         const savedView = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
@@ -3875,7 +3863,6 @@
 
       $("loginPage").style.display = "none";
       $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
-      document.getElementById("crmMobTabBar")?.classList.add("crm-tab-visible");
 
       hydrateUserUI();
       renderAll();
@@ -3909,7 +3896,6 @@
       try{ sessionStorage.removeItem("luwon_auth"); }catch(e){}
       try{ sessionStorage.removeItem("luwon_view"); }catch(e){}
       $("dashboard").style.display = "none";
-      document.getElementById("crmMobTabBar")?.classList.remove("crm-tab-visible");
       $("loginPage").style.display = "grid";
       $("staffId").value = "";
       $("password").value = "";
