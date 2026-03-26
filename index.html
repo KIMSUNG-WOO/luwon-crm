@@ -2931,75 +2931,58 @@
 
   </section>
 
-  <!-- ══ 모바일 앱(APK) 다운로드 안내 모달 ══ -->
+  <!-- ══ 모바일 앱(APK) 다운로드 모달 ══ -->
   <div class="modal-backdrop" id="apkModal" onclick="if(event.target===this)closeApkModal()" style="display:none;">
-    <div class="modal-card" style="max-width:460px;">
+    <div class="modal-card" style="max-width:420px;">
       <div class="modal-head">
         <div>
-          <h4>📱 모바일 앱 설치 안내</h4>
-          <p>스마트폰에서 앱처럼 사용하는 방법</p>
+          <h4>🤖 안드로이드 앱 다운로드</h4>
+          <p>루원 CRM 전용 앱 (Android)</p>
         </div>
         <button class="icon-btn" onclick="closeApkModal()">✕</button>
       </div>
-      <div style="padding:0 24px 24px;display:flex;flex-direction:column;gap:16px;">
+      <div style="padding:0 24px 24px;display:flex;flex-direction:column;gap:14px;">
 
-        <!-- PWA 설치 -->
-        <div style="background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(99,102,241,.06));border:1px solid rgba(59,130,246,.2);border-radius:14px;padding:16px;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0;">L</div>
-            <div>
-              <div style="font-size:14px;font-weight:800;color:var(--text);">브라우저에서 바로 설치 (권장)</div>
-              <div style="font-size:11px;color:var(--muted);">별도 앱스토어 없이 홈화면에 추가</div>
-            </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text2);">
-              <span style="background:#3b82f6;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;margin-top:1px;">1</span>
-              <span>스마트폰에서 <b>Chrome(안드로이드)</b> 또는 <b>Safari(아이폰)</b>로 접속</span>
-            </div>
-            <div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text2);">
-              <span style="background:#3b82f6;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;margin-top:1px;">2</span>
-              <span>주소창 오른쪽 <b>⋮ 메뉴</b>(안드로이드) 또는 <b>공유 버튼 □↑</b>(아이폰) 탭</span>
-            </div>
-            <div style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text2);">
-              <span style="background:#3b82f6;color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;margin-top:1px;">3</span>
-              <span><b>"홈 화면에 추가"</b> 선택 → 설치 완료</span>
+        <!-- 앱 정보 카드 -->
+        <div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(5,150,105,.08),rgba(16,185,129,.05));border:1px solid rgba(5,150,105,.2);border-radius:14px;padding:16px;">
+          <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;flex-shrink:0;box-shadow:0 4px 14px rgba(59,130,246,.35);">L</div>
+          <div>
+            <div style="font-size:15px;font-weight:800;color:var(--text);">루원 CRM</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">TM 운영 전산 시스템</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#059669;border:1px solid #86efac;border-radius:999px;padding:2px 8px;">Android</span>
+              <span style="font-size:10px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:999px;padding:2px 8px;">최신버전</span>
             </div>
           </div>
         </div>
 
-        <!-- APK 다운로드 -->
-        <div style="background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);border-radius:14px;padding:16px;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-            <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#059669,#10b981);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🤖</div>
-            <div>
-              <div style="font-size:14px;font-weight:800;color:var(--text);">안드로이드 APK 직접 설치</div>
-              <div style="font-size:11px;color:var(--muted);">PWABuilder로 생성한 Android 앱</div>
-            </div>
+        <!-- 설치 안내 -->
+        <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);">📋 설치 방법</div>
+          <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);">
+            <span style="background:#3b82f6;color:#fff;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;margin-top:1px;">1</span>
+            <span>아래 버튼으로 APK 파일 다운로드</span>
           </div>
-          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6;">
-            아래 링크에서 APK를 다운로드 후 설치하세요.<br>
-            설치 전 <b>알 수 없는 앱 설치 허용</b>이 필요합니다.
+          <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);">
+            <span style="background:#3b82f6;color:#fff;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;margin-top:1px;">2</span>
+            <span>폰에서 파일 열기 → <b>설치</b> 클릭</span>
           </div>
-          <a id="apkDownloadLink" href="https://github.com/KIMSUNG-WOO/luwon-crm/releases/latest"
-            target="_blank" rel="noopener"
-            style="display:flex;align-items:center;justify-content:center;gap:8px;height:42px;border-radius:11px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:13px;font-weight:800;text-decoration:none;box-shadow:0 4px 14px rgba(5,150,105,.3);">
-            ⬇️ APK 다운로드 (GitHub Releases)
-          </a>
-        </div>
-
-        <!-- QR코드 힌트 -->
-        <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
-          <span style="font-size:22px;">💡</span>
-          <div style="font-size:12px;color:var(--muted);line-height:1.6;">
-            PC에서 이 QR을 스캔하거나 주소를 직접 공유하면 스마트폰에서 바로 설치할 수 있습니다.
+          <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);">
+            <span style="background:#3b82f6;color:#fff;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;margin-top:1px;">3</span>
+            <span><b>"알 수 없는 앱 설치 허용"</b> → 설치 완료</span>
           </div>
         </div>
 
-        <div style="display:flex;gap:8px;">
-          <button onclick="closeApkModal()" style="flex:1;height:42px;border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">닫기</button>
-          <button onclick="copyAppUrl()" style="flex:1;height:42px;border-radius:11px;border:none;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 12px rgba(59,130,246,.3);">🔗 앱 주소 복사</button>
-        </div>
+        <!-- 다운로드 버튼 -->
+        <a id="apkDownloadLink"
+          href="https://expo.dev/accounts/kimsung-woo/projects/luwon-crm-app/builds/ecb92778-3248-4b5d-8d47-189e61ee8098"
+          target="_blank" rel="noopener"
+          style="display:flex;align-items:center;justify-content:center;gap:10px;height:50px;border-radius:13px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:14px;font-weight:800;text-decoration:none;box-shadow:0 4px 18px rgba(5,150,105,.35);transition:opacity .15s;"
+          onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          <span style="font-size:18px;">⬇️</span> APK 다운로드
+        </a>
+
+        <button onclick="closeApkModal()" style="width:100%;height:40px;border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">닫기</button>
       </div>
     </div>
   </div>
