@@ -3095,6 +3095,14 @@
         try{ loadData(); }catch(e){}
         setupRealtimeSync();
         try{ await msgInit(); }catch(e){}  // 새로고침 후에도 쪽지 로드
+        // 새로고침 후 세션 복원 시 즉시 접속 기록 → 관리자 활동 로그에 바로 반영
+        crmAddLog("ok", "접속중", state.currentUser.name);
+        // heartbeat: 5분마다 접속 상태 갱신
+        if(window._heartbeatTimer) clearInterval(window._heartbeatTimer);
+        window._heartbeatTimer = setInterval(() => {
+          if(!state.currentUser) return clearInterval(window._heartbeatTimer);
+          crmAddLog("ok", "접속중", state.currentUser.name);
+        }, 5 * 60 * 1000);
       }
 
       // 7. 최종 화면 복원 ── 모든 비동기 처리 완료 후 실행
