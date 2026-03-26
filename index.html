@@ -4415,8 +4415,8 @@
         const filtered = schedules.filter(s => s.createdAt === today);
         rows = buildStaffCount(filtered, s => s.assignee || s.createdBy || "미상");
       } else if(cardNo === 2){
-        // 오늘 콜량 → leads.result 있는 건, 섭외자별 (ownerName)
-        const filtered = leads.filter(l => l.result && l.result !== "");
+        // 오늘 콜량 → leads.result 있는 건 + 오늘 날짜, 섭외자별 (ownerName)
+        const filtered = leads.filter(l => l.result && l.result !== "" && l.resultDate === today);
         rows = buildStaffCount(filtered, l => l.ownerName || "미상");
       } else if(cardNo === 3){
         // 전직원 익일 일정 → schedules.date === tomorrow, 섭외자별
@@ -7780,6 +7780,7 @@
       if(!user) return;
       const no    = user.staffNo;
       const goal  = staffGoals[no];
+      const today = todayStr();
       const month = monthPrefix();
 
       // 뱃지1: 오늘 등록 일정 (콜 목표 기반)
@@ -7797,7 +7798,7 @@
       const b2 = $("crmGoalBadge2");
       if(b2){
         if(goal && goal.calls > 0){
-          const val2 = leads.filter(l => (l.ownerNo===no||l.ownerName===currentStaffName()) && l.result && l.result!=="").length;
+          const val2 = leads.filter(l => (l.ownerNo===no||l.ownerName===currentStaffName()) && l.result && l.result!=="" && l.resultDate===today).length;
           const pct2 = Math.round((val2/goal.calls)*100);
           b2.innerHTML = `<span class="crm-goal-badge${pct2>=100?" done":pct2>=50?" warn":""}">목표 ${goal.calls}건 · ${pct2}%</span>`;
         } else { b2.innerHTML = ""; }
