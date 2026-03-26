@@ -3835,6 +3835,9 @@
       itineraries.unshift(buildItineraryFromSchedule(newSched));
       renderItineraries();
 
+      // 일정표 Supabase 직접 저장 (_sbFullyLoaded 무관하게 항상 저장)
+      if(sbClient){ const _newItin = itineraries[0]; sbClient.from("itineraries").upsert([itinToRow(_newItin)], {onConflict:"id"}).catch(e => console.warn("일정표 저장 오류:", e)); }
+
       renderSchedules();
       loadAggregate();
       renderCalendar();
@@ -5679,6 +5682,8 @@
 
       closeItineraryEditModal();
       renderItineraries();
+      // 일정표 수정 Supabase 직접 저장 (_sbFullyLoaded 무관하게 항상 저장)
+      if(sbClient){ const _editedItin = itin; sbClient.from("itineraries").upsert([itinToRow(_editedItin)], {onConflict:"id"}).catch(e => console.warn("일정표 수정 저장 오류:", e)); }
       saveAppData();
       showItineraryMsg("✅ 일정표 수정 완료!", "");
     }
