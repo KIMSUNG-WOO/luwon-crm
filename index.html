@@ -3555,6 +3555,8 @@
       closeMobMenu();
 
       applyRoleUI();
+      // 일정표 관리 탭 진입 시 날짜 필터 초기화 → 항상 전체 보기로 시작
+      if(view === "itinerary") itinCalState.selectedDate = null;
       renderAll();
       if(view === "goals") renderGoals();
     }
