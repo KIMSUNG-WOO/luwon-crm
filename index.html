@@ -3350,11 +3350,18 @@
       // 활동 로그 기록
       crmAddLog("ok", "로그인", user.name);
       saveAppData();
+      // 접속 유지 heartbeat: 5분마다 Supabase에 접속 상태 갱신 → 관리자 화면에 실시간 반영
+      if(window._heartbeatTimer) clearInterval(window._heartbeatTimer);
+      window._heartbeatTimer = setInterval(() => {
+        if(!state.currentUser) return clearInterval(window._heartbeatTimer);
+        crmAddLog("ok", "접속중", state.currentUser.name);
+      }, 5 * 60 * 1000); // 5분
       // 쪽지함 초기화 (로그인 후)
       msgInit().catch(e => console.error("쪽지 초기화 오류:", e));
     }
 
     function logout(){
+      if(window._heartbeatTimer){ clearInterval(window._heartbeatTimer); window._heartbeatTimer = null; }
       // 활동 로그 기록 (사용자 정보가 사라지기 전에 기록)
       if(state.currentUser){
         crmAddLog("warn", "로그아웃", state.currentUser.name);
@@ -7181,15 +7188,20 @@
       const box = $("crmLogListBox");
       if(!box) return;
 
-      // ── 직원별 마지막 로그 상태 계산 ──
-      const staffStatus = {}; // { staffName: { action, time, isOnline } }
+      // ── 직원별 마지막 로그 상태 계산 (logs는 최신순) ──
+      const staffStatus = {};
       activityLogs.forEach(log => {
         if(!log.user) return;
         if(!staffStatus[log.user]){
+          // 최근 활동이 "로그아웃"이 아니면 접속중
+          // 단, 마지막 활동이 30분 초과면 자리비움으로 처리
+          const lastMs = log.time ? new Date(log.time).getTime() : 0;
+          const minutesAgo = (Date.now() - lastMs) / 60000;
+          const loggedOut = log.action === "로그아웃";
           staffStatus[log.user] = {
             action:   log.action,
             time:     log.time,
-            isOnline: log.action === "로그인"
+            isOnline: !loggedOut && minutesAgo < 120 // 2시간 이내 활동 = 접속중
           };
         }
       });
