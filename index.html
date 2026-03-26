@@ -7179,12 +7179,38 @@
         online: true  // 기록 시점에는 온라인
       });
       if(activityLogs.length > 200) activityLogs = activityLogs.slice(0,200);
-      // Supabase에 즉시 저장 → 모든 기기(관리자 포함)에서 실시간으로 로그 확인 가능
-      try{ sbClient.from("app_settings").upsert({key:"activityLogs", value:activityLogs},{onConflict:"key"}); }catch(_){}
-      saveAppData();
+      // Supabase 최신 로그 fetch → 내 새 항목과 병합 → 저장 (덮어쓰기 방지)
+      const _newEntry = activityLogs[0];
+      (async () => {
+        try{
+          const { data } = await sbClient.from("app_settings").select("value").eq("key","activityLogs").single();
+          const serverLogs = (data && Array.isArray(data.value)) ? data.value : [];
+          // 새 항목이 서버에 없으면 맨 앞에 추가, 이미 있으면 그대로
+          const isDup = serverLogs.some(l => l.time === _newEntry.time && l.user === _newEntry.user);
+          const merged = isDup ? serverLogs : [_newEntry, ...serverLogs];
+          activityLogs = merged.slice(0, 200);
+          await sbClient.from("app_settings").upsert({key:"activityLogs", value:activityLogs},{onConflict:"key"});
+        }catch(_){}
+        saveAppData();
+      })();
     }
 
     function crmRenderLogs(){
+      const box = $("crmLogListBox");
+      if(!box) return;
+
+      // Supabase에서 최신 로그 직접 fetch 후 렌더 (관리자가 탭 열 때마다 최신 반영)
+      sbClient.from("app_settings").select("value").eq("key","activityLogs").single()
+        .then(({data}) => {
+          if(data && Array.isArray(data.value)){
+            activityLogs = data.value;
+          }
+          _crmRenderLogsUI();
+        })
+        .catch(() => _crmRenderLogsUI());
+    }
+
+    function _crmRenderLogsUI(){
       const box = $("crmLogListBox");
       if(!box) return;
 
