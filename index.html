@@ -2925,28 +2925,15 @@
         const { data, error } = await sbClient.from("staff_accounts").select("*");
         if(error) throw error;
 
-        const sbNos = new Set((data||[]).map(r => r.staff_no));
-
-        // 1. 로컬에만 있는 직원 → Supabase에 업로드 (최초 1회 마이그레이션)
-        for(const u of authUsers){
-          if(!sbNos.has(u.staffNo)){
-            const s = staffs.find(x => x.no === u.staffNo);
-            await upsertStaffToSupabase(u.staffNo, u.password, u.name, u.role, u.branch, s?.rank || "대리");
-          }
-        }
-
-        // 2. Supabase 데이터 + 로컬 전용 데이터 병합 (어느 쪽도 잃지 않음)
+        // Supabase 데이터만 사용 (로컬 캐시 → Supabase 업로드 제거 → 삭제된 직원 부활 방지)
         const merged = [...(data||[])];
-        authUsers.filter(u => !sbNos.has(u.staffNo)).forEach(u => {
-          const s = staffs.find(x => x.no === u.staffNo);
-          merged.push({ staff_no:u.staffNo, password:u.password, name:u.name, role:u.role, branch:u.branch, rank:s?.rank||"대리" });
-        });
 
         if(!merged.length) return;
         staffs    = merged.map(r => ({ name:r.name, no:r.staff_no, role:r.role, branch:r.branch, rank:r.rank }));
         authUsers = merged.map(r => ({ staffNo:r.staff_no, password:r.password, name:r.name, role:r.role, branch:r.branch }));
         merged.forEach(r => { staffRanks[r.staff_no] = r.rank || "대리"; });
-        saveAppData(); // 병합 결과 로컬에 캐시
+        // localStorage에만 캐시 (sbSyncAll 호출 금지 → loadFromSupabase 전에 row 데이터 덮어쓰기 방지)
+        try{ const raw=localStorage.getItem(APP_DATA_KEY); const d=raw?JSON.parse(raw):{}; d.staffs=staffs; d.authUsers=authUsers; d.staffRanks=staffRanks; localStorage.setItem(APP_DATA_KEY,JSON.stringify(d)); }catch(e){}
       }catch(e){ console.warn("직원 목록 로드 오류:", e.message); }
     }
 
@@ -2982,20 +2969,21 @@
     function itinToRow(i){ return { id:Math.floor(Number(i.id)), schedule_id:String(i.scheduleId||""), company:i.company||"", address:i.address||"", biz_phone:i.bizPhone||"", manager:i.manager||"", manager_phone:i.managerPhone||"", date:i.date||"", time:i.time||"", people:i.people||"", age:i.age||"", assignee:i.assignee||"", sub_code:i.subCode||"", subject:i.subject||"", industry:i.industry||"", education_place:i.educationPlace||"", foreigner_count:i.foreignerCount||"", support_content:i.supportContent||"", etc_note:i.etcNote||"", special_note:i.specialNote||"", created_by_no:i.createdByNo||"", created_at:i.createdAt||"" }; }
     function rowToItin(r){ return { id:r.id, scheduleId:r.schedule_id, company:r.company, address:r.address, bizPhone:r.biz_phone, manager:r.manager, managerPhone:r.manager_phone, date:r.date, time:r.time, people:r.people, age:r.age, assignee:r.assignee, subCode:r.sub_code, subject:r.subject, industry:r.industry, educationPlace:r.education_place, foreignerCount:r.foreigner_count, supportContent:r.support_content, etcNote:r.etc_note, specialNote:r.special_note, createdByNo:r.created_by_no, createdAt:r.created_at }; }
 
-    // 전체 배열 Supabase upsert (fire-and-forget)
+    // Supabase 전체 로드 완료 전에는 row 데이터 upsert 금지 (로컬 캐시로 삭제된 데이터 부활 방지)
+    let _sbFullyLoaded = false;
+
     async function sbSyncAll(){
       try{
-        // leads는 education_db 테이블에서 별도 관리 (insertData/loadData)
-        const ops = [
-          schedules.length    ? sbClient.from("schedules").upsert(schedules.map(schedToRow), {onConflict:"id"})                                                             : null,
-          performances.length ? sbClient.from("performances").upsert(performances.map(perfToRow), {onConflict:"id"})                                                        : null,
-          itineraries.length  ? sbClient.from("itineraries").upsert(itineraries.map(itinToRow), {onConflict:"id"})                                                          : null,
-          inspectionRules.length  ? sbClient.from("inspection_rules").upsert(inspectionRules.map(r=>({id:Number(r.id),company:r.company,type:r.type})), {onConflict:"id"}) : null,
-          onlineEduRules.length   ? sbClient.from("online_edu_rules").upsert(onlineEduRules.map(r=>({id:Number(r.id),company:r.company})), {onConflict:"id"})              : null,
-        ].filter(Boolean);
-        const tableNames = ["schedules","performances","itineraries","inspection_rules","online_edu_rules"];
-        const results = await Promise.allSettled(ops);
-        results.forEach((r, i) => { if(r.status==="rejected") console.warn(`sbSyncAll[${tableNames[i]}] 오류:`, r.reason); if(r.value?.error) console.warn(`sbSyncAll[${tableNames[i]}] DB오류:`, r.value.error.message); });
+        if(_sbFullyLoaded){
+          const ops = [
+            schedules.length        ? sbClient.from("schedules").upsert(schedules.map(schedToRow), {onConflict:"id"}) : null,
+            performances.length     ? sbClient.from("performances").upsert(performances.map(perfToRow), {onConflict:"id"}) : null,
+            itineraries.length      ? sbClient.from("itineraries").upsert(itineraries.map(itinToRow), {onConflict:"id"}) : null,
+            inspectionRules.length  ? sbClient.from("inspection_rules").upsert(inspectionRules.map(r=>({id:Number(r.id),company:r.company,type:r.type})), {onConflict:"id"}) : null,
+            onlineEduRules.length   ? sbClient.from("online_edu_rules").upsert(onlineEduRules.map(r=>({id:Number(r.id),company:r.company})), {onConflict:"id"}) : null,
+          ].filter(Boolean);
+          await Promise.allSettled(ops);
+        }
         // 비어있는 설정값은 절대 Supabase에 저장하지 않음 → 기존 데이터 덮어쓰기 방지
         const settOps = [
           Object.keys(paySettings).length   ? sbClient.from("app_settings").upsert({key:"paySettings",   value:paySettings},   {onConflict:"key"}) : null,
@@ -3037,6 +3025,7 @@
             if(row.key==="activityLogs"   && Array.isArray(row.value)) activityLogs   = row.value;
           });
         }
+        _sbFullyLoaded = true; // 이제부터 sbSyncAll이 row 데이터 upsert 허용
         saveAppData();
         if(state.currentUser) renderAll();
         console.log("✅ Supabase 데이터 로드 완료");
