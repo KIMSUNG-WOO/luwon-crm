@@ -3521,7 +3521,7 @@
     function rowToSched(r){ return { id:r.id, assignee:r.assignee, date:r.date, time:r.time, company:r.company, manager:r.manager, phone:r.phone, address:r.address, people:r.people, gap:r.gap, bank:r.bank, memo:r.memo, createdBy:r.created_by, createdByNo:r.created_by_no, createdAt:r.created_at, progressStatus:r.progress_status, progressEtc:r.progress_etc }; }
 
     function leadToRow(l){ return { id:Number(l.id), type:l.type||"", date:l.date||"", time:l.time||"", company:l.company||"", address:l.address||"", manager:l.manager||"", phone:l.phone||"", people:l.people||"", age:l.age||"", subject:l.subject||"", industry:l.industry||"", status:l.status||"", owner_no:l.ownerNo||"", owner_name:l.ownerName||"", created_at:l.createdAt||"", result:l.result||"", result_date:l.resultDate||"", result_time:l.resultTime||"", memo:l.memo||"", rep_name:l.repName||"", clean_biz:l.cleanBiz||false }; }
-    function rowToLead(r){ return { id:r.id, type:r.type, date:r.date, time:r.time, company:r.company, address:r.address, manager:r.manager, phone:r.phone, people:r.people, age:r.age, subject:r.subject, industry:r.industry, status:r.status, ownerNo:r.owner_no, ownerName:r.owner_name, createdAt:r.created_at, result:r.result, resultDate:r.result_date, resultTime:r.result_time, memo:r.memo, repName:r.rep_name }; }
+    function rowToLead(r){ return { id:r.id, type:r.type, date:r.date, time:r.time, company:r.company, address:r.address, manager:r.manager, phone:r.phone, people:r.people, age:r.age, subject:r.subject, industry:r.industry, status:r.status, ownerNo:r.owner_no, ownerName:r.owner_name, createdAt:r.created_at, result:r.result, resultDate:r.result_date, resultTime:r.result_time, resultEnteredAt:r.result_entered_at||"", memo:r.memo, repName:r.rep_name }; }
 
     function perfToRow(p){ return { id:Number(p.id), staff:p.staff||"", staff_no:p.staffNo||"", type:p.type||"", value:String(p.value||""), amount:Number(p.amount||0), take:Number(p.take||0), memo:p.memo||"", date:p.date||"", created_by_no:p.createdByNo||"" }; }
     function rowToPerf(r){ return { id:r.id, staff:r.staff, staffNo:r.staff_no, type:r.type, value:r.value, amount:r.amount, take:r.take, memo:r.memo, date:r.date, createdByNo:r.created_by_no }; }
@@ -4123,7 +4123,7 @@
 
       $("homeValue1").textContent = schedules.filter(s => s.createdAt === today).length;
       // 콜량: 결과값이 빈값(선택) 이 아닌 건수
-      $("homeValue2").textContent = leads.filter(l => l.result && l.result !== "" && l.resultDate === today).length;
+      $("homeValue2").textContent = leads.filter(l => l.result && l.result !== "" && l.resultEnteredAt && l.resultEnteredAt.startsWith(today)).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month)).length;
     }
@@ -4146,7 +4146,7 @@
 
       $("homeValue1").textContent = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
       // 콜량: 내 DB 중 결과값 입력된 건수
-      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && l.resultDate === today).length;
+      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && l.resultEnteredAt && l.resultEnteredAt.startsWith(today)).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month) && s.createdByNo === no).length;
     }
@@ -4415,9 +4415,23 @@
         const filtered = schedules.filter(s => s.createdAt === today);
         rows = buildStaffCount(filtered, s => s.assignee || s.createdBy || "미상");
       } else if(cardNo === 2){
-        // 오늘 콜량 → leads.result 있는 건 + 오늘 날짜, 섭외자별 (ownerName)
-        const filtered = leads.filter(l => l.result && l.result !== "" && l.resultDate === today);
-        rows = buildStaffCount(filtered, l => l.ownerName || "미상");
+        // 오늘 콜량 → result_entered_at이 오늘인 건, 직원별 건수 + 마지막 체크 시간/사업장
+        const filtered = leads.filter(l => l.result && l.result !== "" && l.resultEnteredAt && l.resultEnteredAt.startsWith(today));
+        const map = {};
+        filtered.forEach(l => {
+          const name = l.ownerName || "미상";
+          if(!map[name]) map[name] = { count:0, lastAt:"", lastCompany:"" };
+          map[name].count++;
+          if(l.resultEnteredAt > map[name].lastAt){
+            map[name].lastAt = l.resultEnteredAt;
+            map[name].lastCompany = l.company || "";
+          }
+        });
+        rows = Object.entries(map).map(([name, v]) => {
+          let timeStr = "";
+          if(v.lastAt){ try{ const d=new Date(v.lastAt); timeStr=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`; }catch(e){} }
+          return { name, count:v.count, lastTime:timeStr, lastCompany:v.lastCompany };
+        }).sort((a,b) => b.count - a.count);
       } else if(cardNo === 3){
         // 전직원 익일 일정 → schedules.date === tomorrow, 섭외자별
         const filtered = schedules.filter(s => s.date === tomorrow);
@@ -4434,6 +4448,19 @@
 
       if(!rows.length){
         $("homeDetailBody").innerHTML = `<div class="empty">데이터가 없습니다.</div>`;
+      } else if(cardNo === 2){
+        $("homeDetailBody").innerHTML = rows.map((r,i) => `
+          <div style="padding:10px 14px;border-radius:10px;margin-bottom:6px;
+                      background:${i%2===0?"#f8fafc":"#fff"};border:1px solid #f1f5f9;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-size:14px;font-weight:700;color:#1e293b;">${escapeHtml(r.name)}</span>
+              <span style="font-size:15px;font-weight:800;color:#3b82f6;">${r.count}건</span>
+            </div>
+            <div style="font-size:11px;color:#64748b;">
+              마지막 체크 ${r.lastTime ? r.lastTime : "-"} &nbsp;·&nbsp; ${escapeHtml(r.lastCompany||"-")}
+            </div>
+          </div>
+        `).join("");
       } else {
         $("homeDetailBody").innerHTML = rows.map((r,i) => `
           <div style="display:flex;align-items:center;justify-content:space-between;
@@ -5812,10 +5839,13 @@
       } else {
         l.result = value;
         const rDate = (value && value !== "") ? todayStr() : "";
+        const rEnteredAt = (value && value !== "") ? new Date().toISOString() : null;
         l.resultDate = rDate;
+        l.resultEnteredAt = rEnteredAt || "";
         l.resultTime = "";
         renderLeads();
-        sbClient.from("education_db").update({ result: value, result_date: rDate, result_time: "" }).eq("id", l.id).then(({error}) => { if(error) console.warn(error); });
+        runHomeSummary();
+        sbClient.from("education_db").update({ result: value, result_date: rDate, result_time: "", result_entered_at: rEnteredAt }).eq("id", l.id).then(({error}) => { if(error) console.warn(error); });
       }
     }
 
@@ -5839,14 +5869,17 @@
       const min  = $("resultFixMin").value;
       if(!date) return alert("날짜를 선택해 주세요.");
       const timeStr = `${_resultFixAmPm} ${hour} ${min}분`;
+      const enteredAt = new Date().toISOString();
       l.result = "일정픽스";
       l.resultDate = date;
       l.resultTime = timeStr;
+      l.resultEnteredAt = enteredAt;
       $("resultFixModal").classList.remove("show");
       _resultFixLeadId = null;
       renderLeads();
+      runHomeSummary();
       try{
-        await sbClient.from("education_db").update({ result:"일정픽스", result_date: date, result_time: timeStr }).eq("id", l.id);
+        await sbClient.from("education_db").update({ result:"일정픽스", result_date: date, result_time: timeStr, result_entered_at: enteredAt }).eq("id", l.id);
         showLeadMsg("📅 일정픽스 저장 완료!", "");
       } catch(e){ console.warn(e); }
     }
@@ -7798,7 +7831,7 @@
       const b2 = $("crmGoalBadge2");
       if(b2){
         if(goal && goal.calls > 0){
-          const val2 = leads.filter(l => (l.ownerNo===no||l.ownerName===currentStaffName()) && l.result && l.result!=="" && l.resultDate===today).length;
+          const val2 = leads.filter(l => (l.ownerNo===no||l.ownerName===currentStaffName()) && l.result && l.result!=="" && l.resultEnteredAt && l.resultEnteredAt.startsWith(today)).length;
           const pct2 = Math.round((val2/goal.calls)*100);
           b2.innerHTML = `<span class="crm-goal-badge${pct2>=100?" done":pct2>=50?" warn":""}">목표 ${goal.calls}건 · ${pct2}%</span>`;
         } else { b2.innerHTML = ""; }
