@@ -475,7 +475,7 @@
       min-width: 0;
     }
     /* 헤더: 넘치는 텍스트 숨김, 리사이즈 핸들용 relative */
-    /* padding을 작게 설정 → 열을 아주 좁게까지 줄일 수 있음 (전역 th { padding:11px 14px } 덮어쓰기) */
+    /* box-sizing:border-box → th.style.width = getBoundingClientRect().width (정확히 일치, 점프 없음) */
     #leadTable thead th {
       position: relative;
       user-select: none;
@@ -483,6 +483,7 @@
       white-space: nowrap;
       border-right: 1px solid #d1d5db;
       padding: 8px 6px;
+      box-sizing: border-box;
     }
     #leadTable thead th:last-child { border-right: none; }
     /* 바디 셀: 엑셀처럼 한 줄 고정, 넘치면 말줄임표로 자름 */
@@ -1947,20 +1948,20 @@
             <table id="leadTable" style="font-size:12px;">
               <thead>
                 <tr>
-                  <th style="width:36px;text-align:center;color:var(--muted);font-size:11px;">#</th>
-                  <th id="leadChkTh" class="hidden" style="width:28px;"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
-                  <th style="width:110px;">사업장</th>
-                  <th style="width:130px;">주소</th>
-                  <th style="width:65px;">키맨</th>
-                  <th style="width:65px;">대표자명</th>
-                  <th style="width:95px;">연락처</th>
-                  <th style="width:38px;">인원</th>
-                  <th style="width:75px;">업종</th>
-                  <th style="width:65px;">섭외자</th>
-                  <th style="width:80px;">점검제외 체크</th>
-                  <th style="width:105px;">결과값</th>
-                  <th style="width:50px;">메모</th>
-                  <th id="leadActionTh" class="hidden" style="width:95px;"></th>
+                  <th style="width:42px;text-align:center;color:var(--muted);font-size:11px;">#</th>
+                  <th id="leadChkTh" class="hidden" style="width:36px;"><input type="checkbox" id="leadChkAll" onchange="toggleLeadCheckAll(this)"></th>
+                  <th style="width:130px;">사업장</th>
+                  <th style="width:150px;">주소</th>
+                  <th style="width:78px;">키맨</th>
+                  <th style="width:78px;">대표자명</th>
+                  <th style="width:110px;">연락처</th>
+                  <th style="width:48px;">인원</th>
+                  <th style="width:88px;">업종</th>
+                  <th style="width:78px;">섭외자</th>
+                  <th style="width:95px;">점검제외 체크</th>
+                  <th style="width:120px;">결과값</th>
+                  <th style="width:62px;">메모</th>
+                  <th id="leadActionTh" class="hidden" style="width:108px;"></th>
                 </tr>
               </thead>
               <tbody id="leadTableBody"></tbody>
@@ -5059,33 +5060,33 @@
     function initLeadTableColResize(){
       const table = $("leadTable");
       if(!table) return false;
-      // 뷰가 hidden 상태면 getBoundingClientRect().width = 0 → 핸들 부착 불가, 재시도 필요
       const firstTh = table.querySelector("thead th");
       if(!firstTh || firstTh.getBoundingClientRect().width === 0) return false;
 
+      // 인라인 table.style.width 제거 → CSS width:max-content 가 열 합계를 자동 유지
+      table.style.width = "";
+
       table.querySelectorAll("thead th").forEach(th => {
+        // border-box: th.style.width = getBoundingClientRect().width (정확히 동일)
+        // mousedown 전에 style.width를 실제 렌더 값으로 동기화 → 클릭 시 점프 방지
+        const renderedW = th.getBoundingClientRect().width;
+        if(renderedW > 0) th.style.width = renderedW + "px";
+
         if(th.querySelector(".th-resize-handle")) return; // 이미 부착됨
         const handle = document.createElement("div");
         handle.className = "th-resize-handle";
         th.appendChild(handle);
+
         handle.addEventListener("mousedown", function(e){
           e.preventDefault(); e.stopPropagation();
           handle.classList.add("dragging");
           const startX = e.clientX;
-          // style.width(content-box)를 기준으로 사용 → getBoundingClientRect(border-box)와 혼용 금지
-          const cs = getComputedStyle(th);
-          const hPad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
-          const hBorder = parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
-          const startW = parseFloat(th.style.width) > 0
-            ? parseFloat(th.style.width)
-            : Math.max(0, th.getBoundingClientRect().width - hPad - hBorder);
-          // mousedown에서는 width 변경 없음 → 클릭만 해도 늘어나는 현상 차단
+          // border-box: style.width == getBoundingClientRect().width
+          const startW = parseFloat(th.style.width) || th.getBoundingClientRect().width;
           function onMove(ev){
-            const delta = ev.clientX - startX;
-            if(delta === 0) return;
-            const w = Math.max(0, startW + delta);
+            const w = Math.max(13, startW + (ev.clientX - startX));
             th.style.width = w + "px";
-            syncLeadTableWidth(); // 테이블 총 너비 동기화 → 다른 열 불변
+            // table.style.width 건드리지 않음 → CSS width:max-content 가 자동으로 열 합계 유지
           }
           function onUp(){
             handle.classList.remove("dragging");
@@ -5097,19 +5098,7 @@
           document.addEventListener("mouseup",   onUp);
         });
       });
-      syncLeadTableWidth(); // 초기화 완료 후 총 너비 고정
       return true;
-    }
-
-    // ── 테이블 전체 너비를 열 합계로 동기화 → 각 열이 독립적으로 동작 ──
-    function syncLeadTableWidth(){
-      const table = $("leadTable");
-      if(!table) return;
-      let total = 0;
-      table.querySelectorAll("thead th").forEach(th => {
-        total += th.getBoundingClientRect().width;
-      });
-      if(total > 0) table.style.width = total + "px";
     }
 
     // ── 교육섭외DB 행(로우) 리사이즈 ──────────────────────────────
@@ -5142,14 +5131,14 @@
       if(!user) return;
       try{
         const table = $("leadTable");
-        const widths = {};
-        // 0px 너비는 저장하지 않음 (hidden 상태에서 잘못 캡처된 값 방지)
+        const widths = { _v: _LEAD_COL_VER }; // border-box 버전 태그
         if(table) table.querySelectorAll("thead th").forEach((th, i) => { if(th.style.width && parseFloat(th.style.width) > 0) widths[i] = th.style.width; });
         localStorage.setItem("luwon_lead_cols_" + user.staffNo, JSON.stringify(widths));
         localStorage.setItem("luwon_lead_rows_" + user.staffNo, JSON.stringify(_leadRowHeights));
       }catch(e){}
     }
 
+    const _LEAD_COL_VER = "bbox1"; // border-box 저장 버전 — 이전 content-box 값 자동 파기
     function loadLeadTableLayout(){
       const user = state.currentUser;
       if(!user) return;
@@ -5159,9 +5148,8 @@
         if(rowStr) _leadRowHeights = JSON.parse(rowStr);
         if(colStr){
           const cols = JSON.parse(colStr);
-          // 저장된 값이 모두 0px이면 이전 버전의 깨진 데이터 → 삭제 후 무시
-          const validVals = Object.values(cols).filter(v => parseFloat(v) > 0);
-          if(!validVals.length){
+          // 버전 불일치 = 이전 content-box 저장값 → 초기화 후 HTML 기본값 사용
+          if(cols._v !== _LEAD_COL_VER){
             localStorage.removeItem("luwon_lead_cols_" + user.staffNo);
             return;
           }
@@ -5170,7 +5158,6 @@
             table.querySelectorAll("thead th").forEach((th, i) => {
               if(cols[i] && parseFloat(cols[i]) > 0) th.style.width = cols[i];
             });
-            syncLeadTableWidth(); // 저장된 너비 복원 후 총 너비 고정
           }
         }
       }catch(e){}
