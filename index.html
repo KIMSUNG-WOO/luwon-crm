@@ -2570,6 +2570,7 @@
             <option value="부재">부재</option>
             <option value="결번">결번</option>
             <option value="확인후연락">확인후연락</option>
+            <option value="거절">거절</option>
             <option value="일정픽스">일정픽스</option>
             <option value="교육 이수 완료">교육 이수 완료</option>
             <option value="기타">기타</option>
@@ -4471,7 +4472,7 @@
       const start = (_leadPage - 1) * _leadPerPage;
       const rows  = allRows.slice(start, start + _leadPerPage);
 
-      const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "일정픽스", "교육 이수 완료", "기타"];
+      const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "거절", "일정픽스", "교육 이수 완료", "기타"];
 
       // innerHTML 한 번만 설정 (루프 += 제거 → 렉 방지)
       const html = rows.map(l => {
@@ -6831,7 +6832,7 @@
       if(_leadPage > totalPages) _leadPage = totalPages;
       const start = (_leadPage-1)*_leadPerPage;
       const rows  = allRows.slice(start, start+_leadPerPage);
-      const RESULT_OPTIONS = ["","부재","결번","확인후연락","일정픽스","교육 이수 완료","기타"];
+      const RESULT_OPTIONS = ["","부재","결번","확인후연락","거절","일정픽스","교육 이수 완료","기타"];
       const html = rows.map((l, idx) => {
         const sc = l.status==="교육 이수"?"edu-pass":l.status==="점검제외처리"?"edu-fail":"";
         const addrCell = l.address?`<span class="addr-link" onclick="openNaverMap(leads.findIndex(x=>x.id===${l.id}))">${escapeHtml(l.address)}</span>`:"";
