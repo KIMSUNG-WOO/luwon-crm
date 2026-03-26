@@ -2996,14 +2996,16 @@
         const tableNames = ["schedules","performances","itineraries","inspection_rules","online_edu_rules"];
         const results = await Promise.allSettled(ops);
         results.forEach((r, i) => { if(r.status==="rejected") console.warn(`sbSyncAll[${tableNames[i]}] 오류:`, r.reason); if(r.value?.error) console.warn(`sbSyncAll[${tableNames[i]}] DB오류:`, r.value.error.message); });
-        await Promise.allSettled([
-          sbClient.from("app_settings").upsert({key:"paySettings",   value:paySettings},   {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"staffGoals",    value:staffGoals},    {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"staffRanks",    value:staffRanks},    {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"adminRates",    value:adminRates},    {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"cleanBizRules", value:cleanBizRules}, {onConflict:"key"}),
-          sbClient.from("app_settings").upsert({key:"notices",       value:notices},       {onConflict:"key"}),
-        ]);
+        // 비어있는 설정값은 절대 Supabase에 저장하지 않음 → 기존 데이터 덮어쓰기 방지
+        const settOps = [
+          Object.keys(paySettings).length   ? sbClient.from("app_settings").upsert({key:"paySettings",   value:paySettings},   {onConflict:"key"}) : null,
+          Object.keys(staffGoals||{}).length ? sbClient.from("app_settings").upsert({key:"staffGoals",    value:staffGoals},    {onConflict:"key"}) : null,
+          Object.keys(staffRanks).length     ? sbClient.from("app_settings").upsert({key:"staffRanks",    value:staffRanks},    {onConflict:"key"}) : null,
+          (adminRates.sanjo||adminRates.health) ? sbClient.from("app_settings").upsert({key:"adminRates",  value:adminRates},    {onConflict:"key"}) : null,
+          cleanBizRules.length               ? sbClient.from("app_settings").upsert({key:"cleanBizRules", value:cleanBizRules}, {onConflict:"key"}) : null,
+          notices.length                     ? sbClient.from("app_settings").upsert({key:"notices",       value:notices},       {onConflict:"key"}) : null,
+        ].filter(Boolean);
+        await Promise.allSettled(settOps);
       }catch(e){ console.warn("sbSyncAll 오류:", e.message); }
     }
 
