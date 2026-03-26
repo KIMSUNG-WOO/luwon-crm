@@ -3025,6 +3025,17 @@
             if(row.key==="activityLogs"   && Array.isArray(row.value)) activityLogs   = row.value;
           });
         }
+        // 스케줄은 있는데 대응하는 일정표가 없으면 자동 복구 (직원 로컬에만 있던 데이터 보완)
+        if(schedules.length){
+          const itinSchedIds = new Set(itineraries.map(i => String(i.scheduleId)));
+          const missing = schedules.filter(s => !itinSchedIds.has(String(s.id)));
+          if(missing.length){
+            const recovered = missing.map(s => { const itin = buildItineraryFromSchedule(s); itin.id = Number(s.id); return itin; });
+            itineraries.push(...recovered);
+            if(sbClient) sbClient.from("itineraries").upsert(recovered.map(itinToRow), {onConflict:"id"}).catch(e => console.warn("일정표 자동복구 오류:", e));
+            console.log(`🔄 일정표 자동복구: ${recovered.length}건`);
+          }
+        }
         _sbFullyLoaded = true; // 이제부터 sbSyncAll이 row 데이터 upsert 허용
         saveAppData();
         if(state.currentUser) renderAll();
