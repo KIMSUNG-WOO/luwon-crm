@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#6366f1"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="rgba(255,255,255,0.18)"/>
+      <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="42" fill="url(#bg)"/>
+  <rect width="192" height="96" rx="42" fill="url(#shine)"/>
+  <text x="96" y="96" dominant-baseline="central" text-anchor="middle"
+    font-family="Inter,Arial,sans-serif" font-size="108" font-weight="900"
+    fill="white" letter-spacing="-4">L</text>
+  <text x="96" y="160" dominant-baseline="central" text-anchor="middle"
+    font-family="Inter,Arial,sans-serif" font-size="20" font-weight="700"
+    fill="rgba(255,255,255,0.7)" letter-spacing="2">CRM</text>
+</svg>
