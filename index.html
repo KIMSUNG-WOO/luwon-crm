@@ -1042,12 +1042,13 @@
     /* ══════════════════════════════════════
        모바일 하단 탭바 (Bottom Tab Bar)
     ══════════════════════════════════════ */
+    /* 탭바: 로그인 전 완전 숨김 — 로그인 후 .crm-tab-visible 클래스 추가로만 표시 */
     #crmMobTabBar{
-      display:none;
+      display:none!important;
     }
     @media(max-width:768px){
-      /* 하단 탭바 — 앱처럼 고정 */
-      #crmMobTabBar{
+      /* 하단 탭바 — 로그인 후 앱처럼 고정 */
+      #crmMobTabBar.crm-tab-visible{
         display:flex!important;
         position:fixed;bottom:0;left:0;right:0;
         height:62px;z-index:1003;
@@ -1124,10 +1125,15 @@
         box-shadow:var(--shadow-xs);
       }
 
-      /* 로그인 페이지 모바일 전용 - 세련되게 */
+      /* 로그인 페이지 모바일 전용 — 전체 화면 덮어서 대시보드 완전 차단 */
       .login-page{
+        position:fixed!important;
+        inset:0;
+        z-index:9999;
+        overflow-y:auto;
         background:#080e1c;
         grid-template-columns:1fr;
+        display:grid!important;
       }
       .login-card{
         border-radius:0;
@@ -3579,6 +3585,8 @@
         state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
         $("loginPage").style.display = "none";
         $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
+        // 모바일 탭바 표시 (세션 복원 시)
+        if(window.innerWidth <= 768) $("crmMobTabBar")?.classList.add("crm-tab-visible");
         hydrateUserUI();
         renderAll();
         const savedView = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
@@ -3862,6 +3870,8 @@
 
       $("loginPage").style.display = "none";
       $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
+      // 모바일 탭바 표시 (로그인 후에만)
+      if(window.innerWidth <= 768) $("crmMobTabBar")?.classList.add("crm-tab-visible");
 
       hydrateUserUI();
       renderAll();
@@ -3896,6 +3906,8 @@
       try{ sessionStorage.removeItem("luwon_view"); }catch(e){}
       $("dashboard").style.display = "none";
       $("loginPage").style.display = "grid";
+      // 모바일 탭바 숨김 (로그아웃)
+      $("crmMobTabBar")?.classList.remove("crm-tab-visible");
       $("staffId").value = "";
       $("password").value = "";
       clearMsg();
@@ -4574,16 +4586,30 @@
       safeCopy(buildFullCopyText(row));
     }
 
-    function deleteScheduleById(id){
+    async function deleteScheduleById(id){
       const ok = confirm("이 일정을 삭제할까요?\n(연결된 일정표도 함께 삭제됩니다.)");
       if(!ok) return;
-      // 연결된 일정표 ID 미리 수집 후 Supabase 삭제
+      // 연결된 일정표 ID 미리 수집
       const linkedItins = itineraries.filter(x => String(x.scheduleId) === String(id));
-      linkedItins.forEach(i => sbDeleteRecord("itineraries", i.id));
-      sbDeleteRecord("schedules", id);
-      schedules   = schedules.filter(x => String(x.id) !== String(id));
-      // 일정표 관리에서도 연동 삭제 (scheduleId로 연결)
-      itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
+      // Supabase 삭제 완료까지 대기 (fire-and-forget 방지)
+      await Promise.all([
+        ...linkedItins.map(i => sbDeleteRecord("itineraries", i.id)),
+        sbDeleteRecord("schedules", id)
+      ]);
+      // 삭제 후 Supabase에서 재확인 로드 (로컬과 DB 완전 동기화)
+      try{
+        const [schedRes, itinRes] = await Promise.all([
+          sbClient.from("schedules").select("*"),
+          sbClient.from("itineraries").select("*")
+        ]);
+        if(!schedRes.error && schedRes.data) schedules   = schedRes.data.map(rowToSched);
+        else schedules   = schedules.filter(x => String(x.id) !== String(id));
+        if(!itinRes.error  && itinRes.data)  itineraries = itinRes.data.map(rowToItin);
+        else itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
+      }catch(e){
+        schedules   = schedules.filter(x => String(x.id) !== String(id));
+        itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
+      }
       renderSchedules();
       renderItineraries();
       loadAggregate();
