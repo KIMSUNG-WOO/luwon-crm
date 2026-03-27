@@ -3490,10 +3490,9 @@
     async function sbSyncAll(){
       try{
         if(_sbFullyLoaded){
+          // schedules/itineraries는 개별 upsert/delete로 관리 → sbSyncAll에서 제외 (재삽입 경쟁 상태 방지)
           const ops = [
-            schedules.length        ? sbClient.from("schedules").upsert(schedules.map(schedToRow), {onConflict:"id"}) : null,
             performances.length     ? sbClient.from("performances").upsert(performances.map(perfToRow), {onConflict:"id"}) : null,
-            itineraries.length      ? sbClient.from("itineraries").upsert(itineraries.map(itinToRow), {onConflict:"id"}) : null,
             inspectionRules.length  ? sbClient.from("inspection_rules").upsert(inspectionRules.map(r=>({id:Number(r.id),company:r.company,type:r.type})), {onConflict:"id"}) : null,
             onlineEduRules.length   ? sbClient.from("online_edu_rules").upsert(onlineEduRules.map(r=>({id:Number(r.id),company:r.company})), {onConflict:"id"}) : null,
           ].filter(Boolean);
@@ -3524,7 +3523,7 @@
           sbClient.from("online_edu_rules").select("*"),
           sbClient.from("app_settings").select("*"),
         ]);
-        if(!schedRes.error && schedRes.data?.length)    schedules       = schedRes.data.map(rowToSched);
+        if(!schedRes.error && schedRes.data)             schedules       = schedRes.data.map(rowToSched);
         if(!perfRes.error  && perfRes.data?.length)     performances    = perfRes.data.map(rowToPerf);
         if(!itinRes.error  && itinRes.data?.length)     itineraries     = itinRes.data.map(rowToItin);
         if(!inspRes.error  && inspRes.data?.length)     inspectionRules = inspRes.data.map(r=>({id:r.id, company:r.company, type:r.type}));
@@ -3647,7 +3646,7 @@
         .on("postgres_changes", { event:"*", schema:"public", table:"schedules" }, async () => {
           try{
             const { data, error } = await sbClient.from("schedules").select("*");
-            if(!error && data){ schedules = data.map(rowToSched); if(state.currentUser){ renderSchedules(); renderCalendar(); loadAggregate(); } }
+            if(!error && data){ schedules = data.map(rowToSched); if(state.currentUser){ renderSchedules(); renderCalendar(); loadAggregate(); runHomeSummary(); saveAppData(); } }
           }catch(e){}
         })
         // 실적
@@ -4363,7 +4362,8 @@
       itineraries.unshift(buildItineraryFromSchedule(newSched));
       renderItineraries();
 
-      // 일정표 Supabase 직접 저장 (_sbFullyLoaded 무관하게 항상 저장)
+      // 일정 + 일정표 Supabase 직접 저장 (_sbFullyLoaded 무관하게 항상 저장)
+      if(sbClient){ sbClient.from("schedules").upsert([schedToRow(newSched)], {onConflict:"id"}).catch(e => console.warn("일정 저장 오류:", e)); }
       if(sbClient){ const _newItin = itineraries[0]; sbClient.from("itineraries").upsert([itinToRow(_newItin)], {onConflict:"id"}).catch(e => console.warn("일정표 저장 오류:", e)); }
 
       renderSchedules();
@@ -5334,6 +5334,7 @@
           result:    row.result || "",
           resultDate: row.result_date || "",
           resultTime: row.result_time || "",
+          resultEnteredAt: row.result_entered_at || "",
           createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr(),
           cleanBiz:  row.clean_biz || false
         }));
@@ -6577,9 +6578,10 @@
           row.age     = rowData.age;
           row.subject = rowData.subject;
           row.memo    = rowData.memo;
+          if(sbClient){ sbClient.from("schedules").upsert([schedToRow(row)], {onConflict:"id"}).catch(e => console.warn("수기 일정 수정 저장 오류:", e)); }
         }
       }else{
-        schedules.unshift({
+        const _newManualSched = {
           id: Date.now(),
           ...rowData,
           createdBy: currentStaffName(),
@@ -6587,13 +6589,16 @@
           createdAt: todayStr(),
           progressStatus:"",
           progressEtc:""
-        });
+        };
+        schedules.unshift(_newManualSched);
+        if(sbClient){ sbClient.from("schedules").upsert([schedToRow(_newManualSched)], {onConflict:"id"}).catch(e => console.warn("수기 일정 저장 오류:", e)); }
       }
 
       renderSchedules();
       renderCalendar();
       loadAggregate();
       runHomeSummary();
+      saveAppData();
       openCalendarModal(targetDate);
       alert(state.manualEditId ? "수기 일정 수정 완료" : "수기 일정 등록 완료");
     }
