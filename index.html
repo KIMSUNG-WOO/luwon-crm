@@ -4109,10 +4109,14 @@
       $("homeCardDesc4").textContent  = "이번달 전직원 등록 누적";
 
       $("homeValue1").textContent = schedules.filter(s => s.createdAt === today).length;
-      // 콜량: 결과값이 빈값(선택) 이 아닌 건수
-      $("homeValue2").textContent = leads.filter(l => l.result && l.result !== "" && l.resultEnteredAt && l.resultEnteredAt.startsWith(today)).length;
+      // 콜량: 결과값이 있고, 오늘 입력된 건수 (resultEnteredAt 또는 resultDate 기준)
+      $("homeValue2").textContent = leads.filter(l => l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month)).length;
+      // 상세 모달이 열려있으면 데이터 자동 갱신 (카드 숫자와 모달 일치 유지)
+      if(_openDetailCardNo && $("homeDetailOverlay")?.classList.contains("open")){
+        onHomeCardDblClick(_openDetailCardNo);
+      }
     }
 
     function runMySummary(){
@@ -4133,7 +4137,7 @@
 
       $("homeValue1").textContent = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
       // 콜량: 내 DB 중 결과값 입력된 건수
-      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && l.resultEnteredAt && l.resultEnteredAt.startsWith(today)).length;
+      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month) && s.createdByNo === no).length;
     }
@@ -4385,8 +4389,10 @@
     }
 
     // ── 홈 카드 더블클릭 상세 팝업 ──────────────────────────────
+    let _openDetailCardNo = 0; // 현재 열린 상세 카드 번호 (0=닫힘)
     function onHomeCardDblClick(cardNo){
       if(!isAdminMode()) return; // 관리자 모드에서만 동작
+      _openDetailCardNo = cardNo;
       const today    = todayStr();
       const tomorrow = tomorrowStr();
       const month    = monthPrefix();
@@ -4406,8 +4412,8 @@
         const filtered = schedules.filter(s => s.createdAt === today);
         rows = buildStaffCount(filtered, s => s.assignee || s.createdBy || "미상");
       } else if(cardNo === 2){
-        // 오늘 콜량 → result_entered_at이 오늘인 건, 직원별 건수 + 마지막 체크 시간/사업장
-        const filtered = leads.filter(l => l.result && l.result !== "" && l.resultEnteredAt && l.resultEnteredAt.startsWith(today));
+        // 오늘 콜량 → 오늘 결과값 입력된 건, 직원별 건수 + 마지막 체크 시간/사업장
+        const filtered = leads.filter(l => l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today)));
         const map = {};
         // 전체 직원 0건으로 초기화 → 콜 없어도 이름 표시
         staffs.forEach(s => { map[s.name] = { count:0, lastAt:"", lastCompany:"" }; });
@@ -4480,6 +4486,7 @@
 
     function closeHomeDetail(){
       $("homeDetailOverlay").classList.remove("open");
+      _openDetailCardNo = 0;
     }
 
     function openScheduleModal(){
