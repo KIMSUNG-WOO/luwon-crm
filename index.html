@@ -1042,22 +1042,11 @@
     /* ══════════════════════════════════════
        모바일 하단 탭바 (Bottom Tab Bar)
     ══════════════════════════════════════ */
-    /* 탭바: 로그인 전 완전 숨김 — 로그인 후 .crm-tab-visible 클래스 추가로만 표시 */
+    /* 탭바: 완전 숨김 */
     #crmMobTabBar{
       display:none!important;
     }
     @media(max-width:768px){
-      /* 하단 탭바 — 로그인 후 앱처럼 고정 */
-      #crmMobTabBar.crm-tab-visible{
-        display:flex!important;
-        position:fixed;bottom:0;left:0;right:0;
-        height:62px;z-index:1003;
-        background:#080e1c;
-        border-top:1px solid rgba(255,255,255,.08);
-        padding:0 4px;
-        padding-bottom:env(safe-area-inset-bottom);
-        box-shadow:0 -4px 24px rgba(0,0,0,.4);
-      }
       .crm-tab-item{
         flex:1;display:flex;flex-direction:column;
         align-items:center;justify-content:center;
@@ -1106,9 +1095,6 @@
       #crmMobTabBar .crm-tab-item:last-child:active .tab-icon span{
         background:#60a5fa;
       }
-      /* 메인 콘텐츠 하단 패딩 (탭바 높이만큼) */
-      .main{ padding-bottom:calc(62px + env(safe-area-inset-bottom))!important; }
-
       /* 모바일에서 더 넓은 터치 영역 */
       .menu-item{ min-height:48px; }
       /* 로그아웃 버튼: 사이드바 스크롤 시에도 항상 하단에 고정 */
@@ -3597,8 +3583,6 @@
         state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
         $("loginPage").style.display = "none";
         $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
-        // 모바일 탭바 표시 (세션 복원 시)
-        if(window.innerWidth <= 768) $("crmMobTabBar")?.classList.add("crm-tab-visible");
         hydrateUserUI();
         renderAll();
         const savedView = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
@@ -3882,9 +3866,6 @@
 
       $("loginPage").style.display = "none";
       $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
-      // 모바일 탭바 표시 (로그인 후에만)
-      if(window.innerWidth <= 768) $("crmMobTabBar")?.classList.add("crm-tab-visible");
-
       hydrateUserUI();
       renderAll();
       setView("home");
@@ -3917,8 +3898,6 @@
       try{ sessionStorage.removeItem("luwon_view"); }catch(e){}
       $("dashboard").style.display = "none";
       $("loginPage").style.display = "grid";
-      // 모바일 탭바 숨김 (로그아웃)
-      $("crmMobTabBar")?.classList.remove("crm-tab-visible");
       $("staffId").value = "";
       $("password").value = "";
       clearMsg();
