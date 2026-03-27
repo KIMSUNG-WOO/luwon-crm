@@ -1133,7 +1133,6 @@
         overflow-y:auto;
         background:#080e1c;
         grid-template-columns:1fr;
-        display:grid!important;
       }
       .login-card{
         border-radius:0;
@@ -3877,7 +3876,6 @@
       renderAll();
       setView("home");
       loadData();
-      loadFromSupabase(); // 로그인 후 최신 Supabase 데이터 로드 (백그라운드)
       setupRealtimeSync(); // 실시간 동기화 시작
       // 활동 로그 기록
       crmAddLog("ok", "로그인", user.name);
