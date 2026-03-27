@@ -4430,6 +4430,8 @@
         // 오늘 콜량 → result_entered_at이 오늘인 건, 직원별 건수 + 마지막 체크 시간/사업장
         const filtered = leads.filter(l => l.result && l.result !== "" && l.resultEnteredAt && l.resultEnteredAt.startsWith(today));
         const map = {};
+        // 전체 직원 0건으로 초기화 → 콜 없어도 이름 표시
+        staffs.forEach(s => { map[s.name] = { count:0, lastAt:"", lastCompany:"" }; });
         filtered.forEach(l => {
           const name = l.ownerName || "미상";
           if(!map[name]) map[name] = { count:0, lastAt:"", lastCompany:"" };
