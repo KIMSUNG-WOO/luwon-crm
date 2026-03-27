@@ -3525,7 +3525,7 @@
         ]);
         if(!schedRes.error && schedRes.data)             schedules       = schedRes.data.map(rowToSched);
         if(!perfRes.error  && perfRes.data?.length)     performances    = perfRes.data.map(rowToPerf);
-        if(!itinRes.error  && itinRes.data?.length)     itineraries     = itinRes.data.map(rowToItin);
+        if(!itinRes.error  && itinRes.data)             itineraries     = itinRes.data.map(rowToItin);
         if(!inspRes.error  && inspRes.data?.length)     inspectionRules = inspRes.data.map(r=>({id:r.id, company:r.company, type:r.type}));
         if(!onlRes.error   && onlRes.data?.length)      onlineEduRules  = onlRes.data.map(r=>({id:r.id, company:r.company}));
         if(!settRes.error  && settRes.data){
@@ -4581,7 +4581,7 @@
       const linkedItins = itineraries.filter(x => String(x.scheduleId) === String(id));
       linkedItins.forEach(i => sbDeleteRecord("itineraries", i.id));
       sbDeleteRecord("schedules", id);
-      schedules   = schedules.filter(x => x.id !== id);
+      schedules   = schedules.filter(x => String(x.id) !== String(id));
       // 일정표 관리에서도 연동 삭제 (scheduleId로 연결)
       itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
       renderSchedules();
@@ -7308,8 +7308,16 @@
     function systemResetSchedules(){
       if(!_checkAdminPass("sysPassSchedules")) return;
       if(!confirm("모든 일정 데이터를 삭제할까? 복구 불가!")) return;
+      // Supabase에서도 완전 삭제 (새로고침 후 재등장 방지)
+      if(sbClient){
+        const schedIds = schedules.map(s => Number(s.id)).filter(n => !isNaN(n) && n > 0);
+        const itinIds  = itineraries.map(i => Number(i.id)).filter(n => !isNaN(n) && n > 0);
+        if(schedIds.length) sbClient.from("schedules").delete().in("id", schedIds).catch(e => console.warn("일정 일괄삭제 오류:", e));
+        if(itinIds.length)  sbClient.from("itineraries").delete().in("id", itinIds).catch(e => console.warn("일정표 일괄삭제 오류:", e));
+      }
       schedules   = [];
       itineraries = [];
+      saveAppData();
       renderSchedules();
       renderItineraries();
       renderCalendar();
