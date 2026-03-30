@@ -2123,6 +2123,7 @@
             <table>
               <thead>
                 <tr>
+                  <th>등록시간</th>
                   <th>섭외자</th>
                   <th>섭외</th>
                   <th>날짜</th>
@@ -2140,6 +2141,7 @@
               <tbody id="scheduleTableBody"></tbody>
             </table>
           </div>
+          <div id="schedPagination" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0;flex-wrap:wrap;"></div>
         </div>
 
         <div class="view hidden" id="view-aggregate">
@@ -3477,8 +3479,8 @@
     // ─── Supabase 전체 데이터 동기화 ────────────────────────────────
 
     // camelCase ↔ snake_case 변환 헬퍼
-    function schedToRow(s){ return { id:Number(s.id), assignee:s.assignee||"", date:s.date||"", time:s.time||"", company:s.company||"", manager:s.manager||"", phone:s.phone||"", address:s.address||"", people:s.people||"", gap:s.gap||"", bank:s.bank||"", memo:s.memo||"", created_by:s.createdBy||"", created_by_no:s.createdByNo||"", created_at:s.createdAt||"", progress_status:s.progressStatus||"", progress_etc:s.progressEtc||"" }; }
-    function rowToSched(r){ return { id:r.id, assignee:r.assignee, date:r.date, time:r.time, company:r.company, manager:r.manager, phone:r.phone, address:r.address, people:r.people, gap:r.gap, bank:r.bank, memo:r.memo, createdBy:r.created_by, createdByNo:r.created_by_no, createdAt:r.created_at, progressStatus:r.progress_status, progressEtc:r.progress_etc }; }
+    function schedToRow(s){ return { id:Number(s.id), assignee:s.assignee||"", type:s.type||"교육섭외", date:s.date||"", time:s.time||"", company:s.company||"", manager:s.manager||"", phone:s.phone||"", address:s.address||"", people:s.people||"", age:s.age||"", subject:s.subject||"", gap:s.gap||"", bank:s.bank||"", memo:s.memo||"", created_by:s.createdBy||"", created_by_no:s.createdByNo||"", created_at:s.createdAt||"", progress_status:s.progressStatus||"", progress_etc:s.progressEtc||"" }; }
+    function rowToSched(r){ return { id:r.id, assignee:r.assignee, type:r.type||"교육섭외", date:r.date, time:r.time, company:r.company, manager:r.manager, phone:r.phone, address:r.address, people:r.people, age:r.age||"", subject:r.subject||"", gap:r.gap, bank:r.bank, memo:r.memo, createdBy:r.created_by, createdByNo:r.created_by_no, createdAt:r.created_at, progressStatus:r.progress_status, progressEtc:r.progress_etc }; }
 
     function leadToRow(l){ return { id:Number(l.id), type:l.type||"", date:l.date||"", time:l.time||"", company:l.company||"", address:l.address||"", manager:l.manager||"", phone:l.phone||"", people:l.people||"", age:l.age||"", subject:l.subject||"", industry:l.industry||"", status:l.status||"", owner_no:l.ownerNo||"", owner_name:l.ownerName||"", created_at:l.createdAt||"", result:l.result||"", result_date:l.resultDate||"", result_time:l.resultTime||"", memo:l.memo||"", rep_name:l.repName||"", clean_biz:l.cleanBiz||false }; }
     function rowToLead(r){ return { id:r.id, type:r.type, date:r.date, time:r.time, company:r.company, address:r.address, manager:r.manager, phone:r.phone, people:r.people, age:r.age, subject:r.subject, industry:r.industry, status:r.status, ownerNo:r.owner_no, ownerName:r.owner_name, createdAt:r.created_at, result:r.result, resultDate:r.result_date, resultTime:r.result_time, resultEnteredAt:r.result_entered_at||"", memo:r.memo, repName:r.rep_name }; }
@@ -4154,7 +4156,7 @@
     }
 
     function getVisibleSchedules(){
-      return schedules.slice();
+      return isAdminMode() ? schedules.slice() : schedules.filter(s => s.createdByNo === currentStaffNo());
     }
 
     function getVisiblePerformances(){
@@ -4369,7 +4371,7 @@
         assignee, type, date, time, company, address, manager, phone, people, age, subject, memo,
         createdBy: currentStaffName(),
         createdByNo: currentStaffNo(),
-        createdAt: todayStr(),
+        createdAt: new Date().toISOString(),
         progressStatus:"",
         progressEtc:""
       };
@@ -4557,39 +4559,72 @@
       safeCopy(value);
     }
 
+    function formatKSTTimestamp(isoStr){
+      if(!isoStr) return "";
+      try{
+        const d = new Date(isoStr);
+        if(isNaN(d.getTime())) return isoStr.slice(0,19).replace("T"," ");
+        const kst = new Date(d.getTime() + 9*60*60*1000);
+        return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,"0")}-${String(kst.getUTCDate()).padStart(2,"0")} ${String(kst.getUTCHours()).padStart(2,"0")}:${String(kst.getUTCMinutes()).padStart(2,"0")}:${String(kst.getUTCSeconds()).padStart(2,"0")}`;
+      }catch(e){ return String(isoStr).slice(0,19).replace("T"," "); }
+    }
+
+    function renderSchedPagination(total, totalPages){
+      const el = $("schedPagination");
+      if(!el) return;
+      if(totalPages <= 1){ el.innerHTML = ""; return; }
+      let html = "";
+      if(_schedPage > 1) html += `<button class="ghost-btn" style="padding:4px 10px;font-size:12px;" onclick="_schedPage=${_schedPage-1};renderSchedules()">‹ 이전</button>`;
+      const start = Math.max(1, _schedPage-2), end = Math.min(totalPages, _schedPage+2);
+      for(let i=start;i<=end;i++) html += `<button class="ghost-btn${i===_schedPage?" active":""}" style="padding:4px 10px;font-size:12px;${i===_schedPage?"background:var(--primary);color:#fff;":""}" onclick="_schedPage=${i};renderSchedules()">${i}</button>`;
+      if(_schedPage < totalPages) html += `<button class="ghost-btn" style="padding:4px 10px;font-size:12px;" onclick="_schedPage=${_schedPage+1};renderSchedules()">다음 ›</button>`;
+      html += `<span style="font-size:11px;color:var(--muted);margin-left:4px;">${total}건 / ${totalPages}페이지</span>`;
+      el.innerHTML = html;
+    }
+
     function renderSchedules(){
       const body = $("scheduleTableBody");
-      const rows = getVisibleSchedules().sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`, "ko"));
-      body.innerHTML = "";
+      // 최신 등록순 내림차순 정렬
+      const allRows = getVisibleSchedules().sort((a,b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return tb - ta;
+      });
 
-      if(!rows.length){
-        body.innerHTML = `<tr><td colspan="12"><div class="empty">등록된 일정이 없습니다.</div></td></tr>`;
+      if(!allRows.length){
+        body.innerHTML = `<tr><td colspan="13"><div class="empty">등록된 일정이 없습니다.</div></td></tr>`;
+        renderSchedPagination(0,0);
         return;
       }
 
-      rows.forEach(row => {
-        body.innerHTML += `
-          <tr>
-            <td>${escapeHtml(row.assignee)}</td>
-            <td>${escapeHtml(row.type || "교육섭외")}</td>
-            <td>${escapeHtml(row.date)}</td>
-            <td>${escapeHtml(row.time)}</td>
-            <td>${escapeHtml(row.company)}</td>
-            <td>${escapeHtml(row.manager)}</td>
-            <td>${escapeHtml(formatPhone(row.phone))}</td>
-            <td>${escapeHtml(row.people)}</td>
-            <td>${escapeHtml(row.age || "")}</td>
-            <td>${escapeHtml(row.subject || "")}</td>
-            <td>${escapeHtml(row.memo)}</td>
-            <td>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button class="ghost-btn" type="button" onclick="copyScheduleFullText(${row.id})">복사</button>
-                <button class="danger-btn" type="button" onclick="deleteScheduleById(${row.id})">삭제</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      });
+      const totalPages = Math.ceil(allRows.length / _schedPerPage);
+      if(_schedPage > totalPages) _schedPage = totalPages;
+      const start = (_schedPage - 1) * _schedPerPage;
+      const rows  = allRows.slice(start, start + _schedPerPage);
+
+      body.innerHTML = rows.map(row => `
+        <tr>
+          <td style="font-size:11px;white-space:nowrap;color:var(--muted);">${escapeHtml(formatKSTTimestamp(row.createdAt))}</td>
+          <td>${escapeHtml(row.assignee)}</td>
+          <td>${escapeHtml(row.type || "교육섭외")}</td>
+          <td>${escapeHtml(row.date)}</td>
+          <td>${escapeHtml(row.time)}</td>
+          <td>${escapeHtml(row.company)}</td>
+          <td>${escapeHtml(row.manager)}</td>
+          <td>${escapeHtml(formatPhone(row.phone))}</td>
+          <td>${escapeHtml(row.people)}</td>
+          <td>${escapeHtml(row.age || "")}</td>
+          <td>${escapeHtml(row.subject || "")}</td>
+          <td>${escapeHtml(row.memo)}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="ghost-btn" type="button" onclick="copyScheduleFullText(${row.id})">복사</button>
+              <button class="danger-btn" type="button" onclick="deleteScheduleById(${row.id})">삭제</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+      renderSchedPagination(allRows.length, totalPages);
     }
 
     function copyScheduleFullText(id){
@@ -5028,6 +5063,8 @@
 
     let _leadPage = 1;
     const _leadPerPage = 50;
+    let _schedPage = 1;
+    const _schedPerPage = 30;
     let _leadRowHeights = {};      // { leadId: px } — 세션 유지, 새로고침 시 초기화
     let _leadTableResizeInit = false; // 열 리사이즈 핸들 한 번만 부착
 
@@ -7427,11 +7464,13 @@
     function crmGetFilteredLeads(){
       const q = _crmLeadSearchTerm;
       if(!q) return getVisibleLeads();
+      const qPhone = q.replace(/[^0-9]/g,"");
       return getVisibleLeads().filter(l =>
         (l.company||"").toLowerCase().includes(q) ||
         (l.manager||"").toLowerCase().includes(q) ||
         (l.address||"").toLowerCase().includes(q) ||
-        (l.ownerName||"").toLowerCase().includes(q)
+        (l.ownerName||"").toLowerCase().includes(q) ||
+        (qPhone && (l.phone||"").replace(/[^0-9]/g,"").includes(qPhone))
       );
     }
 
@@ -7503,20 +7542,34 @@
     function crmRenderFilteredSchedules(){
       if(!_crmSchedSearchTerm){ renderSchedules(); return; }
       const q    = _crmSchedSearchTerm;
+      const qPhone = q.replace(/[^0-9]/g,"");
       const body = $("scheduleTableBody");
-      const rows = getVisibleSchedules().filter(s =>
+      const allRows = getVisibleSchedules().filter(s =>
         (s.company||"").toLowerCase().includes(q) ||
         (s.assignee||"").toLowerCase().includes(q) ||
         (s.date||"").includes(q) ||
-        (s.manager||"").toLowerCase().includes(q)
-      ).sort((a,b)=>`${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`,"ko"));
+        (s.manager||"").toLowerCase().includes(q) ||
+        (qPhone && (s.phone||"").replace(/[^0-9]/g,"").includes(qPhone))
+      ).sort((a,b)=>{
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return tb - ta;
+      });
 
-      if(!rows.length){
-        body.innerHTML = `<tr><td colspan="12"><div class="crm-empty-illust"><svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#e2e8f0" stroke-width="2"/><path d="M20 28h16M28 20v16" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg><p>"${escapeHtml(_crmSchedSearchTerm)}" 검색 결과가 없습니다.</p></div></td></tr>`;
+      if(!allRows.length){
+        body.innerHTML = `<tr><td colspan="13"><div class="crm-empty-illust"><svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#e2e8f0" stroke-width="2"/><path d="M20 28h16M28 20v16" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg><p>"${escapeHtml(_crmSchedSearchTerm)}" 검색 결과가 없습니다.</p></div></td></tr>`;
+        renderSchedPagination(0,0);
         return;
       }
+
+      const totalPages = Math.ceil(allRows.length / _schedPerPage);
+      if(_schedPage > totalPages) _schedPage = totalPages;
+      const start = (_schedPage - 1) * _schedPerPage;
+      const rows  = allRows.slice(start, start + _schedPerPage);
+
       body.innerHTML = rows.map(row=>`
         <tr>
+          <td style="font-size:11px;white-space:nowrap;color:var(--muted);">${escapeHtml(formatKSTTimestamp(row.createdAt))}</td>
           <td>${escapeHtml(row.assignee)}</td>
           <td>${escapeHtml(row.type||"교육섭외")}</td>
           <td>${escapeHtml(row.date)}</td>
@@ -7536,6 +7589,7 @@
           </td>
         </tr>
       `).join("");
+      renderSchedPagination(allRows.length, totalPages);
     }
 
     /* ══════════════════════════════════════════════════════════
