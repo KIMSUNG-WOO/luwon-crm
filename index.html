@@ -20,6 +20,10 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="application-name" content="루원CRM">
   <meta name="msapplication-TileColor" content="#3b82f6">
+  <!-- 캐시 완전 무효화 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -8670,5 +8674,30 @@
       </div>
     </div>
   </div>
+
+  <!-- 서비스워커 등록 + 업데이트 시 자동 새로고침 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+        .then(reg => {
+          // 이미 대기 중인 새 SW 있으면 즉시 활성화
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          reg.addEventListener('updatefound', () => {
+            const nw = reg.installing;
+            nw.addEventListener('statechange', () => {
+              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                // 새 SW 설치 완료 → 자동 새로고침
+                window.location.reload();
+              }
+            });
+          });
+        })
+        .catch(() => {});
+      // 다른 탭에서 SW가 교체되면 이 탭도 새로고침
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    }
+  </script>
 </body>
 </html>

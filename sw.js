@@ -1,111 +1,41 @@
-// LUWON CRM Service Worker — PWA 오프라인 + 푸시 알림
-const CACHE_NAME = "luwon-crm-v5";
-const STATIC_ASSETS = [
-  "./",
-  "./index.html",
-  "./manifest.json",
-  "./icon-192.svg",
-  "./icon-512.svg"
-];
+// LUWON CRM Service Worker — Network First (캐시 완전 우회)
+const CACHE_NAME = "luwon-crm-v20";
 
-// 설치 — 정적 자산 캐시
+// 설치 — skipWaiting으로 즉시 활성화
 self.addEventListener("install", e => {
   self.skipWaiting();
-  e.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(STATIC_ASSETS).catch(() => {});
-    })
-  );
 });
 
-// 활성화 — 이전 캐시 정리
+// 활성화 — 이전 캐시 전부 삭제 + 즉시 클라이언트 제어
 self.addEventListener("activate", e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      )
-    ).then(() => clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => clients.claim())
   );
 });
 
-// 네트워크 요청 — Network First (Supabase API), Cache First (정적 자산)
+// fetch — Supabase/CDN 포함 모든 요청 Network First
 self.addEventListener("fetch", e => {
-  const url = new URL(e.request.url);
+  // POST 등 non-GET은 SW 개입하지 않음
+  if (e.request.method !== "GET") return;
 
-  // Supabase API — 항상 네트워크 우선
-  if (url.hostname.includes("supabase.co") || url.hostname.includes("supabase.in")) {
-    return; // 기본 fetch 동작 (네트워크)
-  }
-
-  // CDN 스크립트 — 캐시 우선
-  if (url.hostname.includes("cdn.jsdelivr.net") || url.hostname.includes("fonts.google")) {
-    e.respondWith(
-      caches.match(e.request).then(cached => {
-        if (cached) return cached;
-        return fetch(e.request).then(response => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-          }
-          return response;
-        }).catch(() => cached);
-      })
-    );
-    return;
-  }
-
-  // index.html — 항상 네트워크 우선 (최신 배포 즉시 반영)
-  if (url.origin === self.location.origin && (url.pathname === "/" || url.pathname.endsWith("index.html"))) {
-    e.respondWith(
-      fetch(e.request).then(response => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
-        }
-        return response;
-      }).catch(() => caches.match(e.request))
-    );
-    return;
-  }
-
-  // 나머지 앱 자체 파일 — Stale-While-Revalidate
-  if (url.origin === self.location.origin) {
-    e.respondWith(
-      caches.open(CACHE_NAME).then(cache =>
-        cache.match(e.request).then(cached => {
-          const fetchPromise = fetch(e.request).then(response => {
-            if (response && response.status === 200) {
-              cache.put(e.request, response.clone());
-            }
-            return response;
-          }).catch(() => cached);
-          return cached || fetchPromise;
-        })
-      )
-    );
-  }
+  e.respondWith(
+    fetch(e.request, { cache: "no-store" })
+      .catch(() => caches.match(e.request)) // 오프라인 폴백만 허용
+  );
 });
 
 // 푸시 수신 → 알림 표시
 self.addEventListener("push", e => {
   let data = { title: "LUWON CRM", body: "새 알림이 있습니다.", icon: "./icon-192.svg", tag: "luwon-push" };
-  try {
-    if (e.data) {
-      const parsed = e.data.json();
-      Object.assign(data, parsed);
-    }
-  } catch(err) {}
-
+  try { if (e.data) Object.assign(data, e.data.json()); } catch(err) {}
   e.waitUntil(
     self.registration.showNotification(data.title, {
-      body:    data.body,
-      icon:    data.icon || "./icon-192.svg",
-      badge:   data.badge || "./icon-192.svg",
-      tag:     data.tag  || "luwon-push",
-      renotify: true,
-      vibrate: [200, 100, 200],
-      data:    { url: data.url || "/" }
+      body: data.body, icon: data.icon || "./icon-192.svg",
+      badge: data.badge || "./icon-192.svg", tag: data.tag || "luwon-push",
+      renotify: true, vibrate: [200, 100, 200],
+      data: { url: data.url || "/" }
     })
   );
 });
