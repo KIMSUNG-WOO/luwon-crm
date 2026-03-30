@@ -4162,8 +4162,10 @@
       $("homeCardDesc2").textContent  = "결과값 입력된 DB 건수 (전직원)";
       $("homeCardLabel3").textContent = "전직원 익일 일정";
       $("homeCardDesc3").textContent  = "내일 나가는 전직원 일정 수";
-      $("homeCardLabel4").textContent = "전직원 이번달 등록 일정";
-      $("homeCardDesc4").textContent  = "이번달 전직원 등록 누적";
+      const calY = state.calendarYear, calM = state.calendarMonth;
+      const calLabel = getMonthLabel(calY, calM);
+      $("homeCardLabel4").textContent = `전직원 ${calLabel} 일정`;
+      $("homeCardDesc4").textContent  = `${calLabel} 전직원 일정 (진행일 기준)`;
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today)).length;
       // 콜량: 결과값이 있고, 오늘 입력된 건수 (resultEnteredAt 또는 resultDate 기준)
@@ -4171,7 +4173,11 @@
       $("homeValue2").textContent = _todayCalls.length;
       renderCallRanking(_todayCalls);
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
-      $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month)).length;
+      $("homeValue4").textContent = schedules.filter(s => {
+        if(!s.date) return false;
+        const d = new Date(s.date + "T00:00:00");
+        return d.getFullYear() === calY && d.getMonth() === calM;
+      }).length;
       // 상세 모달이 열려있으면 데이터 자동 갱신 (카드 숫자와 모달 일치 유지)
       if(_openDetailCardNo && $("homeDetailOverlay")?.classList.contains("open")){
         onHomeCardDblClick(_openDetailCardNo);
@@ -4191,15 +4197,21 @@
       $("homeCardDesc2").textContent  = "결과값 입력된 DB 건수";
       $("homeCardLabel3").textContent = "내 익일 일정";
       $("homeCardDesc3").textContent  = "내일 나가는 일정 수";
-      $("homeCardLabel4").textContent = "내 이번달 등록 일정";
-      $("homeCardDesc4").textContent  = "이번달 등록 누적";
+      const calY = state.calendarYear, calM = state.calendarMonth;
+      const calLabel = getMonthLabel(calY, calM);
+      $("homeCardLabel4").textContent = `내 ${calLabel} 일정`;
+      $("homeCardDesc4").textContent  = `${calLabel} 내 일정 (진행일 기준)`;
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 콜량: 내 DB 중 결과값 입력된 건수
       $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && l.result !== "선택" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
       renderCallRanking(null); // 직원 모드: 랭킹 숨김
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
-      $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month) && s.createdByNo === no).length;
+      $("homeValue4").textContent = schedules.filter(s => {
+        if(!s.date) return false;
+        const d = new Date(s.date + "T00:00:00");
+        return d.getFullYear() === calY && d.getMonth() === calM && s.createdByNo === no;
+      }).length;
     }
 
     function getVisibleSchedules(){
@@ -6553,6 +6565,7 @@
       if(state.calendarMonth < 0){ state.calendarMonth = 11; state.calendarYear -= 1; }
       if(state.calendarMonth > 11){ state.calendarMonth = 0; state.calendarYear += 1; }
       renderCalendar();
+      runHomeSummary(); // 캘린더 월 변경 → 카드4 즉시 갱신
     }
 
     function goTodayCalendar(){
@@ -6561,6 +6574,7 @@
       state.calendarMonth = now.getMonth();
       state.selectedCalendarDate = todayStr();
       renderCalendar();
+      runHomeSummary(); // 오늘 월로 복귀 → 카드4 즉시 갱신
     }
 
     function selectCalendarDate(dateStr){
