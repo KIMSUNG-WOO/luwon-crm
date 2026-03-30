@@ -3768,6 +3768,18 @@
       msg.textContent = "";
     }
 
+    function formatDateTime(iso){
+      if(!iso) return "";
+      const d = new Date(iso);
+      if(isNaN(d)) return "";
+      return d.getFullYear() + "-" +
+        String(d.getMonth()+1).padStart(2,"0") + "-" +
+        String(d.getDate()).padStart(2,"0") + " " +
+        String(d.getHours()).padStart(2,"0") + ":" +
+        String(d.getMinutes()).padStart(2,"0") + ":" +
+        String(d.getSeconds()).padStart(2,"0");
+    }
+
     function escapeHtml(str){
       return String(str ?? "")
         .replaceAll("&","&amp;")
@@ -5176,7 +5188,9 @@
         const resultOpts = RESULT_OPTIONS.map(o =>
           `<option value="${o}" ${l.result===o?"selected":""}>${o||"선택"}</option>`).join("");
         const resultLabel = l.result === "일정픽스" && l.resultDate
-          ? `<div style="font-size:10px;color:#2563eb;margin-top:2px;">${escapeHtml(l.resultDate)} ${escapeHtml(l.resultTime||"")}</div>` : "";
+          ? `<div style="font-size:10px;color:#2563eb;margin-top:2px;">${escapeHtml(l.resultDate)} ${escapeHtml(l.resultTime||"")}</div>`
+          : (l.result && l.result !== "" && l.result !== "선택" && l.resultEnteredAt)
+            ? `<div style="font-size:10px;color:#64748b;margin-top:2px;">${formatDateTime(l.resultEnteredAt)}</div>` : "";
         const resultCell = `<td><select class="result-select" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>${resultLabel}</td>`;
 
         const hasMemo = !!(l.memo && l.memo.trim());
