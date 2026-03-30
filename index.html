@@ -3559,7 +3559,7 @@
           if(missing.length){
             const recovered = missing.map(s => { const itin = buildItineraryFromSchedule(s); itin.id = Number(s.id); return itin; });
             itineraries.push(...recovered);
-            if(sbClient) sbClient.from("itineraries").upsert(recovered.map(itinToRow), {onConflict:"id"}).catch(e => console.warn("일정표 자동복구 오류:", e));
+            if(sbClient){ const { error: _recErr } = await sbClient.from("itineraries").upsert(recovered.map(itinToRow), {onConflict:"id"}); if(_recErr) console.warn("일정표 자동복구 오류:", _recErr); }
             console.log(`🔄 일정표 자동복구: ${recovered.length}건`);
           }
         }
@@ -4396,7 +4396,7 @@
         const newItin = buildItineraryFromSchedule(newSched);
         itineraries.unshift(newItin);
         if(sbClient){
-          sbClient.from("itineraries").upsert([itinToRow(newItin)], {onConflict:"id"}).catch(e => console.warn("일정표 저장 오류:", e));
+          const { error: _itinErr } = await sbClient.from("itineraries").upsert([itinToRow(newItin)], {onConflict:"id"}); if(_itinErr) console.warn("일정표 저장 오류:", _itinErr);
         }
         renderItineraries();
 
@@ -4529,10 +4529,11 @@
 
     function openScheduleModal(){
       if(!state.currentUser) return;
-      // 기본값 세팅
+      // 열 때마다 항상 완전 초기화 (이전 입력값 잔존 방지)
       $("scheduleAssignee").value = currentStaffName();
-      if(!$("scheduleDate").value) $("scheduleDate").value = tomorrowStr();
-      $("scheduleType").value = $("scheduleType").value || "교육섭외";
+      $("scheduleDate").value     = tomorrowStr();
+      $("scheduleType").value     = "교육섭외";
+      ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { const el=$(id); if(el) el.value=""; });
       updateSchedModalNateon();
       $("schedModalOverlay").classList.add("open");
       // 날짜 변경 등 입력 시 미리보기 업데이트
@@ -6345,7 +6346,7 @@
       closeItineraryEditModal();
       renderItineraries();
       // 일정표 수정 Supabase 직접 저장 (_sbFullyLoaded 무관하게 항상 저장)
-      if(sbClient){ const _editedItin = itin; sbClient.from("itineraries").upsert([itinToRow(_editedItin)], {onConflict:"id"}).catch(e => console.warn("일정표 수정 저장 오류:", e)); }
+      if(sbClient){ const _editedItin = itin; (async()=>{ const { error } = await sbClient.from("itineraries").upsert([itinToRow(_editedItin)], {onConflict:"id"}); if(error) console.warn("일정표 수정 저장 오류:", error); })(); }
       saveAppData();
       showItineraryMsg("✅ 일정표 수정 완료!", "");
     }
@@ -6678,7 +6679,7 @@
           row.age     = rowData.age;
           row.subject = rowData.subject;
           row.memo    = rowData.memo;
-          if(sbClient){ sbClient.from("schedules").upsert([schedToRow(row)], {onConflict:"id"}).catch(e => console.warn("수기 일정 수정 저장 오류:", e)); }
+          if(sbClient){ (async()=>{ const { error } = await sbClient.from("schedules").upsert([schedToRow(row)], {onConflict:"id"}); if(error) console.warn("수기 일정 수정 저장 오류:", error); })(); }
         }
       }else{
         const _newManualSched = {
@@ -6691,7 +6692,7 @@
           progressEtc:""
         };
         schedules.unshift(_newManualSched);
-        if(sbClient){ sbClient.from("schedules").upsert([schedToRow(_newManualSched)], {onConflict:"id"}).catch(e => console.warn("수기 일정 저장 오류:", e)); }
+        if(sbClient){ (async()=>{ const { error } = await sbClient.from("schedules").upsert([schedToRow(_newManualSched)], {onConflict:"id"}); if(error) console.warn("수기 일정 저장 오류:", error); })(); }
       }
 
       renderSchedules();
@@ -7412,8 +7413,8 @@
       if(sbClient){
         const schedIds = schedules.map(s => Number(s.id)).filter(n => !isNaN(n) && n > 0);
         const itinIds  = itineraries.map(i => Number(i.id)).filter(n => !isNaN(n) && n > 0);
-        if(schedIds.length) sbClient.from("schedules").delete().in("id", schedIds).catch(e => console.warn("일정 일괄삭제 오류:", e));
-        if(itinIds.length)  sbClient.from("itineraries").delete().in("id", itinIds).catch(e => console.warn("일정표 일괄삭제 오류:", e));
+        if(schedIds.length) (async()=>{ const { error } = await sbClient.from("schedules").delete().in("id", schedIds); if(error) console.warn("일정 일괄삭제 오류:", error); })();
+        if(itinIds.length)  (async()=>{ const { error } = await sbClient.from("itineraries").delete().in("id", itinIds); if(error) console.warn("일정표 일괄삭제 오류:", error); })();
       }
       schedules   = [];
       itineraries = [];
