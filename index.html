@@ -8,6 +8,22 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Inter,Arial,sans-serif' font-size='38' font-weight='900' fill='white' letter-spacing='-1'%3EL%3C/text%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233b82f6'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='180' height='180' rx='40' fill='url(%23g)'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='central' text-anchor='middle' font-family='Inter,Arial,sans-serif' font-size='110' font-weight='900' fill='white'%3EL%3C/text%3E%3C/svg%3E">
   <meta name="theme-color" content="#3b82f6">
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.json">
+  <!-- iOS PWA 설정 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="루원CRM">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.svg">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.svg">
+  <!-- Android/기타 -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="루원CRM">
+  <meta name="msapplication-TileColor" content="#3b82f6">
+  <!-- 캐시 완전 무효화 -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -64,6 +80,90 @@
     }
     body{padding:0}
     .hidden{display:none !important}
+
+    /* ══════════════════════════════════════
+       SPLASH SCREEN (앱 진입 애니메이션)
+    ══════════════════════════════════════ */
+    #splashScreen{
+      position:fixed;inset:0;z-index:99999;
+      background:#080e1c;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      gap:0;
+      transition:opacity .5s ease, transform .5s ease;
+    }
+    #splashScreen.hide{
+      opacity:0;transform:scale(1.04);pointer-events:none;
+    }
+    .splash-logo-wrap{
+      width:88px;height:88px;border-radius:24px;
+      background:linear-gradient(135deg,#3b82f6,#6366f1);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 16px 48px rgba(59,130,246,.45),0 4px 16px rgba(59,130,246,.3);
+      animation:splashLogoIn .7s cubic-bezier(.34,1.56,.64,1) both;
+      position:relative;overflow:hidden;
+    }
+    .splash-logo-wrap::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:50%;
+      background:linear-gradient(rgba(255,255,255,.18),transparent);
+      border-radius:24px 24px 0 0;
+    }
+    .splash-logo-letter{
+      font-size:52px;font-weight:900;color:#fff;
+      font-family:Inter,-apple-system,sans-serif;
+      letter-spacing:-2px;position:relative;z-index:1;
+    }
+    .splash-brand{
+      margin-top:20px;
+      font-size:22px;font-weight:900;color:#f1f5f9;
+      letter-spacing:-0.5px;
+      animation:splashFadeUp .6s .3s cubic-bezier(.4,0,.2,1) both;
+    }
+    .splash-sub{
+      margin-top:6px;
+      font-size:12px;font-weight:500;color:#475569;
+      letter-spacing:1px;text-transform:uppercase;
+      animation:splashFadeUp .6s .45s cubic-bezier(.4,0,.2,1) both;
+    }
+    .splash-bar-wrap{
+      margin-top:40px;width:120px;height:3px;
+      background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;
+      animation:splashFadeUp .5s .6s both;
+    }
+    .splash-bar{
+      height:100%;width:0;border-radius:999px;
+      background:linear-gradient(90deg,#3b82f6,#6366f1);
+      animation:splashProgress 1.8s .6s cubic-bezier(.4,0,.2,1) forwards;
+    }
+    .splash-dots{
+      display:flex;gap:6px;margin-top:16px;
+      animation:splashFadeUp .5s .65s both;
+    }
+    .splash-dot{
+      width:5px;height:5px;border-radius:50%;
+      background:#334155;
+      animation:splashDotPulse 1.2s infinite ease-in-out;
+    }
+    .splash-dot:nth-child(2){animation-delay:.2s}
+    .splash-dot:nth-child(3){animation-delay:.4s}
+
+    @keyframes splashLogoIn{
+      from{opacity:0;transform:scale(.5) rotate(-10deg)}
+      to{opacity:1;transform:scale(1) rotate(0deg)}
+    }
+    @keyframes splashFadeUp{
+      from{opacity:0;transform:translateY(12px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    @keyframes splashProgress{
+      0%{width:0}
+      60%{width:70%}
+      100%{width:100%}
+    }
+    @keyframes splashDotPulse{
+      0%,80%,100%{transform:scale(.6);background:#334155}
+      40%{transform:scale(1);background:#3b82f6}
+    }
 
     /* ══════════════════════════════════════
        LOGIN PAGE
@@ -943,6 +1043,301 @@
     /* PC에서는 모바일 모드토글 숨김 */
     @media(min-width:769px){ .mob-mode-wrap{ display:none!important; } }
 
+    /* ══════════════════════════════════════
+       모바일 하단 탭바 (Bottom Tab Bar)
+    ══════════════════════════════════════ */
+    /* 탭바: 완전 숨김 */
+    #crmMobTabBar{
+      display:none!important;
+    }
+    @media(max-width:768px){
+      .crm-tab-item{
+        flex:1;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;
+        gap:3px;padding:6px 4px 4px;
+        background:transparent;border:none;
+        color:#475569;font-size:9.5px;font-weight:700;
+        cursor:pointer;border-radius:12px;
+        transition:all .18s;font-family:inherit;
+        position:relative;min-width:0;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .crm-tab-item .tab-icon{
+        font-size:20px;line-height:1;
+        transition:transform .2s cubic-bezier(.34,1.56,.64,1);
+      }
+      .crm-tab-item .tab-label{
+        font-size:9.5px;font-weight:700;letter-spacing:.2px;
+        transition:color .18s;white-space:nowrap;overflow:hidden;
+        text-overflow:ellipsis;max-width:52px;
+      }
+      .crm-tab-item.active{
+        color:#60a5fa;
+      }
+      .crm-tab-item.active .tab-icon{
+        transform:scale(1.15) translateY(-2px);
+      }
+      .crm-tab-item.active::before{
+        content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+        width:28px;height:3px;border-radius:0 0 3px 3px;
+        background:linear-gradient(90deg,#3b82f6,#6366f1);
+      }
+      .crm-tab-item:active{
+        transform:scale(.94);background:rgba(255,255,255,.05);
+      }
+      /* 더보기 탭 */
+      .crm-tab-more .tab-icon{
+        width:24px;height:24px;
+        display:flex;flex-direction:column;
+        align-items:center;justify-content:center;gap:3.5px;
+      }
+      .crm-tab-more .tab-icon span{
+        display:block;width:18px;height:2px;
+        background:#475569;border-radius:2px;transition:background .18s;
+      }
+      .crm-tab-more.active .tab-icon span,
+      #crmMobTabBar .crm-tab-item:last-child:active .tab-icon span{
+        background:#60a5fa;
+      }
+      /* 모바일에서 더 넓은 터치 영역 */
+      .menu-item{ min-height:48px; }
+      /* 모바일 사이드바: 사이드바 자체는 스크롤 없이 고정, 메뉴만 스크롤 */
+      .sidebar{ overflow:hidden!important; }
+      .menu{ flex:1; overflow-y:auto; min-height:0; }
+      /* 로그아웃 버튼: 항상 사이드바 하단에 고정 노출 */
+      .logout{ flex-shrink:0; min-height:48px; position:relative; background:var(--sidebar-bg); z-index:2; margin-top:0; }
+
+      /* 홈 요약 카드 개선 */
+      .summary-card{
+        padding:14px 12px;
+        border-radius:14px;
+        cursor:pointer;
+        transition:transform .15s, box-shadow .15s;
+      }
+      .summary-card:active{
+        transform:scale(.97);
+        box-shadow:var(--shadow-xs);
+      }
+
+      /* 로그인 페이지 모바일 전용 — 전체 화면 덮어서 대시보드 완전 차단 */
+      .login-page{
+        position:fixed!important;
+        inset:0;
+        z-index:9999;
+        overflow-y:auto;
+        background:#080e1c;
+        grid-template-columns:1fr;
+      }
+      .login-card{
+        border-radius:0;
+        box-shadow:none;
+        background:transparent;
+      }
+      .lf-body{
+        background:rgba(255,255,255,.97);
+        margin:0 0;
+        border-radius:0;
+      }
+
+      /* 일정/실적 카드형 목록 */
+      .mob-card-list{ display:flex!important; flex-direction:column; gap:10px; }
+      .mob-card-list table,
+      .mob-card-list thead{ display:none!important; }
+      .mob-card-item{
+        background:var(--panel);
+        border:1px solid var(--line);
+        border-radius:14px;
+        padding:14px 16px;
+        display:flex;flex-direction:column;gap:8px;
+        box-shadow:var(--shadow-xs);
+        transition:box-shadow .15s;
+      }
+      .mob-card-item:active{ box-shadow:var(--shadow); }
+      .mob-card-header{
+        display:flex;justify-content:space-between;align-items:flex-start;gap:8px;
+      }
+      .mob-card-title{
+        font-size:14px;font-weight:800;color:var(--text);flex:1;line-height:1.3;
+      }
+      .mob-card-meta{
+        display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--muted);
+      }
+      .mob-card-meta span{ display:flex;align-items:center;gap:3px; }
+      .mob-card-actions{
+        display:flex;gap:6px;padding-top:4px;border-top:1px solid var(--line2);
+      }
+      .mob-card-actions button{
+        flex:1;height:34px;border-radius:9px;font-size:12px;font-weight:700;
+        cursor:pointer;font-family:inherit;transition:all .15s;
+      }
+
+      /* 섹션 헤더 개선 */
+      .section-head{
+        padding:4px 0 12px;
+        border-bottom:1px solid var(--line2);
+        margin-bottom:12px;
+      }
+
+      /* 검색/필터 영역 */
+      .toolbar{ gap:8px; }
+      .toolbar input,.toolbar select{
+        height:44px;font-size:14px;border-radius:10px;
+      }
+      .toolbar button,.small-btn,.ghost-btn{
+        height:44px;font-size:13px;border-radius:10px;padding:0 16px;
+      }
+
+      /* 탭 버튼 */
+      .tab-btn{
+        height:40px;font-size:13px;border-radius:10px;padding:0 14px;
+      }
+
+      /* 폼 입력 */
+      .sched-modal input, .sched-modal select, .sched-modal textarea{
+        font-size:16px!important; /* iOS 줌 방지 */
+      }
+
+      /* 모달 하단에서 올라오는 애니메이션 */
+      .modal-overlay.show .sched-modal,
+      .modal-overlay.show > div[style]{
+        animation:mobModalSlideUp .3s cubic-bezier(.4,0,.2,1);
+      }
+      @keyframes mobModalSlideUp{
+        from{transform:translateY(30px);opacity:0}
+        to{transform:translateY(0);opacity:1}
+      }
+
+      /* 쪽지 패널 전체화면 */
+      .msg-panel{
+        left:8px!important;right:8px!important;
+        bottom:70px!important;
+        width:auto!important;
+      }
+    }
+
+    /* ══════════════════════════════════════
+       로그인 모바일 세련되게
+    ══════════════════════════════════════ */
+    @media(max-width:768px){
+      .login-page{
+        background:linear-gradient(160deg,#080e1c 0%,#0f172a 50%,#1a2744 100%)!important;
+        position:relative;overflow:hidden;
+      }
+      .login-page::before{
+        content:'';position:absolute;
+        width:400px;height:400px;border-radius:50%;
+        background:radial-gradient(circle,rgba(59,130,246,.12) 0%,transparent 65%);
+        top:-80px;right:-80px;pointer-events:none;
+      }
+      .login-page::after{
+        content:'';position:absolute;
+        width:300px;height:300px;border-radius:50%;
+        background:radial-gradient(circle,rgba(99,102,241,.09) 0%,transparent 65%);
+        bottom:-40px;left:-40px;pointer-events:none;
+      }
+      .login-card{
+        background:transparent!important;
+        box-shadow:none!important;
+        display:flex;flex-direction:column;justify-content:flex-end;
+        min-height:100vh;
+        position:relative;z-index:1;
+      }
+      .lf-top{
+        background:transparent;
+        border-bottom:none!important;
+        padding:32px 24px 16px!important;
+      }
+      .lf-top .lf-logo span{ color:#f1f5f9!important; }
+      .secure{ background:rgba(59,130,246,.15)!important;border-color:rgba(59,130,246,.3)!important;color:#93c5fd!important; }
+      .lf-body{
+        background:rgba(255,255,255,.97)!important;
+        border-radius:28px 28px 0 0!important;
+        padding:32px 28px 28px!important;
+        box-shadow:0 -8px 48px rgba(0,0,0,.3)!important;
+        margin:0!important;
+      }
+      .lf-footer{
+        background:rgba(255,255,255,.97)!important;
+        padding:8px 28px 24px!important;
+        border-top:1px solid #f1f5f9!important;
+      }
+      .login-head h2{ font-size:28px!important; }
+      .input{ height:54px!important;font-size:16px!important;border-radius:14px!important; }
+      .login-btn{ height:54px!important;font-size:16px!important;border-radius:14px!important; }
+      /* 로그인 화면 상단 앱 로고 */
+      .mob-login-hero{
+        flex:1;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;
+        gap:12px;padding:40px 24px 20px;
+      }
+      .mob-login-logo-wrap{
+        width:80px;height:80px;border-radius:22px;
+        background:linear-gradient(135deg,#3b82f6,#6366f1);
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 12px 40px rgba(59,130,246,.4);
+        font-size:44px;font-weight:900;color:#fff;
+        font-family:Inter,-apple-system,sans-serif;
+        position:relative;overflow:hidden;
+      }
+      .mob-login-logo-wrap::before{
+        content:'';position:absolute;top:0;left:0;right:0;height:50%;
+        background:linear-gradient(rgba(255,255,255,.2),transparent);
+        border-radius:22px 22px 0 0;
+      }
+      .mob-login-brand{
+        font-size:26px;font-weight:900;color:#f1f5f9;letter-spacing:-0.5px;
+      }
+      .mob-login-sub{
+        font-size:12px;color:#475569;letter-spacing:1px;text-transform:uppercase;
+      }
+    }
+    @media(min-width:769px){ .mob-login-hero{ display:none!important; } }
+
+    /* ══════════════════════════════════════
+       PWA 설치 배너 (모바일)
+    ══════════════════════════════════════ */
+    #pwaInstallBanner{
+      display:none;
+      position:fixed;bottom:70px;left:12px;right:12px;
+      background:linear-gradient(135deg,#1e3a5f,#1e3367);
+      border:1px solid rgba(59,130,246,.3);
+      border-radius:16px;padding:14px 16px;
+      z-index:1002;
+      box-shadow:0 8px 32px rgba(0,0,0,.4);
+      align-items:center;gap:12px;
+      animation:slideUp .35s cubic-bezier(.4,0,.2,1);
+    }
+    #pwaInstallBanner.show{ display:flex!important; }
+    @keyframes slideUp{
+      from{transform:translateY(20px);opacity:0}
+      to{transform:translateY(0);opacity:1}
+    }
+    .pwa-banner-icon{
+      width:44px;height:44px;border-radius:12px;flex-shrink:0;
+      background:linear-gradient(135deg,#3b82f6,#6366f1);
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;font-weight:900;color:#fff;
+    }
+    .pwa-banner-text{ flex:1;min-width:0; }
+    .pwa-banner-title{ font-size:13px;font-weight:800;color:#f1f5f9; }
+    .pwa-banner-desc{ font-size:11px;color:#64748b;margin-top:1px; }
+    .pwa-install-btn{
+      height:36px;padding:0 14px;border-radius:10px;border:none;
+      background:linear-gradient(135deg,#3b82f6,#2563eb);
+      color:#fff;font-size:12px;font-weight:800;cursor:pointer;
+      white-space:nowrap;flex-shrink:0;font-family:inherit;
+      box-shadow:0 3px 12px rgba(59,130,246,.35);
+    }
+    .pwa-close-btn{
+      width:28px;height:28px;border-radius:8px;border:none;
+      background:rgba(255,255,255,.07);color:#64748b;
+      font-size:14px;cursor:pointer;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+    }
+
+    /* PC에서는 탭바 숨김 */
+    @media(min-width:769px){ #crmMobTabBar{ display:none!important; } }
+
     /* ── EDU BADGES ── */
     .edu-pass{
       display:inline-flex;align-items:center;height:22px;padding:0 9px;
@@ -1370,6 +1765,21 @@
 </head>
 <body>
 
+  <!-- ══ 스플래시 화면 ══ -->
+  <div id="splashScreen">
+    <div class="splash-logo-wrap">
+      <span class="splash-logo-letter">L</span>
+    </div>
+    <div class="splash-brand">LUWON CRM</div>
+    <div class="splash-sub">TM 운영 전산 시스템</div>
+    <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
+    <div class="splash-dots">
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+    </div>
+  </div>
+
   <section class="login-page" id="loginPage">
 
     <!-- ── 왼쪽 다크 브랜딩 패널 ── -->
@@ -1406,6 +1816,12 @@
 
     <!-- ── 오른쪽 로그인 폼 ── -->
     <div class="login-card">
+      <!-- 모바일 전용 로고 영역 -->
+      <div class="mob-login-hero">
+        <div class="mob-login-logo-wrap">L</div>
+        <div class="mob-login-brand">LUWON CRM</div>
+        <div class="mob-login-sub">TM 운영 전산 시스템</div>
+      </div>
       <div class="lf-top">
         <div class="lf-logo">
           <div class="logo-wrap"><div class="logo">L</div></div>
@@ -1526,6 +1942,43 @@
       <button class="logout" onclick="logout()">로그아웃</button>
     </aside>
 
+    <!-- ══ 모바일 하단 탭바 ══ -->
+    <nav id="crmMobTabBar">
+      <button class="crm-tab-item" data-view="home" onclick="setView('home');closeMobMenu()">
+        <span class="tab-icon">🏠</span>
+        <span class="tab-label">홈</span>
+      </button>
+      <button class="crm-tab-item" data-view="schedule" onclick="setView('schedule');closeMobMenu()">
+        <span class="tab-icon">🗓</span>
+        <span class="tab-label">일정</span>
+      </button>
+      <button class="crm-tab-item" data-view="performance-save" onclick="setView('performance-save');closeMobMenu()">
+        <span class="tab-icon">💾</span>
+        <span class="tab-label">실적</span>
+      </button>
+      <button class="crm-tab-item" data-view="lead" onclick="setView('lead');closeMobMenu()">
+        <span class="tab-icon">🗂</span>
+        <span class="tab-label">교육DB</span>
+      </button>
+      <button class="crm-tab-item crm-tab-more" id="crmTabMore" onclick="toggleMobMenu()">
+        <span class="tab-icon">
+          <span></span><span></span><span></span>
+        </span>
+        <span class="tab-label">더보기</span>
+      </button>
+    </nav>
+
+    <!-- ══ PWA 설치 배너 ══ -->
+    <div id="pwaInstallBanner">
+      <div class="pwa-banner-icon">L</div>
+      <div class="pwa-banner-text">
+        <div class="pwa-banner-title">앱으로 설치하기</div>
+        <div class="pwa-banner-desc">홈 화면에 추가하면 앱처럼 사용 가능</div>
+      </div>
+      <button class="pwa-install-btn" onclick="pwaInstallApp()">설치</button>
+      <button class="pwa-close-btn" onclick="pwaDismiss()">✕</button>
+    </div>
+
     <main class="main">
       <div class="topbar">
         <div>
@@ -1538,6 +1991,11 @@
             <button class="mode-btn active" id="staffModeBtn" onclick="switchMode('staff')">직원 모드</button>
             <button class="mode-btn" id="adminModeBtn" onclick="switchMode('admin')">관리자 모드</button>
           </div>
+          <!-- PC 전용: 모바일 앱 다운로드 버튼 -->
+          <button id="pcApkBtn" onclick="openApkModal()" title="모바일 앱 설치 안내"
+            style="display:none;height:36px;padding:0 14px;border-radius:10px;border:1px solid rgba(59,130,246,.25);background:rgba(59,130,246,.08);color:#3b82f6;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;gap:6px;align-items:center;">
+            📱 모바일 앱
+          </button>
           <button id="darkModeToggleBtn" title="다크모드 전환" onclick="crmToggleDarkMode()">🌙</button>
         </div>
       </div>
@@ -1578,9 +2036,6 @@
               <div id="crmGoalBadge4"></div>
             </div>
           </div>
-
-          <!-- 금일 콜량 직원 랭킹 (관리자 전용) -->
-          <div id="homeCallRanking" style="display:none; margin-bottom:16px;"></div>
 
           <div class="split-grid">
             <div class="panel" id="homeNoticePanel">
@@ -1668,6 +2123,7 @@
             <table>
               <thead>
                 <tr>
+                  <th>등록시간</th>
                   <th>섭외자</th>
                   <th>섭외</th>
                   <th>날짜</th>
@@ -1685,6 +2141,7 @@
               <tbody id="scheduleTableBody"></tbody>
             </table>
           </div>
+          <div id="schedPagination" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0;flex-wrap:wrap;"></div>
         </div>
 
         <div class="view hidden" id="view-aggregate">
@@ -2475,6 +2932,62 @@
 
   </section>
 
+  <!-- ══ 모바일 앱(APK) 다운로드 모달 ══ -->
+  <div class="modal-backdrop" id="apkModal" onclick="if(event.target===this)closeApkModal()" style="display:none;">
+    <div class="modal-card" style="max-width:420px;">
+      <div class="modal-head">
+        <div>
+          <h4>🤖 안드로이드 앱 다운로드</h4>
+          <p>루원 CRM 전용 앱 (Android)</p>
+        </div>
+        <button class="icon-btn" onclick="closeApkModal()">✕</button>
+      </div>
+      <div style="padding:0 24px 24px;display:flex;flex-direction:column;gap:14px;">
+
+        <!-- 앱 정보 카드 -->
+        <div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,rgba(5,150,105,.08),rgba(16,185,129,.05));border:1px solid rgba(5,150,105,.2);border-radius:14px;padding:16px;">
+          <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;flex-shrink:0;box-shadow:0 4px 14px rgba(59,130,246,.35);">L</div>
+          <div>
+            <div style="font-size:15px;font-weight:800;color:var(--text);">루원 CRM</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">TM 운영 전산 시스템</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
+              <span style="font-size:10px;font-weight:700;background:#dcfce7;color:#059669;border:1px solid #86efac;border-radius:999px;padding:2px 8px;">Android</span>
+              <span style="font-size:10px;font-weight:700;background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;border-radius:999px;padding:2px 8px;">최신버전</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 설치 안내 -->
+        <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);">📋 설치 방법</div>
+          <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);">
+            <span style="background:#3b82f6;color:#fff;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;margin-top:1px;">1</span>
+            <span>아래 버튼으로 APK 파일 다운로드</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);">
+            <span style="background:#3b82f6;color:#fff;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;margin-top:1px;">2</span>
+            <span>폰에서 파일 열기 → <b>설치</b> 클릭</span>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--muted);">
+            <span style="background:#3b82f6;color:#fff;border-radius:50%;width:17px;height:17px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;margin-top:1px;">3</span>
+            <span><b>"알 수 없는 앱 설치 허용"</b> → 설치 완료</span>
+          </div>
+        </div>
+
+        <!-- 다운로드 버튼 -->
+        <a id="apkDownloadLink"
+          href="https://expo.dev/artifacts/eas/c8TsaPHKsfF69DMhTuUhik.apk"
+          target="_blank" rel="noopener"
+          style="display:flex;align-items:center;justify-content:center;gap:10px;height:50px;border-radius:13px;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:14px;font-weight:800;text-decoration:none;box-shadow:0 4px 18px rgba(5,150,105,.35);transition:opacity .15s;"
+          onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          <span style="font-size:18px;">⬇️</span> APK 다운로드
+        </a>
+
+        <button onclick="closeApkModal()" style="width:100%;height:40px;border-radius:11px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">닫기</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 메모 모달 -->
   <div class="modal-backdrop" id="leadMemoModal" onclick="if(event.target===this)closeLeadMemoModal()">
     <div class="modal-card" style="max-width:420px;">
@@ -2880,6 +3393,12 @@
     let msgList         = [];
     let msgLastChecked  = null;
 
+    // ─── 삭제된 일정 ID 레지스트리 (레이스컨디션 방지용) ───
+    const DELETED_SCHED_KEY = "luwon_deleted_sched_ids";
+    function getDeletedSchedIds(){ try{ return new Set(JSON.parse(localStorage.getItem(DELETED_SCHED_KEY)||"[]").map(String)); }catch(e){ return new Set(); } }
+    function markSchedDeleted(id){ try{ const s=getDeletedSchedIds(); s.add(String(id)); localStorage.setItem(DELETED_SCHED_KEY,JSON.stringify([...s])); }catch(e){} }
+    function cleanDeletedSchedIds(activeIds){ try{ const active=new Set(activeIds.map(String)); const remaining=[...getDeletedSchedIds()].filter(id=>active.has(id)); localStorage.setItem(DELETED_SCHED_KEY,JSON.stringify(remaining)); }catch(e){} }
+
     // ─── 앱 데이터 localStorage 저장/복원 ───
     const APP_DATA_KEY = "luwon_app_data";
 
@@ -2910,7 +3429,7 @@
         if(d.adminRates      && typeof d.adminRates==="object")  Object.assign(adminRates, d.adminRates);
         if(d.performances    && Array.isArray(d.performances))   performances    = d.performances;
         if(d.leads           && Array.isArray(d.leads))          leads           = d.leads;
-        if(d.schedules       && Array.isArray(d.schedules))      schedules       = d.schedules;
+        if(d.schedules       && Array.isArray(d.schedules))      { const _dIds=getDeletedSchedIds(); schedules = d.schedules.filter(s => !_dIds.has(String(s.id))); }
         if(d.itineraries     && Array.isArray(d.itineraries))    itineraries     = d.itineraries;
         if(d.notices         && Array.isArray(d.notices))        notices         = d.notices;
         if(d.inspectionRules && Array.isArray(d.inspectionRules)) inspectionRules = d.inspectionRules;
@@ -2960,11 +3479,11 @@
     // ─── Supabase 전체 데이터 동기화 ────────────────────────────────
 
     // camelCase ↔ snake_case 변환 헬퍼
-    function schedToRow(s){ return { id:Number(s.id), assignee:s.assignee||"", date:s.date||"", time:s.time||"", company:s.company||"", manager:s.manager||"", phone:s.phone||"", address:s.address||"", people:s.people||"", gap:s.gap||"", bank:s.bank||"", memo:s.memo||"", created_by:s.createdBy||"", created_by_no:s.createdByNo||"", created_at:s.createdAt||"", progress_status:s.progressStatus||"", progress_etc:s.progressEtc||"" }; }
-    function rowToSched(r){ return { id:r.id, assignee:r.assignee, date:r.date, time:r.time, company:r.company, manager:r.manager, phone:r.phone, address:r.address, people:r.people, gap:r.gap, bank:r.bank, memo:r.memo, createdBy:r.created_by, createdByNo:r.created_by_no, createdAt:r.created_at, progressStatus:r.progress_status, progressEtc:r.progress_etc }; }
+    function schedToRow(s){ return { id:Number(s.id), assignee:s.assignee||"", type:s.type||"교육섭외", date:s.date||"", time:s.time||"", company:s.company||"", manager:s.manager||"", phone:s.phone||"", address:s.address||"", people:s.people||"", age:s.age||"", subject:s.subject||"", gap:s.gap||"", bank:s.bank||"", memo:s.memo||"", created_by:s.createdBy||"", created_by_no:s.createdByNo||"", created_at:s.createdAt||"", progress_status:s.progressStatus||"", progress_etc:s.progressEtc||"" }; }
+    function rowToSched(r){ return { id:r.id, assignee:r.assignee, type:r.type||"교육섭외", date:r.date, time:r.time, company:r.company, manager:r.manager, phone:r.phone, address:r.address, people:r.people, age:r.age||"", subject:r.subject||"", gap:r.gap, bank:r.bank, memo:r.memo, createdBy:r.created_by, createdByNo:r.created_by_no, createdAt:r.created_at, progressStatus:r.progress_status, progressEtc:r.progress_etc }; }
 
     function leadToRow(l){ return { id:Number(l.id), type:l.type||"", date:l.date||"", time:l.time||"", company:l.company||"", address:l.address||"", manager:l.manager||"", phone:l.phone||"", people:l.people||"", age:l.age||"", subject:l.subject||"", industry:l.industry||"", status:l.status||"", owner_no:l.ownerNo||"", owner_name:l.ownerName||"", created_at:l.createdAt||"", result:l.result||"", result_date:l.resultDate||"", result_time:l.resultTime||"", memo:l.memo||"", rep_name:l.repName||"", clean_biz:l.cleanBiz||false }; }
-    function rowToLead(r){ return { id:r.id, type:r.type, date:r.date, time:r.time, company:r.company, address:r.address, manager:r.manager, phone:r.phone, people:r.people, age:r.age, subject:r.subject, industry:r.industry, status:r.status, ownerNo:r.owner_no, ownerName:r.owner_name, createdAt:r.created_at, result:r.result, resultDate:r.result_date, resultTime:r.result_time, memo:r.memo, repName:r.rep_name }; }
+    function rowToLead(r){ return { id:r.id, type:r.type, date:r.date, time:r.time, company:r.company, address:r.address, manager:r.manager, phone:r.phone, people:r.people, age:r.age, subject:r.subject, industry:r.industry, status:r.status, ownerNo:r.owner_no, ownerName:r.owner_name, createdAt:r.created_at, result:r.result, resultDate:r.result_date, resultTime:r.result_time, resultEnteredAt:r.result_entered_at||"", memo:r.memo, repName:r.rep_name }; }
 
     function perfToRow(p){ return { id:Number(p.id), staff:p.staff||"", staff_no:p.staffNo||"", type:p.type||"", value:String(p.value||""), amount:Number(p.amount||0), take:Number(p.take||0), memo:p.memo||"", date:p.date||"", created_by_no:p.createdByNo||"" }; }
     function rowToPerf(r){ return { id:r.id, staff:r.staff, staffNo:r.staff_no, type:r.type, value:r.value, amount:r.amount, take:r.take, memo:r.memo, date:r.date, createdByNo:r.created_by_no }; }
@@ -2978,10 +3497,9 @@
     async function sbSyncAll(){
       try{
         if(_sbFullyLoaded){
+          // schedules/itineraries는 개별 upsert/delete로 관리 → sbSyncAll에서 제외 (재삽입 경쟁 상태 방지)
           const ops = [
-            schedules.length        ? sbClient.from("schedules").upsert(schedules.map(schedToRow), {onConflict:"id"}) : null,
             performances.length     ? sbClient.from("performances").upsert(performances.map(perfToRow), {onConflict:"id"}) : null,
-            itineraries.length      ? sbClient.from("itineraries").upsert(itineraries.map(itinToRow), {onConflict:"id"}) : null,
             inspectionRules.length  ? sbClient.from("inspection_rules").upsert(inspectionRules.map(r=>({id:Number(r.id),company:r.company,type:r.type})), {onConflict:"id"}) : null,
             onlineEduRules.length   ? sbClient.from("online_edu_rules").upsert(onlineEduRules.map(r=>({id:Number(r.id),company:r.company})), {onConflict:"id"}) : null,
           ].filter(Boolean);
@@ -3012,9 +3530,15 @@
           sbClient.from("online_edu_rules").select("*"),
           sbClient.from("app_settings").select("*"),
         ]);
-        if(!schedRes.error && schedRes.data?.length)    schedules       = schedRes.data.map(rowToSched);
+        if(!schedRes.error && schedRes.data){
+          const _deletedIds = getDeletedSchedIds();
+          // 삭제 레지스트리에 없는 ID만 남김 (레이스컨디션으로 stale 데이터 덮어쓰기 방지)
+          schedules = schedRes.data.map(rowToSched).filter(s => !_deletedIds.has(String(s.id)));
+          // Supabase에서도 사라진 ID는 레지스트리에서 제거 (cleanup)
+          cleanDeletedSchedIds(schedRes.data.map(r => r.id));
+        }
         if(!perfRes.error  && perfRes.data?.length)     performances    = perfRes.data.map(rowToPerf);
-        if(!itinRes.error  && itinRes.data?.length)     itineraries     = itinRes.data.map(rowToItin);
+        if(!itinRes.error  && itinRes.data)             itineraries     = itinRes.data.map(rowToItin);
         if(!inspRes.error  && inspRes.data?.length)     inspectionRules = inspRes.data.map(r=>({id:r.id, company:r.company, type:r.type}));
         if(!onlRes.error   && onlRes.data?.length)      onlineEduRules  = onlRes.data.map(r=>({id:r.id, company:r.company}));
         if(!settRes.error  && settRes.data){
@@ -3035,7 +3559,7 @@
           if(missing.length){
             const recovered = missing.map(s => { const itin = buildItineraryFromSchedule(s); itin.id = Number(s.id); return itin; });
             itineraries.push(...recovered);
-            if(sbClient) sbClient.from("itineraries").upsert(recovered.map(itinToRow), {onConflict:"id"}).catch(e => console.warn("일정표 자동복구 오류:", e));
+            if(sbClient){ const { error: _recErr } = await sbClient.from("itineraries").upsert(recovered.map(itinToRow), {onConflict:"id"}); if(_recErr) console.warn("일정표 자동복구 오류:", _recErr); }
             console.log(`🔄 일정표 자동복구: ${recovered.length}건`);
           }
         }
@@ -3135,7 +3659,11 @@
         .on("postgres_changes", { event:"*", schema:"public", table:"schedules" }, async () => {
           try{
             const { data, error } = await sbClient.from("schedules").select("*");
-            if(!error && data){ schedules = data.map(rowToSched); if(state.currentUser){ renderSchedules(); renderCalendar(); loadAggregate(); } }
+            if(!error && data){
+              const _dIds = getDeletedSchedIds();
+              schedules = data.map(rowToSched).filter(s => !_dIds.has(String(s.id)));
+              if(state.currentUser){ renderSchedules(); renderCalendar(); loadAggregate(); runHomeSummary(); saveAppData(); }
+            }
           }catch(e){}
         })
         // 실적
@@ -3351,12 +3879,10 @@
 
       $("loginPage").style.display = "none";
       $("dashboard").style.display = window.innerWidth <= 768 ? "block" : "grid";
-
       hydrateUserUI();
       renderAll();
       setView("home");
       loadData();
-      loadFromSupabase(); // 로그인 후 최신 Supabase 데이터 로드 (백그라운드)
       setupRealtimeSync(); // 실시간 동기화 시작
       // 활동 로그 기록
       crmAddLog("ok", "로그인", user.name);
@@ -3595,13 +4121,15 @@
       $("homeCardLabel4").textContent = "전직원 이번달 등록 일정";
       $("homeCardDesc4").textContent  = "이번달 전직원 등록 누적";
 
-      $("homeValue1").textContent = schedules.filter(s => s.createdAt === today).length;
-      // 콜량: 결과값이 빈값(선택) 이 아닌 건수
-      const todayAdminCalls = leads.filter(l => l.resultDate === today && l.result && l.result !== "" && l.result !== "선택");
-      $("homeValue2").textContent = todayAdminCalls.length;
+      $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today)).length;
+      // 콜량: 결과값이 있고, 오늘 입력된 건수 (resultEnteredAt 또는 resultDate 기준)
+      $("homeValue2").textContent = leads.filter(l => l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month)).length;
-      renderCallRanking(todayAdminCalls);
+      // 상세 모달이 열려있으면 데이터 자동 갱신 (카드 숫자와 모달 일치 유지)
+      if(_openDetailCardNo && $("homeDetailOverlay")?.classList.contains("open")){
+        onHomeCardDblClick(_openDetailCardNo);
+      }
     }
 
     function runMySummary(){
@@ -3620,50 +4148,11 @@
       $("homeCardLabel4").textContent = "내 이번달 등록 일정";
       $("homeCardDesc4").textContent  = "이번달 등록 누적";
 
-      $("homeValue1").textContent = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
+      $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 콜량: 내 DB 중 결과값 입력된 건수
-      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.resultDate === today && l.result && l.result !== "" && l.result !== "선택").length;
-      renderCallRanking(null); // 직원 모드: 랭킹 숨김
+      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month) && s.createdByNo === no).length;
-    }
-
-    function renderCallRanking(todayCalls){
-      const el = $("homeCallRanking");
-      if(!el) return;
-      if(!todayCalls || !todayCalls.length){ el.style.display = "none"; return; }
-
-      // 직원별 집계
-      const byStaff = {};
-      todayCalls.forEach(l => {
-        const name = l.ownerName || "미정";
-        byStaff[name] = (byStaff[name] || 0) + 1;
-      });
-
-      // 콜량 많은 순 정렬
-      const ranking = Object.entries(byStaff)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count);
-
-      const medals = ["🥇","🥈","🥉"];
-      const rows = ranking.map((r, i) =>
-        `<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:8px;background:${i===0?'rgba(59,130,246,0.08)':'transparent'}">
-          <span style="font-size:16px;width:24px;text-align:center;">${medals[i] || `${i+1}`}</span>
-          <span style="flex:1;font-weight:700;font-size:13px;">${escapeHtml(r.name)}</span>
-          <span style="font-size:13px;font-weight:800;color:#3b82f6;">${r.count}<span style="font-size:11px;color:#64748b;font-weight:500;margin-left:2px;">콜</span></span>
-        </div>`
-      ).join("");
-
-      el.style.display = "block";
-      el.innerHTML = `
-        <div class="panel" style="padding:14px 16px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-            <span style="font-size:15px;">🏆</span>
-            <span style="font-weight:800;font-size:14px;">금일 콜량 랭킹</span>
-            <span style="margin-left:auto;font-size:11px;color:#64748b;">총 ${todayCalls.length}콜 · ${todayStr()} 기준</span>
-          </div>
-          ${rows}
-        </div>`;
     }
 
     function getVisibleSchedules(){
@@ -3857,63 +4346,89 @@
       });
     }
 
-    function addSchedule(){
+    async function addSchedule(){
       if(!state.currentUser) return;
 
-      const assignee = currentStaffName();
-      const type    = normalizeText($("scheduleType").value) || "교육섭외";
-      const date    = normalizeText($("scheduleDate").value);
-      const time    = normalizeManualTime($("scheduleTime").value);
-      const company = normalizeText($("scheduleCompany").value);
-      const address = normalizeText($("scheduleAddress").value);
-      const manager = normalizeText($("scheduleManager").value);
-      const phone   = normalizePhone($("schedulePhone").value);
-      const people  = normalizeText($("schedulePeople").value);
-      const age     = normalizeText($("scheduleAge").value);
-      const subject = normalizeText($("scheduleSubject").value);
-      const memo    = normalizeText($("scheduleMemo").value);
+      // 중복 클릭 방지 — 저장 중에는 버튼 비활성화
+      const _saveBtn = document.querySelector('.sched-save-btn');
+      if(_saveBtn && _saveBtn.disabled) return; // 이미 저장 진행 중
+      if(_saveBtn){ _saveBtn.disabled = true; _saveBtn.textContent = '저장 중...'; }
 
-      if(!date) return alert("날짜는 꼭 입력해 주세요.");
-      if(!time) return alert("시간은 꼭 입력해 주세요.");
-      if(!company) return alert("업체는 꼭 입력해 주세요.");
+      const _restoreBtn = () => { if(_saveBtn){ _saveBtn.disabled = false; _saveBtn.textContent = '✅ 일정 저장'; } };
 
-      const newSched = {
-        id: Date.now(),
-        assignee, type, date, time, company, address, manager, phone, people, age, subject, memo,
-        createdBy: currentStaffName(),
-        createdByNo: currentStaffNo(),
-        createdAt: todayStr(),
-        progressStatus:"",
-        progressEtc:""
-      };
-      schedules.unshift(newSched);
+      try{
+        const assignee = currentStaffName();
+        const type    = normalizeText($("scheduleType").value) || "교육섭외";
+        const date    = normalizeText($("scheduleDate").value);
+        const time    = normalizeManualTime($("scheduleTime").value);
+        const company = normalizeText($("scheduleCompany").value);
+        const address = normalizeText($("scheduleAddress").value);
+        const manager = normalizeText($("scheduleManager").value);
+        const phone   = normalizePhone($("schedulePhone").value);
+        const people  = normalizeText($("schedulePeople").value);
+        const age     = normalizeText($("scheduleAge").value);
+        const subject = normalizeText($("scheduleSubject").value);
+        const memo    = normalizeText($("scheduleMemo").value);
 
-      // 일정표 관리에도 자동 추가 (특이사항 기본값 포함)
-      itineraries.unshift(buildItineraryFromSchedule(newSched));
-      renderItineraries();
+        if(!date){ _restoreBtn(); return alert("날짜는 꼭 입력해 주세요."); }
+        if(!time){ _restoreBtn(); return alert("시간은 꼭 입력해 주세요."); }
+        if(!company){ _restoreBtn(); return alert("업체는 꼭 입력해 주세요."); }
 
-      // 일정표 Supabase 직접 저장 (_sbFullyLoaded 무관하게 항상 저장)
-      if(sbClient){ const _newItin = itineraries[0]; sbClient.from("itineraries").upsert([itinToRow(_newItin)], {onConflict:"id"}).catch(e => console.warn("일정표 저장 오류:", e)); }
+        const newSched = {
+          id: Date.now(),
+          assignee, type, date, time, company, address, manager, phone, people, age, subject, memo,
+          createdBy: currentStaffName(),
+          createdByNo: currentStaffNo(),
+          createdAt: new Date().toISOString(),
+          progressStatus:"",
+          progressEtc:""
+        };
 
-      renderSchedules();
-      loadAggregate();
-      renderCalendar();
-      runHomeSummary();
-      saveAppData();
+        // ── Supabase 저장 (await + 에러 표시) ──────────────────────
+        if(sbClient){
+          const { error: schedErr } = await sbClient.from("schedules").upsert([schedToRow(newSched)], {onConflict:"id"});
+          if(schedErr){ console.error("일정 저장 오류:", schedErr); _restoreBtn(); alert("일정 저장 실패: " + schedErr.message); return; }
+        }
 
-      safeCopy(buildFullCopyText(schedules[0]));
+        schedules.unshift(newSched);
 
-      ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { $(id).value = ""; });
-      $("scheduleDate").value = tomorrowStr();
-      $("scheduleType").value = "교육섭외";
-      $("scheduleAssignee").value = currentStaffName();
-      updateNateonPreview();
-      closeScheduleModal();
+        // 일정표 관리에도 자동 추가 (특이사항 기본값 포함)
+        const newItin = buildItineraryFromSchedule(newSched);
+        itineraries.unshift(newItin);
+        if(sbClient){
+          const { error: _itinErr } = await sbClient.from("itineraries").upsert([itinToRow(newItin)], {onConflict:"id"}); if(_itinErr) console.warn("일정표 저장 오류:", _itinErr);
+        }
+        renderItineraries();
+
+        // 1페이지로 리셋 후 렌더 (새 일정이 반드시 화면에 보이도록)
+        _schedPage = 1;
+        renderSchedules();
+        loadAggregate();
+        renderCalendar();
+        runHomeSummary();
+        saveAppData();
+
+        safeCopy(buildFullCopyText(newSched));
+
+        ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { $(id).value = ""; });
+        $("scheduleDate").value = tomorrowStr();
+        $("scheduleType").value = "교육섭외";
+        $("scheduleAssignee").value = currentStaffName();
+        updateNateonPreview();
+        closeScheduleModal();
+      }catch(e){
+        console.error("일정 저장 예외:", e);
+        alert("일정 저장 중 오류가 발생했습니다: " + (e.message || e));
+      }finally{
+        _restoreBtn();
+      }
     }
 
     // ── 홈 카드 더블클릭 상세 팝업 ──────────────────────────────
+    let _openDetailCardNo = 0; // 현재 열린 상세 카드 번호 (0=닫힘)
     function onHomeCardDblClick(cardNo){
       if(!isAdminMode()) return; // 관리자 모드에서만 동작
+      _openDetailCardNo = cardNo;
       const today    = todayStr();
       const tomorrow = tomorrowStr();
       const month    = monthPrefix();
@@ -3929,13 +4444,31 @@
       let rows = [];
 
       if(cardNo === 1){
-        // 금일 등록 일정 → schedules.createdAt === today, 섭외자별
-        const filtered = schedules.filter(s => s.createdAt === today);
+        // 금일 등록 일정 → schedules.createdAt startsWith today, 섭외자별
+        const filtered = schedules.filter(s => String(s.createdAt||"").startsWith(today));
         rows = buildStaffCount(filtered, s => s.assignee || s.createdBy || "미상");
       } else if(cardNo === 2){
-        // 오늘 콜량 → 오늘 결과값 입력된 건, 섭외자별 (ownerName)
-        const filtered = leads.filter(l => l.resultDate === today && l.result && l.result !== "" && l.result !== "선택");
-        rows = buildStaffCount(filtered, l => l.ownerName || "미상");
+        // 오늘 콜량 → 오늘 결과값 입력된 건, 직원별 건수 + 마지막 체크 시간/사업장
+        const filtered = leads.filter(l => l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today)));
+        const map = {};
+        // 전체 직원 0건으로 초기화 → 콜 없어도 이름 표시
+        staffs.forEach(s => { map[s.name] = { count:0, lastAt:"", lastCompany:"" }; });
+        filtered.forEach(l => {
+          const name = l.ownerName || "미상";
+          if(!map[name]) map[name] = { count:0, lastAt:"", lastCompany:"" };
+          map[name].count++;
+          const _curT = l.resultEnteredAt ? new Date(l.resultEnteredAt).getTime() : 0;
+          const _preT = map[name].lastAt ? new Date(map[name].lastAt).getTime() : 0;
+          if(_curT > _preT){
+            map[name].lastAt = l.resultEnteredAt;
+            map[name].lastCompany = l.company || "";
+          }
+        });
+        rows = Object.entries(map).map(([name, v]) => {
+          let timeStr = "";
+          if(v.lastAt){ try{ const d=new Date(v.lastAt); timeStr=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`; }catch(e){} }
+          return { name, count:v.count, lastTime:timeStr, lastCompany:v.lastCompany };
+        }).sort((a,b) => b.count - a.count);
       } else if(cardNo === 3){
         // 전직원 익일 일정 → schedules.date === tomorrow, 섭외자별
         const filtered = schedules.filter(s => s.date === tomorrow);
@@ -3952,6 +4485,19 @@
 
       if(!rows.length){
         $("homeDetailBody").innerHTML = `<div class="empty">데이터가 없습니다.</div>`;
+      } else if(cardNo === 2){
+        $("homeDetailBody").innerHTML = rows.map((r,i) => `
+          <div style="padding:10px 14px;border-radius:10px;margin-bottom:6px;
+                      background:${i%2===0?"#f8fafc":"#fff"};border:1px solid #f1f5f9;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-size:14px;font-weight:700;color:#1e293b;">${escapeHtml(r.name)}</span>
+              <span style="font-size:15px;font-weight:800;color:#3b82f6;">${r.count}건</span>
+            </div>
+            <div style="font-size:11px;color:#64748b;">
+              마지막 체크 ${r.lastTime ? r.lastTime : "-"} &nbsp;·&nbsp; ${escapeHtml(r.lastCompany||"-")}
+            </div>
+          </div>
+        `).join("");
       } else {
         $("homeDetailBody").innerHTML = rows.map((r,i) => `
           <div style="display:flex;align-items:center;justify-content:space-between;
@@ -3978,14 +4524,16 @@
 
     function closeHomeDetail(){
       $("homeDetailOverlay").classList.remove("open");
+      _openDetailCardNo = 0;
     }
 
     function openScheduleModal(){
       if(!state.currentUser) return;
-      // 기본값 세팅
+      // 열 때마다 항상 완전 초기화 (이전 입력값 잔존 방지)
       $("scheduleAssignee").value = currentStaffName();
-      if(!$("scheduleDate").value) $("scheduleDate").value = tomorrowStr();
-      $("scheduleType").value = $("scheduleType").value || "교육섭외";
+      $("scheduleDate").value     = tomorrowStr();
+      $("scheduleType").value     = "교육섭외";
+      ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { const el=$(id); if(el) el.value=""; });
       updateSchedModalNateon();
       $("schedModalOverlay").classList.add("open");
       // 날짜 변경 등 입력 시 미리보기 업데이트
@@ -4035,39 +4583,72 @@
       safeCopy(value);
     }
 
+    function formatKSTTimestamp(isoStr){
+      if(!isoStr) return "";
+      try{
+        const d = new Date(isoStr);
+        if(isNaN(d.getTime())) return isoStr.slice(0,19).replace("T"," ");
+        const kst = new Date(d.getTime() + 9*60*60*1000);
+        return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,"0")}-${String(kst.getUTCDate()).padStart(2,"0")} ${String(kst.getUTCHours()).padStart(2,"0")}:${String(kst.getUTCMinutes()).padStart(2,"0")}:${String(kst.getUTCSeconds()).padStart(2,"0")}`;
+      }catch(e){ return String(isoStr).slice(0,19).replace("T"," "); }
+    }
+
+    function renderSchedPagination(total, totalPages){
+      const el = $("schedPagination");
+      if(!el) return;
+      if(totalPages <= 1){ el.innerHTML = ""; return; }
+      let html = "";
+      if(_schedPage > 1) html += `<button class="ghost-btn" style="padding:4px 10px;font-size:12px;" onclick="_schedPage=${_schedPage-1};renderSchedules()">‹ 이전</button>`;
+      const start = Math.max(1, _schedPage-2), end = Math.min(totalPages, _schedPage+2);
+      for(let i=start;i<=end;i++) html += `<button class="ghost-btn${i===_schedPage?" active":""}" style="padding:4px 10px;font-size:12px;${i===_schedPage?"background:var(--primary);color:#fff;":""}" onclick="_schedPage=${i};renderSchedules()">${i}</button>`;
+      if(_schedPage < totalPages) html += `<button class="ghost-btn" style="padding:4px 10px;font-size:12px;" onclick="_schedPage=${_schedPage+1};renderSchedules()">다음 ›</button>`;
+      html += `<span style="font-size:11px;color:var(--muted);margin-left:4px;">${total}건 / ${totalPages}페이지</span>`;
+      el.innerHTML = html;
+    }
+
     function renderSchedules(){
       const body = $("scheduleTableBody");
-      const rows = getVisibleSchedules().sort((a,b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`, "ko"));
-      body.innerHTML = "";
+      // 최신 등록순 내림차순 정렬
+      const allRows = getVisibleSchedules().sort((a,b) => {
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return tb - ta;
+      });
 
-      if(!rows.length){
-        body.innerHTML = `<tr><td colspan="12"><div class="empty">등록된 일정이 없습니다.</div></td></tr>`;
+      if(!allRows.length){
+        body.innerHTML = `<tr><td colspan="13"><div class="empty">등록된 일정이 없습니다.</div></td></tr>`;
+        renderSchedPagination(0,0);
         return;
       }
 
-      rows.forEach(row => {
-        body.innerHTML += `
-          <tr>
-            <td>${escapeHtml(row.assignee)}</td>
-            <td>${escapeHtml(row.type || "교육섭외")}</td>
-            <td>${escapeHtml(row.date)}</td>
-            <td>${escapeHtml(row.time)}</td>
-            <td>${escapeHtml(row.company)}</td>
-            <td>${escapeHtml(row.manager)}</td>
-            <td>${escapeHtml(formatPhone(row.phone))}</td>
-            <td>${escapeHtml(row.people)}</td>
-            <td>${escapeHtml(row.age || "")}</td>
-            <td>${escapeHtml(row.subject || "")}</td>
-            <td>${escapeHtml(row.memo)}</td>
-            <td>
-              <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                <button class="ghost-btn" type="button" onclick="copyScheduleFullText(${row.id})">복사</button>
-                <button class="danger-btn" type="button" onclick="deleteScheduleById(${row.id})">삭제</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      });
+      const totalPages = Math.ceil(allRows.length / _schedPerPage);
+      if(_schedPage > totalPages) _schedPage = totalPages;
+      const start = (_schedPage - 1) * _schedPerPage;
+      const rows  = allRows.slice(start, start + _schedPerPage);
+
+      body.innerHTML = rows.map(row => `
+        <tr>
+          <td style="font-size:11px;white-space:nowrap;color:var(--muted);">${escapeHtml(formatKSTTimestamp(row.createdAt))}</td>
+          <td>${escapeHtml(row.assignee)}</td>
+          <td>${escapeHtml(row.type || "교육섭외")}</td>
+          <td>${escapeHtml(row.date)}</td>
+          <td>${escapeHtml(row.time)}</td>
+          <td>${escapeHtml(row.company)}</td>
+          <td>${escapeHtml(row.manager)}</td>
+          <td>${escapeHtml(formatPhone(row.phone))}</td>
+          <td>${escapeHtml(row.people)}</td>
+          <td>${escapeHtml(row.age || "")}</td>
+          <td>${escapeHtml(row.subject || "")}</td>
+          <td>${escapeHtml(row.memo)}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="ghost-btn" type="button" onclick="copyScheduleFullText(${row.id})">복사</button>
+              <button class="danger-btn" type="button" onclick="deleteScheduleById(${row.id})">삭제</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+      renderSchedPagination(allRows.length, totalPages);
     }
 
     function copyScheduleFullText(id){
@@ -4076,16 +4657,32 @@
       safeCopy(buildFullCopyText(row));
     }
 
-    function deleteScheduleById(id){
+    async function deleteScheduleById(id){
       const ok = confirm("이 일정을 삭제할까요?\n(연결된 일정표도 함께 삭제됩니다.)");
       if(!ok) return;
-      // 연결된 일정표 ID 미리 수집 후 Supabase 삭제
+      // 삭제 레지스트리에 즉시 등록 → loadFromSupabase 레이스컨디션 방지
+      markSchedDeleted(id);
+      // 연결된 일정표 ID 미리 수집
       const linkedItins = itineraries.filter(x => String(x.scheduleId) === String(id));
-      linkedItins.forEach(i => sbDeleteRecord("itineraries", i.id));
-      sbDeleteRecord("schedules", id);
-      schedules   = schedules.filter(x => x.id !== id);
-      // 일정표 관리에서도 연동 삭제 (scheduleId로 연결)
-      itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
+      // Supabase 삭제 완료까지 대기 (fire-and-forget 방지)
+      await Promise.all([
+        ...linkedItins.map(i => sbDeleteRecord("itineraries", i.id)),
+        sbDeleteRecord("schedules", id)
+      ]);
+      // 삭제 후 Supabase에서 재확인 로드 (로컬과 DB 완전 동기화)
+      try{
+        const [schedRes, itinRes] = await Promise.all([
+          sbClient.from("schedules").select("*"),
+          sbClient.from("itineraries").select("*")
+        ]);
+        if(!schedRes.error && schedRes.data){ const _dIds=getDeletedSchedIds(); schedules = schedRes.data.map(rowToSched).filter(s => !_dIds.has(String(s.id))); }
+        else schedules   = schedules.filter(x => String(x.id) !== String(id));
+        if(!itinRes.error  && itinRes.data)  itineraries = itinRes.data.map(rowToItin);
+        else itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
+      }catch(e){
+        schedules   = schedules.filter(x => String(x.id) !== String(id));
+        itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
+      }
       renderSchedules();
       renderItineraries();
       loadAggregate();
@@ -4401,7 +4998,7 @@
 
       const scheduleRows = getVisibleSchedules().filter(s => {
         if(tab === "month") return String(s.createdAt || "").startsWith(monthPrefix());
-        return s.createdAt === selectedDate || s.date === selectedDate;
+        return String(s.createdAt||"").startsWith(selectedDate) || s.date === selectedDate;
       });
 
       const perfRows = getVisiblePerformances().filter(p => {
@@ -4411,11 +5008,11 @@
 
       const leadRows = getVisibleLeads().filter(l => {
         if(tab === "month") return String(l.createdAt || "").startsWith(monthPrefix()) && normalizeText(l.company || "");
-        return l.createdAt === selectedDate && normalizeText(l.company || "");
+        return String(l.createdAt||"").startsWith(selectedDate) && normalizeText(l.company || "");
       });
 
       const scheduleCount = scheduleRows.length;
-      const calls = leadRows.filter(l => l.resultDate === baseDate && l.result && l.result !== "" && l.result !== "선택").length;
+      const calls = leadRows.filter(l => l.result && l.result !== "").length;
       const perfCount = perfRows.length;
       const rate = scheduleCount ? Math.min(100, Math.round((perfCount / scheduleCount) * 100)) : 0;
 
@@ -4490,6 +5087,8 @@
 
     let _leadPage = 1;
     const _leadPerPage = 50;
+    let _schedPage = 1;
+    const _schedPerPage = 30;
     let _leadRowHeights = {};      // { leadId: px } — 세션 유지, 새로고침 시 초기화
     let _leadTableResizeInit = false; // 열 리사이즈 핸들 한 번만 부착
 
@@ -4709,7 +5308,6 @@
           industry:   l.industry,
           status:     l.status,
           result:     l.result,
-          result_date: (l.result && l.result !== "" && l.result !== "선택" && l.result !== "일정픽스") ? todayStr() : (l.result === "일정픽스" ? (l.resultDate||"") : ""),
           memo:       l.memo
         }).eq("id", l.id);
         if(error) throw error;
@@ -4837,6 +5435,7 @@
           result:    row.result || "",
           resultDate: row.result_date || "",
           resultTime: row.result_time || "",
+          resultEnteredAt: row.result_entered_at || "",
           createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr(),
           cleanBiz:  row.clean_biz || false
         }));
@@ -5109,7 +5708,7 @@
 
     // ── 클린사업장 배지 토글 (관리자 전용) ─────────────────────────
     async function toggleCleanBiz(id){
-      if(!isAdminMode()) return;
+      if(!isAdminMode()){ alert("클린사업장 설정은 관리자만 변경할 수 있습니다."); return; }
       const l = leads.find(x => x.id === id);
       if(!l) return;
       const newVal = !l.cleanBiz;
@@ -5335,12 +5934,15 @@
         $("resultFixModal").classList.add("show");
       } else {
         l.result = value;
-        l.resultDate = todayStr(); // 결과 입력일 = 오늘
+        const rDate = (value && value !== "") ? todayStr() : "";
+        const rEnteredAt = (value && value !== "") ? new Date().toISOString() : null;
+        l.resultDate = rDate;
+        l.resultEnteredAt = rEnteredAt || "";
         l.resultTime = "";
         renderLeads();
-        runHomeSummary(); // 콜량 카운터 즉시 반영
+        runHomeSummary();
         crmAddLog("info", "결과값 변경", `${l.company||""} → ${value||"선택"}`);
-        sbClient.from("education_db").update({ result: value, result_date: todayStr(), result_time: "" }).eq("id", l.id).then(({error}) => { if(error) console.warn(error); });
+        sbClient.from("education_db").update({ result: value, result_date: rDate, result_time: "", result_entered_at: rEnteredAt }).eq("id", l.id).then(({error}) => { if(error) console.warn(error); });
       }
     }
 
@@ -5364,14 +5966,17 @@
       const min  = $("resultFixMin").value;
       if(!date) return alert("날짜를 선택해 주세요.");
       const timeStr = `${_resultFixAmPm} ${hour} ${min}분`;
+      const enteredAt = new Date().toISOString();
       l.result = "일정픽스";
       l.resultDate = date;
       l.resultTime = timeStr;
+      l.resultEnteredAt = enteredAt;
       $("resultFixModal").classList.remove("show");
       _resultFixLeadId = null;
       renderLeads();
+      runHomeSummary();
       try{
-        await sbClient.from("education_db").update({ result:"일정픽스", result_date: date, result_time: timeStr }).eq("id", l.id);
+        await sbClient.from("education_db").update({ result:"일정픽스", result_date: date, result_time: timeStr, result_entered_at: enteredAt }).eq("id", l.id);
         showLeadMsg("📅 일정픽스 저장 완료!", "");
       } catch(e){ console.warn(e); }
     }
@@ -5741,7 +6346,7 @@
       closeItineraryEditModal();
       renderItineraries();
       // 일정표 수정 Supabase 직접 저장 (_sbFullyLoaded 무관하게 항상 저장)
-      if(sbClient){ const _editedItin = itin; sbClient.from("itineraries").upsert([itinToRow(_editedItin)], {onConflict:"id"}).catch(e => console.warn("일정표 수정 저장 오류:", e)); }
+      if(sbClient){ const _editedItin = itin; (async()=>{ const { error } = await sbClient.from("itineraries").upsert([itinToRow(_editedItin)], {onConflict:"id"}); if(error) console.warn("일정표 수정 저장 오류:", error); })(); }
       saveAppData();
       showItineraryMsg("✅ 일정표 수정 완료!", "");
     }
@@ -6074,9 +6679,10 @@
           row.age     = rowData.age;
           row.subject = rowData.subject;
           row.memo    = rowData.memo;
+          if(sbClient){ (async()=>{ const { error } = await sbClient.from("schedules").upsert([schedToRow(row)], {onConflict:"id"}); if(error) console.warn("수기 일정 수정 저장 오류:", error); })(); }
         }
       }else{
-        schedules.unshift({
+        const _newManualSched = {
           id: Date.now(),
           ...rowData,
           createdBy: currentStaffName(),
@@ -6084,13 +6690,16 @@
           createdAt: todayStr(),
           progressStatus:"",
           progressEtc:""
-        });
+        };
+        schedules.unshift(_newManualSched);
+        if(sbClient){ (async()=>{ const { error } = await sbClient.from("schedules").upsert([schedToRow(_newManualSched)], {onConflict:"id"}); if(error) console.warn("수기 일정 저장 오류:", error); })(); }
       }
 
       renderSchedules();
       renderCalendar();
       loadAggregate();
       runHomeSummary();
+      saveAppData();
       openCalendarModal(targetDate);
       alert(state.manualEditId ? "수기 일정 수정 완료" : "수기 일정 등록 완료");
     }
@@ -6285,8 +6894,20 @@
     $("staffId").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
     $("password").addEventListener("keydown", e => { if(e.key === "Enter") login(); });
 
+    // ── 스플래시 화면 제어 ──
+    function hideSplash(){
+      const s = document.getElementById("splashScreen");
+      if(!s) return;
+      setTimeout(() => {
+        s.classList.add("hide");
+        setTimeout(() => { s.style.display = "none"; }, 520);
+      }, 200);
+    }
+
     // ── 앱 시작: Supabase 직원 로드 후 세션 복원 ──
-    initApp();
+    initApp().then(hideSplash).catch(hideSplash);
+    // 최대 3초 후 강제 숨김 (네트워크 지연 대비)
+    setTimeout(hideSplash, 3000);
 
     renderNotices();
     $("progressDate").value = todayStr();
@@ -6788,8 +7409,16 @@
     function systemResetSchedules(){
       if(!_checkAdminPass("sysPassSchedules")) return;
       if(!confirm("모든 일정 데이터를 삭제할까? 복구 불가!")) return;
+      // Supabase에서도 완전 삭제 (새로고침 후 재등장 방지)
+      if(sbClient){
+        const schedIds = schedules.map(s => Number(s.id)).filter(n => !isNaN(n) && n > 0);
+        const itinIds  = itineraries.map(i => Number(i.id)).filter(n => !isNaN(n) && n > 0);
+        if(schedIds.length) (async()=>{ const { error } = await sbClient.from("schedules").delete().in("id", schedIds); if(error) console.warn("일정 일괄삭제 오류:", error); })();
+        if(itinIds.length)  (async()=>{ const { error } = await sbClient.from("itineraries").delete().in("id", itinIds); if(error) console.warn("일정표 일괄삭제 오류:", error); })();
+      }
       schedules   = [];
       itineraries = [];
+      saveAppData();
       renderSchedules();
       renderItineraries();
       renderCalendar();
@@ -6859,11 +7488,13 @@
     function crmGetFilteredLeads(){
       const q = _crmLeadSearchTerm;
       if(!q) return getVisibleLeads();
+      const qPhone = q.replace(/[^0-9]/g,"");
       return getVisibleLeads().filter(l =>
         (l.company||"").toLowerCase().includes(q) ||
         (l.manager||"").toLowerCase().includes(q) ||
         (l.address||"").toLowerCase().includes(q) ||
-        (l.ownerName||"").toLowerCase().includes(q)
+        (l.ownerName||"").toLowerCase().includes(q) ||
+        (qPhone && (l.phone||"").replace(/[^0-9]/g,"").includes(qPhone))
       );
     }
 
@@ -6935,20 +7566,34 @@
     function crmRenderFilteredSchedules(){
       if(!_crmSchedSearchTerm){ renderSchedules(); return; }
       const q    = _crmSchedSearchTerm;
+      const qPhone = q.replace(/[^0-9]/g,"");
       const body = $("scheduleTableBody");
-      const rows = getVisibleSchedules().filter(s =>
+      const allRows = getVisibleSchedules().filter(s =>
         (s.company||"").toLowerCase().includes(q) ||
         (s.assignee||"").toLowerCase().includes(q) ||
         (s.date||"").includes(q) ||
-        (s.manager||"").toLowerCase().includes(q)
-      ).sort((a,b)=>`${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`,"ko"));
+        (s.manager||"").toLowerCase().includes(q) ||
+        (qPhone && (s.phone||"").replace(/[^0-9]/g,"").includes(qPhone))
+      ).sort((a,b)=>{
+        const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return tb - ta;
+      });
 
-      if(!rows.length){
-        body.innerHTML = `<tr><td colspan="12"><div class="crm-empty-illust"><svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#e2e8f0" stroke-width="2"/><path d="M20 28h16M28 20v16" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg><p>"${escapeHtml(_crmSchedSearchTerm)}" 검색 결과가 없습니다.</p></div></td></tr>`;
+      if(!allRows.length){
+        body.innerHTML = `<tr><td colspan="13"><div class="crm-empty-illust"><svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#e2e8f0" stroke-width="2"/><path d="M20 28h16M28 20v16" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg><p>"${escapeHtml(_crmSchedSearchTerm)}" 검색 결과가 없습니다.</p></div></td></tr>`;
+        renderSchedPagination(0,0);
         return;
       }
+
+      const totalPages = Math.ceil(allRows.length / _schedPerPage);
+      if(_schedPage > totalPages) _schedPage = totalPages;
+      const start = (_schedPage - 1) * _schedPerPage;
+      const rows  = allRows.slice(start, start + _schedPerPage);
+
       body.innerHTML = rows.map(row=>`
         <tr>
+          <td style="font-size:11px;white-space:nowrap;color:var(--muted);">${escapeHtml(formatKSTTimestamp(row.createdAt))}</td>
           <td>${escapeHtml(row.assignee)}</td>
           <td>${escapeHtml(row.type||"교육섭외")}</td>
           <td>${escapeHtml(row.date)}</td>
@@ -6968,6 +7613,7 @@
           </td>
         </tr>
       `).join("");
+      renderSchedPagination(allRows.length, totalPages);
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -7186,6 +7832,7 @@
       if(!user) return;
       const no    = user.staffNo;
       const goal  = staffGoals[no];
+      const today = todayStr();
       const month = monthPrefix();
 
       // 뱃지1: 오늘 등록 일정 (콜 목표 기반)
@@ -7193,7 +7840,7 @@
       if(b1){
         if(goal && goal.calls > 0){
           const today = todayStr();
-          const val1  = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
+          const val1  = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
           const pct1  = Math.round((val1/goal.calls)*100);
           b1.innerHTML = `<span class="crm-goal-badge${pct1>=100?" done":pct1>=50?" warn":""}">목표 ${goal.calls}건 · ${pct1}%</span>`;
         } else { b1.innerHTML = ""; }
@@ -7203,7 +7850,7 @@
       const b2 = $("crmGoalBadge2");
       if(b2){
         if(goal && goal.calls > 0){
-          const val2 = leads.filter(l => (l.ownerNo===no||l.ownerName===currentStaffName()) && l.result && l.result!=="").length;
+          const val2 = leads.filter(l => (l.ownerNo===no||l.ownerName===currentStaffName()) && l.result && l.result!=="" && l.resultEnteredAt && l.resultEnteredAt.startsWith(today)).length;
           const pct2 = Math.round((val2/goal.calls)*100);
           b2.innerHTML = `<span class="crm-goal-badge${pct2>=100?" done":pct2>=50?" warn":""}">목표 ${goal.calls}건 · ${pct2}%</span>`;
         } else { b2.innerHTML = ""; }
@@ -7360,9 +8007,9 @@
       const month = monthPrefix();
 
       // 금일 콜량: 오늘 등록한 일정 수 (createdAt = today, createdByNo = no)
-      const todayCalls  = schedules.filter(s => (s.createdAt||"") === today && s.createdByNo === no).length;
+      const todayCalls  = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 금일 섭외건수: 오늘 등록한 일정 수 (동일 기준 – 콜과 별개로 UI 표시)
-      const todayScheds = schedules.filter(s => (s.createdAt||"") === today && s.createdByNo === no).length;
+      const todayScheds = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 이번달 섭외건수
       const monthScheds = schedules.filter(s => String(s.createdAt||"").startsWith(month) && s.createdByNo === no).length;
 
@@ -7931,6 +8578,124 @@
       // Web Push 제거 → 내부 쪽지로 대체
       await msgSendToAll({ title, body: body||"", type: "notice" });
     }
+
+    /* ══════════════════════════════════════════════════════════
+       APK 모달 + PWA 설치 + 탭바 JS
+    ══════════════════════════════════════════════════════════ */
+
+    // APK 모달 열기/닫기
+    function openApkModal(){
+      const m = document.getElementById("apkModal");
+      if(m){ m.style.display = "flex"; }
+    }
+    function closeApkModal(){
+      const m = document.getElementById("apkModal");
+      if(m){ m.style.display = "none"; }
+    }
+    // 앱 주소 복사
+    function copyAppUrl(){
+      const url = window.location.href.split("?")[0];
+      try{
+        navigator.clipboard.writeText(url).then(() => alert("앱 주소가 복사되었습니다.\n\n" + url));
+      } catch(e){
+        const ta = document.createElement("textarea");
+        ta.value = url; document.body.appendChild(ta);
+        ta.select(); document.execCommand("copy");
+        document.body.removeChild(ta);
+        alert("앱 주소가 복사되었습니다.\n\n" + url);
+      }
+    }
+
+    // PC 모바일앱 버튼 표시 (로그인 후)
+    (function patchShowPcApkBtn(){
+      const _origLogin = login;
+      // login 이후 버튼 표시는 applyRoleUI 패치로 처리
+    })();
+
+    function _showPcApkBtn(){
+      const btn = document.getElementById("pcApkBtn");
+      if(btn && window.innerWidth >= 769){
+        btn.style.display = "inline-flex";
+      }
+    }
+
+    // applyRoleUI 패치 — 로그인 후 PC APK 버튼 표시
+    (function(){
+      const _orig = applyRoleUI;
+      applyRoleUI = function(){
+        _orig();
+        _showPcApkBtn();
+      };
+    })();
+
+    // 이미 로그인된 상태라면 즉시 버튼 표시
+    if(state && state.currentUser) _showPcApkBtn();
+
+    // 창 크기 변경 시 dashboard display 동기화
+    window.addEventListener("resize", function(){
+      const dash = document.getElementById("dashboard");
+      if(!dash || dash.style.display === "none") return;
+      dash.style.display = window.innerWidth <= 768 ? "block" : "grid";
+    });
+
+    /* ── PWA 설치 프롬프트 ── */
+    let _pwaInstallEvent = null;
+
+    window.addEventListener("beforeinstallprompt", e => {
+      e.preventDefault();
+      _pwaInstallEvent = e;
+      // 모바일에서만 배너 표시
+      if(window.innerWidth <= 768 && state.currentUser){
+        const dismissed = localStorage.getItem("luwon_pwa_dismissed");
+        if(!dismissed){
+          setTimeout(() => {
+            const banner = document.getElementById("pwaInstallBanner");
+            if(banner) banner.classList.add("show");
+          }, 2000);
+        }
+      }
+    });
+
+    function pwaInstallApp(){
+      if(_pwaInstallEvent){
+        _pwaInstallEvent.prompt();
+        _pwaInstallEvent.userChoice.then(r => {
+          _pwaInstallEvent = null;
+          const banner = document.getElementById("pwaInstallBanner");
+          if(banner) banner.classList.remove("show");
+        });
+      } else {
+        // iOS Safari 안내
+        alert("설치 방법:\n\n📱 아이폰(Safari):\n하단 공유 버튼(□↑) → 홈 화면에 추가\n\n🤖 안드로이드(Chrome):\n우측 상단 ⋮ 메뉴 → 홈 화면에 추가");
+      }
+    }
+
+    function pwaDismiss(){
+      localStorage.setItem("luwon_pwa_dismissed", "1");
+      const banner = document.getElementById("pwaInstallBanner");
+      if(banner) banner.classList.remove("show");
+    }
+
+    // PWA로 실행 중이면 배너 숨김
+    if(window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone){
+      const banner = document.getElementById("pwaInstallBanner");
+      if(banner) banner.style.display = "none";
+    }
+
+    /* ── 더보기 탭 열릴 때 active 처리 ── */
+    (function patchToggleMobMenu(){
+      const _orig = typeof toggleMobMenu === "function" ? toggleMobMenu : null;
+      if(!_orig) return;
+      toggleMobMenu = function(){
+        _orig();
+        const moreBtn = document.getElementById("crmTabMore");
+        const sidebar = document.querySelector(".sidebar");
+        if(moreBtn && sidebar){
+          moreBtn.classList.toggle("active", sidebar.classList.contains("mob-open"));
+        }
+      };
+    })();
+
   </script>
 
   <!-- ── 홈 카드 상세 팝업 ── -->
@@ -7987,5 +8752,30 @@
       </div>
     </div>
   </div>
+
+  <!-- 서비스워커 등록 + 업데이트 시 자동 새로고침 -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+        .then(reg => {
+          // 이미 대기 중인 새 SW 있으면 즉시 활성화
+          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          reg.addEventListener('updatefound', () => {
+            const nw = reg.installing;
+            nw.addEventListener('statechange', () => {
+              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                // 새 SW 설치 완료 → 자동 새로고침
+                window.location.reload();
+              }
+            });
+          });
+        })
+        .catch(() => {});
+      // 다른 탭에서 SW가 교체되면 이 탭도 새로고침
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    }
+  </script>
 </body>
 </html>
