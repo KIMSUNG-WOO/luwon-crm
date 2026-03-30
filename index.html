@@ -4349,67 +4349,79 @@
     async function addSchedule(){
       if(!state.currentUser) return;
 
-      const assignee = currentStaffName();
-      const type    = normalizeText($("scheduleType").value) || "교육섭외";
-      const date    = normalizeText($("scheduleDate").value);
-      const time    = normalizeManualTime($("scheduleTime").value);
-      const company = normalizeText($("scheduleCompany").value);
-      const address = normalizeText($("scheduleAddress").value);
-      const manager = normalizeText($("scheduleManager").value);
-      const phone   = normalizePhone($("schedulePhone").value);
-      const people  = normalizeText($("schedulePeople").value);
-      const age     = normalizeText($("scheduleAge").value);
-      const subject = normalizeText($("scheduleSubject").value);
-      const memo    = normalizeText($("scheduleMemo").value);
+      // 중복 클릭 방지 — 저장 중에는 버튼 비활성화
+      const _saveBtn = document.querySelector('.sched-save-btn');
+      if(_saveBtn && _saveBtn.disabled) return; // 이미 저장 진행 중
+      if(_saveBtn){ _saveBtn.disabled = true; _saveBtn.textContent = '저장 중...'; }
 
-      if(!date) return alert("날짜는 꼭 입력해 주세요.");
-      if(!time) return alert("시간은 꼭 입력해 주세요.");
-      if(!company) return alert("업체는 꼭 입력해 주세요.");
+      const _restoreBtn = () => { if(_saveBtn){ _saveBtn.disabled = false; _saveBtn.textContent = '✅ 일정 저장'; } };
 
-      const newSched = {
-        id: Date.now(),
-        assignee, type, date, time, company, address, manager, phone, people, age, subject, memo,
-        createdBy: currentStaffName(),
-        createdByNo: currentStaffNo(),
-        createdAt: new Date().toISOString(),
-        progressStatus:"",
-        progressEtc:""
-      };
+      try{
+        const assignee = currentStaffName();
+        const type    = normalizeText($("scheduleType").value) || "교육섭외";
+        const date    = normalizeText($("scheduleDate").value);
+        const time    = normalizeManualTime($("scheduleTime").value);
+        const company = normalizeText($("scheduleCompany").value);
+        const address = normalizeText($("scheduleAddress").value);
+        const manager = normalizeText($("scheduleManager").value);
+        const phone   = normalizePhone($("schedulePhone").value);
+        const people  = normalizeText($("schedulePeople").value);
+        const age     = normalizeText($("scheduleAge").value);
+        const subject = normalizeText($("scheduleSubject").value);
+        const memo    = normalizeText($("scheduleMemo").value);
 
-      // ── Supabase 저장 (await + 에러 표시) ──────────────────────
-      if(sbClient){
-        try{
+        if(!date){ _restoreBtn(); return alert("날짜는 꼭 입력해 주세요."); }
+        if(!time){ _restoreBtn(); return alert("시간은 꼭 입력해 주세요."); }
+        if(!company){ _restoreBtn(); return alert("업체는 꼭 입력해 주세요."); }
+
+        const newSched = {
+          id: Date.now(),
+          assignee, type, date, time, company, address, manager, phone, people, age, subject, memo,
+          createdBy: currentStaffName(),
+          createdByNo: currentStaffNo(),
+          createdAt: new Date().toISOString(),
+          progressStatus:"",
+          progressEtc:""
+        };
+
+        // ── Supabase 저장 (await + 에러 표시) ──────────────────────
+        if(sbClient){
           const { error: schedErr } = await sbClient.from("schedules").upsert([schedToRow(newSched)], {onConflict:"id"});
-          if(schedErr){ console.error("일정 저장 오류:", schedErr); alert("일정 저장 실패: " + schedErr.message); return; }
-        }catch(e){ console.error("일정 저장 예외:", e); alert("일정 저장 중 오류가 발생했습니다."); return; }
+          if(schedErr){ console.error("일정 저장 오류:", schedErr); _restoreBtn(); alert("일정 저장 실패: " + schedErr.message); return; }
+        }
+
+        schedules.unshift(newSched);
+
+        // 일정표 관리에도 자동 추가 (특이사항 기본값 포함)
+        const newItin = buildItineraryFromSchedule(newSched);
+        itineraries.unshift(newItin);
+        if(sbClient){
+          sbClient.from("itineraries").upsert([itinToRow(newItin)], {onConflict:"id"}).catch(e => console.warn("일정표 저장 오류:", e));
+        }
+        renderItineraries();
+
+        // 1페이지로 리셋 후 렌더 (새 일정이 반드시 화면에 보이도록)
+        _schedPage = 1;
+        renderSchedules();
+        loadAggregate();
+        renderCalendar();
+        runHomeSummary();
+        saveAppData();
+
+        safeCopy(buildFullCopyText(newSched));
+
+        ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { $(id).value = ""; });
+        $("scheduleDate").value = tomorrowStr();
+        $("scheduleType").value = "교육섭외";
+        $("scheduleAssignee").value = currentStaffName();
+        updateNateonPreview();
+        closeScheduleModal();
+      }catch(e){
+        console.error("일정 저장 예외:", e);
+        alert("일정 저장 중 오류가 발생했습니다: " + (e.message || e));
+      }finally{
+        _restoreBtn();
       }
-
-      schedules.unshift(newSched);
-
-      // 일정표 관리에도 자동 추가 (특이사항 기본값 포함)
-      const newItin = buildItineraryFromSchedule(newSched);
-      itineraries.unshift(newItin);
-      if(sbClient){
-        sbClient.from("itineraries").upsert([itinToRow(newItin)], {onConflict:"id"}).catch(e => console.warn("일정표 저장 오류:", e));
-      }
-      renderItineraries();
-
-      // 1페이지로 리셋 후 렌더 (새 일정이 반드시 화면에 보이도록)
-      _schedPage = 1;
-      renderSchedules();
-      loadAggregate();
-      renderCalendar();
-      runHomeSummary();
-      saveAppData();
-
-      safeCopy(buildFullCopyText(newSched));
-
-      ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { $(id).value = ""; });
-      $("scheduleDate").value = tomorrowStr();
-      $("scheduleType").value = "교육섭외";
-      $("scheduleAssignee").value = currentStaffName();
-      updateNateonPreview();
-      closeScheduleModal();
     }
 
     // ── 홈 카드 더블클릭 상세 팝업 ──────────────────────────────
@@ -5695,7 +5707,7 @@
 
     // ── 클린사업장 배지 토글 (관리자 전용) ─────────────────────────
     async function toggleCleanBiz(id){
-      if(!isAdminMode()) return;
+      if(!isAdminMode()){ alert("클린사업장 설정은 관리자만 변경할 수 있습니다."); return; }
       const l = leads.find(x => x.id === id);
       if(!l) return;
       const newVal = !l.cleanBiz;
