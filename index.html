@@ -4121,7 +4121,7 @@
       $("homeCardLabel4").textContent = "전직원 이번달 등록 일정";
       $("homeCardDesc4").textContent  = "이번달 전직원 등록 누적";
 
-      $("homeValue1").textContent = schedules.filter(s => s.createdAt === today).length;
+      $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today)).length;
       // 콜량: 결과값이 있고, 오늘 입력된 건수 (resultEnteredAt 또는 resultDate 기준)
       $("homeValue2").textContent = leads.filter(l => l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
@@ -4148,7 +4148,7 @@
       $("homeCardLabel4").textContent = "내 이번달 등록 일정";
       $("homeCardDesc4").textContent  = "이번달 등록 누적";
 
-      $("homeValue1").textContent = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
+      $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 콜량: 내 DB 중 결과값 입력된 건수
       $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
@@ -4346,7 +4346,7 @@
       });
     }
 
-    function addSchedule(){
+    async function addSchedule(){
       if(!state.currentUser) return;
 
       const assignee = currentStaffName();
@@ -4375,23 +4375,34 @@
         progressStatus:"",
         progressEtc:""
       };
+
+      // ── Supabase 저장 (await + 에러 표시) ──────────────────────
+      if(sbClient){
+        try{
+          const { error: schedErr } = await sbClient.from("schedules").upsert([schedToRow(newSched)], {onConflict:"id"});
+          if(schedErr){ console.error("일정 저장 오류:", schedErr); alert("일정 저장 실패: " + schedErr.message); return; }
+        }catch(e){ console.error("일정 저장 예외:", e); alert("일정 저장 중 오류가 발생했습니다."); return; }
+      }
+
       schedules.unshift(newSched);
 
       // 일정표 관리에도 자동 추가 (특이사항 기본값 포함)
-      itineraries.unshift(buildItineraryFromSchedule(newSched));
+      const newItin = buildItineraryFromSchedule(newSched);
+      itineraries.unshift(newItin);
+      if(sbClient){
+        sbClient.from("itineraries").upsert([itinToRow(newItin)], {onConflict:"id"}).catch(e => console.warn("일정표 저장 오류:", e));
+      }
       renderItineraries();
 
-      // 일정 + 일정표 Supabase 직접 저장 (_sbFullyLoaded 무관하게 항상 저장)
-      if(sbClient){ sbClient.from("schedules").upsert([schedToRow(newSched)], {onConflict:"id"}).catch(e => console.warn("일정 저장 오류:", e)); }
-      if(sbClient){ const _newItin = itineraries[0]; sbClient.from("itineraries").upsert([itinToRow(_newItin)], {onConflict:"id"}).catch(e => console.warn("일정표 저장 오류:", e)); }
-
+      // 1페이지로 리셋 후 렌더 (새 일정이 반드시 화면에 보이도록)
+      _schedPage = 1;
       renderSchedules();
       loadAggregate();
       renderCalendar();
       runHomeSummary();
       saveAppData();
 
-      safeCopy(buildFullCopyText(schedules[0]));
+      safeCopy(buildFullCopyText(newSched));
 
       ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { $(id).value = ""; });
       $("scheduleDate").value = tomorrowStr();
@@ -4421,8 +4432,8 @@
       let rows = [];
 
       if(cardNo === 1){
-        // 금일 등록 일정 → schedules.createdAt === today, 섭외자별
-        const filtered = schedules.filter(s => s.createdAt === today);
+        // 금일 등록 일정 → schedules.createdAt startsWith today, 섭외자별
+        const filtered = schedules.filter(s => String(s.createdAt||"").startsWith(today));
         rows = buildStaffCount(filtered, s => s.assignee || s.createdBy || "미상");
       } else if(cardNo === 2){
         // 오늘 콜량 → 오늘 결과값 입력된 건, 직원별 건수 + 마지막 체크 시간/사업장
@@ -4974,7 +4985,7 @@
 
       const scheduleRows = getVisibleSchedules().filter(s => {
         if(tab === "month") return String(s.createdAt || "").startsWith(monthPrefix());
-        return s.createdAt === selectedDate || s.date === selectedDate;
+        return String(s.createdAt||"").startsWith(selectedDate) || s.date === selectedDate;
       });
 
       const perfRows = getVisiblePerformances().filter(p => {
@@ -4984,7 +4995,7 @@
 
       const leadRows = getVisibleLeads().filter(l => {
         if(tab === "month") return String(l.createdAt || "").startsWith(monthPrefix()) && normalizeText(l.company || "");
-        return l.createdAt === selectedDate && normalizeText(l.company || "");
+        return String(l.createdAt||"").startsWith(selectedDate) && normalizeText(l.company || "");
       });
 
       const scheduleCount = scheduleRows.length;
@@ -7816,7 +7827,7 @@
       if(b1){
         if(goal && goal.calls > 0){
           const today = todayStr();
-          const val1  = schedules.filter(s => s.createdAt === today && s.createdByNo === no).length;
+          const val1  = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
           const pct1  = Math.round((val1/goal.calls)*100);
           b1.innerHTML = `<span class="crm-goal-badge${pct1>=100?" done":pct1>=50?" warn":""}">목표 ${goal.calls}건 · ${pct1}%</span>`;
         } else { b1.innerHTML = ""; }
@@ -7983,9 +7994,9 @@
       const month = monthPrefix();
 
       // 금일 콜량: 오늘 등록한 일정 수 (createdAt = today, createdByNo = no)
-      const todayCalls  = schedules.filter(s => (s.createdAt||"") === today && s.createdByNo === no).length;
+      const todayCalls  = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 금일 섭외건수: 오늘 등록한 일정 수 (동일 기준 – 콜과 별개로 UI 표시)
-      const todayScheds = schedules.filter(s => (s.createdAt||"") === today && s.createdByNo === no).length;
+      const todayScheds = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 이번달 섭외건수
       const monthScheds = schedules.filter(s => String(s.createdAt||"").startsWith(month) && s.createdByNo === no).length;
 
