@@ -1,5 +1,5 @@
 // LUWON CRM Service Worker — PWA 오프라인 + 푸시 알림
-const CACHE_NAME = "luwon-crm-v3";
+const CACHE_NAME = "luwon-crm-v5";
 const STATIC_ASSETS = [
   "./",
   "./index.html",
@@ -55,7 +55,21 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // 앱 자체 파일 — Stale-While-Revalidate
+  // index.html — 항상 네트워크 우선 (최신 배포 즉시 반영)
+  if (url.origin === self.location.origin && (url.pathname === "/" || url.pathname.endsWith("index.html"))) {
+    e.respondWith(
+      fetch(e.request).then(response => {
+        if (response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // 나머지 앱 자체 파일 — Stale-While-Revalidate
   if (url.origin === self.location.origin) {
     e.respondWith(
       caches.open(CACHE_NAME).then(cache =>
