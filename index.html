@@ -1097,8 +1097,11 @@
       }
       /* 모바일에서 더 넓은 터치 영역 */
       .menu-item{ min-height:48px; }
-      /* 로그아웃 버튼: 사이드바 스크롤 시에도 항상 하단에 고정 */
-      .logout{ min-height:48px; position:sticky; bottom:0; background:var(--sidebar-bg); z-index:2; }
+      /* 모바일 사이드바: 사이드바 자체는 스크롤 없이 고정, 메뉴만 스크롤 */
+      .sidebar{ overflow:hidden!important; }
+      .menu{ flex:1; overflow-y:auto; min-height:0; }
+      /* 로그아웃 버튼: 항상 사이드바 하단에 고정 노출 */
+      .logout{ flex-shrink:0; min-height:48px; position:relative; background:var(--sidebar-bg); z-index:2; margin-top:0; }
 
       /* 홈 요약 카드 개선 */
       .summary-card{
@@ -3420,7 +3423,7 @@
         if(d.adminRates      && typeof d.adminRates==="object")  Object.assign(adminRates, d.adminRates);
         if(d.performances    && Array.isArray(d.performances))   performances    = d.performances;
         if(d.leads           && Array.isArray(d.leads))          leads           = d.leads;
-        if(d.schedules       && Array.isArray(d.schedules))      schedules       = d.schedules;
+        if(d.schedules       && Array.isArray(d.schedules))      { const _dIds=getDeletedSchedIds(); schedules = d.schedules.filter(s => !_dIds.has(String(s.id))); }
         if(d.itineraries     && Array.isArray(d.itineraries))    itineraries     = d.itineraries;
         if(d.notices         && Array.isArray(d.notices))        notices         = d.notices;
         if(d.inspectionRules && Array.isArray(d.inspectionRules)) inspectionRules = d.inspectionRules;
@@ -3650,7 +3653,11 @@
         .on("postgres_changes", { event:"*", schema:"public", table:"schedules" }, async () => {
           try{
             const { data, error } = await sbClient.from("schedules").select("*");
-            if(!error && data){ schedules = data.map(rowToSched); if(state.currentUser){ renderSchedules(); renderCalendar(); loadAggregate(); runHomeSummary(); saveAppData(); } }
+            if(!error && data){
+              const _dIds = getDeletedSchedIds();
+              schedules = data.map(rowToSched).filter(s => !_dIds.has(String(s.id)));
+              if(state.currentUser){ renderSchedules(); renderCalendar(); loadAggregate(); runHomeSummary(); saveAppData(); }
+            }
           }catch(e){}
         })
         // 실적
@@ -4143,7 +4150,7 @@
     }
 
     function getVisibleSchedules(){
-      return isAdminMode() ? schedules.slice() : schedules.filter(s => s.createdByNo === currentStaffNo());
+      return schedules.slice();
     }
 
     function getVisiblePerformances(){
@@ -4421,7 +4428,9 @@
           const name = l.ownerName || "미상";
           if(!map[name]) map[name] = { count:0, lastAt:"", lastCompany:"" };
           map[name].count++;
-          if(l.resultEnteredAt > map[name].lastAt){
+          const _curT = l.resultEnteredAt ? new Date(l.resultEnteredAt).getTime() : 0;
+          const _preT = map[name].lastAt ? new Date(map[name].lastAt).getTime() : 0;
+          if(_curT > _preT){
             map[name].lastAt = l.resultEnteredAt;
             map[name].lastCompany = l.company || "";
           }
@@ -4603,7 +4612,7 @@
           sbClient.from("schedules").select("*"),
           sbClient.from("itineraries").select("*")
         ]);
-        if(!schedRes.error && schedRes.data) schedules   = schedRes.data.map(rowToSched);
+        if(!schedRes.error && schedRes.data){ const _dIds=getDeletedSchedIds(); schedules = schedRes.data.map(rowToSched).filter(s => !_dIds.has(String(s.id))); }
         else schedules   = schedules.filter(x => String(x.id) !== String(id));
         if(!itinRes.error  && itinRes.data)  itineraries = itinRes.data.map(rowToItin);
         else itineraries = itineraries.filter(x => String(x.scheduleId) !== String(id));
