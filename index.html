@@ -2037,6 +2037,9 @@
             </div>
           </div>
 
+          <!-- 금일 콜량 랭킹 (관리자 전용) -->
+          <div id="homeCallRanking" style="display:none;margin-bottom:16px;"></div>
+
           <div class="split-grid">
             <div class="panel" id="homeNoticePanel">
               <h5>최근 공지</h5>
@@ -4101,6 +4104,35 @@
       if(view === "goals") renderGoals();
     }
 
+    function renderCallRanking(todayCalls){
+      const el = $("homeCallRanking");
+      if(!el) return;
+      if(!todayCalls || !todayCalls.length){ el.style.display = "none"; return; }
+      const byStaff = {};
+      todayCalls.forEach(l => {
+        const name = l.ownerName || "미정";
+        byStaff[name] = (byStaff[name] || 0) + 1;
+      });
+      const ranking = Object.entries(byStaff)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count);
+      const medals = ["🥇","🥈","🥉"];
+      const rows = ranking.map((r, i) =>
+        `<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:8px;background:${i===0?"rgba(59,130,246,0.08)":"transparent"}">
+          <span style="font-size:15px;width:26px;text-align:center;">${medals[i] || (i+1)+"위"}</span>
+          <span style="flex:1;font-weight:700;font-size:13px;">${escapeHtml(r.name)}</span>
+          <span style="font-size:13px;font-weight:800;color:#3b82f6;">${r.count}<span style="font-size:11px;color:#64748b;font-weight:500;margin-left:2px;">콜</span></span>
+        </div>`
+      ).join("");
+      el.style.display = "block";
+      el.innerHTML = `<div class="panel" style="padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:15px;">🏆</span>
+          <span style="font-weight:800;font-size:14px;">금일 콜량 랭킹</span>
+          <span style="margin-left:auto;font-size:11px;color:#64748b;">총 ${todayCalls.length}콜 · ${todayStr()} 기준</span>
+        </div>${rows}</div>`;
+    }
+
     function runHomeSummary(){
       if(isAdminMode()) runAdminSummary();
       else runMySummary();
@@ -4123,7 +4155,9 @@
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today)).length;
       // 콜량: 결과값이 있고, 오늘 입력된 건수 (resultEnteredAt 또는 resultDate 기준)
-      $("homeValue2").textContent = leads.filter(l => l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
+      const _todayCalls = leads.filter(l => l.result && l.result !== "" && l.result !== "선택" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today)));
+      $("homeValue2").textContent = _todayCalls.length;
+      renderCallRanking(_todayCalls);
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month)).length;
       // 상세 모달이 열려있으면 데이터 자동 갱신 (카드 숫자와 모달 일치 유지)
@@ -4150,7 +4184,8 @@
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 콜량: 내 DB 중 결과값 입력된 건수
-      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
+      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && l.result !== "선택" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
+      renderCallRanking(null); // 직원 모드: 랭킹 숨김
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => String(s.createdAt || "").startsWith(month) && s.createdByNo === no).length;
     }
@@ -5308,9 +5343,12 @@
           industry:   l.industry,
           status:     l.status,
           result:     l.result,
+          result_entered_at: (l.result && l.result !== "" && l.result !== "선택") ? new Date().toISOString() : null,
           memo:       l.memo
         }).eq("id", l.id);
         if(error) throw error;
+        if(l.result && l.result !== "" && l.result !== "선택") l.resultEnteredAt = new Date().toISOString();
+        runHomeSummary();
         showLeadMsg("✅ 수정 완료!", "");
       } catch(err){
         console.warn("수정 오류:", err.message);
