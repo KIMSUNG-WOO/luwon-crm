@@ -3656,6 +3656,8 @@
         .channel("crm-realtime")
         // 교육섭외 DB
         .on("postgres_changes", { event:"*", schema:"public", table:"education_db" }, () => {
+          // 로컬 업데이트 직후 2초간 realtime 재로드 억제 (optimistic update 덮어쓰기 방지)
+          if(Date.now() - _leadsLocalUpdateTs < 2000) return;
           try{ loadData(); }catch(e){}
         })
         // 일정
@@ -5456,6 +5458,7 @@
       if(!l) return;
       if(!isCompanyAllowed(l.company)){ showInspectionBlocked(); return; }
       l.status = l.status === "점검제외처리" ? "교육 이수" : "점검제외처리";
+      _leadsLocalUpdateTs = Date.now(); // realtime 덮어쓰기 억제
       renderLeads();
       saveAppData();
       try{
@@ -5982,6 +5985,7 @@
 
     // ── 결과값 + 일정픽스 ─────────────────────────────────────────
 
+    let _leadsLocalUpdateTs = 0; // realtime 억제용 타임스탬프
     let _resultFixLeadId = null;
     let _resultFixAmPm = "오전";
 
@@ -6003,6 +6007,7 @@
         l.resultDate = rDate;
         l.resultEnteredAt = rEnteredAt || "";
         l.resultTime = "";
+        _leadsLocalUpdateTs = Date.now(); // realtime 덮어쓰기 억제
         renderLeads();
         runHomeSummary();
         crmAddLog("info", "결과값 변경", `${l.company||""} → ${value||"선택"}`);
