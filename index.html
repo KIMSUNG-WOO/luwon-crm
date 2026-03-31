@@ -5458,34 +5458,24 @@
       if(!l) return;
       if(!isCompanyAllowed(l.company)){ showInspectionBlocked(); return; }
       const newStatus = l.status === "점검제외처리" ? "교육 이수" : "점검제외처리";
-      // 낙관적 UI 업데이트
+      // 낙관적 UI 업데이트 (즉시 반영)
       l.status = newStatus;
       _pendingLeadStatus.set(String(l.id), newStatus);
       _leadsLocalUpdateTs = Date.now();
       renderLeads();
       saveAppData();
       try{
-        // DB 저장 후 응답값으로 state 확정
-        const { data: updated, error } = await sbClient
+        // DB 저장 — .select() 없이 단순 update (RLS 오류 방지)
+        const { error } = await sbClient
           .from("education_db")
           .update({ status: newStatus })
-          .eq("id", l.id)
-          .select()
-          .single();
+          .eq("id", l.id);
         if(error) throw error;
-        // DB 확정값으로 leads 배열 고정 (응답이 있을 때만)
-        if(updated){
-          const idx = leads.findIndex(x => x.id === id);
-          if(idx !== -1) leads[idx].status = updated.status || newStatus;
-        }
-        _pendingLeadStatus.delete(String(l.id));
+        _pendingLeadStatus.delete(String(l.id)); // DB 확정 후 pending 해제
         saveAppData();
       } catch(err){
-        // 실패 시 낙관적 값 롤백
-        l.status = newStatus === "점검제외처리" ? "교육 이수" : "점검제외처리";
+        // DB 실패해도 롤백 없음 — 낙관적 값 유지, 다음 loadData에서 보정
         _pendingLeadStatus.delete(String(l.id));
-        renderLeads();
-        saveAppData();
         console.warn("상태 변경 오류:", err.message);
       }
     }
@@ -6063,29 +6053,19 @@
         l.resultTime = "";
         _pendingLeadResult.set(String(l.id), { result: value, resultDate: rDate, resultEnteredAt: rEnteredAt || "", resultTime: "" }); // loadData 덮어쓰기 방지
         _leadsLocalUpdateTs = Date.now();
-        renderLeads();
+        // 이 드롭다운(id)의 editing 플래그 해제 후 renderLeads
+        // (다른 드롭다운이 열려있으면 renderLeads 건너뜀 → 닫힘 방지)
+        if(String(_leadEditingResultId) === String(id)) clearLeadResultEditing();
+        if(!_leadEditingResultId) renderLeads();
         runHomeSummary();
         crmAddLog("info", "결과값 변경", `${l.company||""} → ${value||"선택"}`);
+        // DB 저장 — .select() 없이 단순 update (RLS 오류 방지)
         sbClient.from("education_db")
           .update({ result: value, result_date: rDate, result_time: "", result_entered_at: rEnteredAt })
           .eq("id", l.id)
-          .select()
-          .single()
-          .then(({data: updated, error}) => {
-            if(error){
-              _pendingLeadResult.delete(String(l.id));
-              console.warn(error);
-            } else {
-              // DB 확정값으로 leads 배열 고정
-              if(updated){
-                const idx = leads.findIndex(x => x.id === l.id);
-                if(idx !== -1){
-                  leads[idx].result          = updated.result          || "";
-                  leads[idx].resultDate      = updated.result_date     || "";
-                  leads[idx].resultTime      = updated.result_time     || "";
-                  leads[idx].resultEnteredAt = updated.result_entered_at || "";
-                }
-              }
+          .then(({error}) => {
+            if(error){ _pendingLeadResult.delete(String(l.id)); console.warn(error); }
+            else {
               _pendingLeadResult.delete(String(l.id));
               saveAppData();
             }
