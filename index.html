@@ -6524,6 +6524,26 @@
     // ── 일정표 수정 모달 ──
     let _itineraryEditId = null;
 
+    // itineraries 실제 컬럼 목록 캐시 (없는 컬럼 자동 제외용)
+    let _itinColsCache = null;
+    async function getItinCols(){
+      if(_itinColsCache) return _itinColsCache;
+      try{
+        const { data } = await sbClient.from("itineraries").select("*").limit(1);
+        if(data && data.length > 0){
+          _itinColsCache = new Set(Object.keys(data[0]));
+          return _itinColsCache;
+        }
+      }catch(e){}
+      return null; // 판단 불가 시 null → 전체 payload 그대로 사용
+    }
+    function filterPayloadByCols(payload, cols){
+      if(!cols) return payload;
+      const out = {};
+      for(const [k,v] of Object.entries(payload)) if(cols.has(k)) out[k] = v;
+      return out;
+    }
+
     function openItineraryEditModal(id){
       const itin = itineraries.find(x => String(x.id) === String(id));
       if(!itin) return;
@@ -6587,7 +6607,12 @@
 
       try{
         const _id = Math.floor(Number(itin.id));
-        const payload = {
+
+        // 실제 Supabase 컬럼 목록 조회 (없는 컬럼 자동 제외)
+        const cols = await getItinCols();
+
+        // 전체 가능한 payload (없는 컬럼은 filterPayloadByCols가 제거)
+        const fullPayload = {
           company:          itin.company         || "",
           address:          itin.address         || "",
           biz_phone:        itin.bizPhone        || "",
@@ -6596,6 +6621,7 @@
           date:             itin.date            || "",
           time:             itin.time            || "",
           people:           itin.people          || "",
+          age:              itin.age             || "",
           assignee:         itin.assignee        || "",
           sub_code:         itin.subCode         || "",
           subject:          itin.subject         || "",
@@ -6606,6 +6632,7 @@
           etc_note:         itin.etcNote         || "",
           special_note:     itin.specialNote     || ""
         };
+        const payload = filterPayloadByCols(fullPayload, cols);
 
         // ① update 시도 — 결과 행 수 확인
         const { data: updRows, error: upErr } = await sbClient
@@ -6618,18 +6645,19 @@
 
         if(!updRows || updRows.length === 0){
           // ② Supabase에 해당 행 없음 → insert
+          const insertRow = filterPayloadByCols({
+            ...fullPayload,
+            id:             _id,
+            schedule_id:    String(itin.scheduleId||""),
+            created_by_no:  itin.createdByNo||"",
+            created_at:     itin.createdAt||""
+          }, cols);
           const { data: insRows, error: insErr } = await sbClient
             .from("itineraries")
-            .insert([{ ...payload, id: _id, schedule_id: String(itin.scheduleId||""), created_by_no: itin.createdByNo||"", created_at: itin.createdAt||"" }])
+            .insert([insertRow])
             .select("id");
-          if(insErr){
-            // insert도 실패(id 충돌 등) → upsert로 최종 시도
-            const { error: upsErr } = await sbClient
-              .from("itineraries")
-              .upsert([itinToRow(itin)], {onConflict:"id"});
-            if(upsErr) throw upsErr;
-          } else if(insRows && insRows[0]){
-            // Supabase가 새 id 할당했으면 로컬도 동기화
+          if(insErr) throw insErr;
+          if(insRows && insRows[0]){
             itin.id = insRows[0].id;
             saveAppData();
           }
@@ -6638,7 +6666,7 @@
       } catch(e){
         const msg = e.message || e.code || JSON.stringify(e);
         console.warn("일정표 저장 오류:", msg);
-        alert("저장 오류 (개발자 확인용):\n" + msg);
+        alert("저장 오류:\n" + msg);
         showItineraryMsg("⚠️ 저장 실패 — 다시 시도해 주세요", "error");
       }
     }
