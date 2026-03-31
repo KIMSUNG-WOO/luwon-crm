@@ -6524,24 +6524,32 @@
     // ── 일정표 수정 모달 ──
     let _itineraryEditId = null;
 
-    // itineraries 실제 컬럼 목록 캐시 (없는 컬럼 자동 제외용)
-    let _itinColsCache = null;
-    async function getItinCols(){
-      if(_itinColsCache) return _itinColsCache;
-      try{
-        const { data } = await sbClient.from("itineraries").select("*").limit(1);
-        if(data && data.length > 0){
-          _itinColsCache = new Set(Object.keys(data[0]));
-          return _itinColsCache;
-        }
-      }catch(e){}
-      return null; // 판단 불가 시 null → 전체 payload 그대로 사용
+    // 없는 컬럼 오류 자동 감지·제거 후 재시도 — 어떤 스키마든 대응
+    const _itinBadCols = new Set(); // 확인된 없는 컬럼 캐시
+    async function itinSafeUpdate(rowId, payload){
+      let p = Object.assign({}, payload);
+      // 이전에 확인된 없는 컬럼 미리 제거
+      _itinBadCols.forEach(c => delete p[c]);
+      for(let retry = 0; retry < 20; retry++){
+        const { data, error } = await sbClient.from("itineraries").update(p).eq("id", rowId).select("id");
+        if(!error) return { data, error: null };
+        const m = (error.message||"").match(/Could not find the '(\w+)' column/);
+        if(m){ _itinBadCols.add(m[1]); delete p[m[1]]; }
+        else return { data: null, error };
+      }
+      return { data: null, error: new Error("컬럼 오류 반복") };
     }
-    function filterPayloadByCols(payload, cols){
-      if(!cols) return payload;
-      const out = {};
-      for(const [k,v] of Object.entries(payload)) if(cols.has(k)) out[k] = v;
-      return out;
+    async function itinSafeInsert(row){
+      let p = Object.assign({}, row);
+      _itinBadCols.forEach(c => delete p[c]);
+      for(let retry = 0; retry < 20; retry++){
+        const { data, error } = await sbClient.from("itineraries").insert([p]).select("id");
+        if(!error) return { data, error: null };
+        const m = (error.message||"").match(/Could not find the '(\w+)' column/);
+        if(m){ _itinBadCols.add(m[1]); delete p[m[1]]; }
+        else return { data: null, error };
+      }
+      return { data: null, error: new Error("컬럼 오류 반복") };
     }
 
     function openItineraryEditModal(id){
@@ -6607,19 +6615,16 @@
 
       try{
         const _id = Math.floor(Number(itin.id));
-
-        // 실제 Supabase 컬럼 목록 조회 (없는 컬럼 자동 제외)
-        const cols = await getItinCols();
-
-        // payload — Supabase itineraries에 없는 컬럼(age, biz_phone) 제외
-        const fullPayload = {
+        const payload = {
           company:          itin.company         || "",
           address:          itin.address         || "",
+          biz_phone:        itin.bizPhone        || "",
           manager:          itin.manager         || "",
           manager_phone:    itin.managerPhone    || "",
           date:             itin.date            || "",
           time:             itin.time            || "",
           people:           itin.people          || "",
+          age:              itin.age             || "",
           assignee:         itin.assignee        || "",
           sub_code:         itin.subCode         || "",
           subject:          itin.subject         || "",
@@ -6630,43 +6635,27 @@
           etc_note:         itin.etcNote         || "",
           special_note:     itin.specialNote     || ""
         };
-        // cols가 있으면 추가 필터링, 없으면 fullPayload 그대로 사용
-        const payload = cols ? filterPayloadByCols(fullPayload, cols) : fullPayload;
 
-        // ① update 시도 — 결과 행 수 확인
-        const { data: updRows, error: upErr } = await sbClient
-          .from("itineraries")
-          .update(payload)
-          .eq("id", _id)
-          .select("id");
-
+        // 없는 컬럼 자동 감지·제거 후 재시도
+        const { data: updRows, error: upErr } = await itinSafeUpdate(_id, payload);
         if(upErr) throw upErr;
 
         if(!updRows || updRows.length === 0){
-          // ② Supabase에 해당 행 없음 → insert
-          const insertBase = {
-            ...fullPayload,
+          // 행이 없으면 insert
+          const insertRow = {
+            ...payload,
             id:             _id,
             schedule_id:    String(itin.scheduleId||""),
             created_by_no:  itin.createdByNo||"",
             created_at:     itin.createdAt||""
           };
-          const insertRow = cols ? filterPayloadByCols(insertBase, cols) : insertBase;
-          const { data: insRows, error: insErr } = await sbClient
-            .from("itineraries")
-            .insert([insertRow])
-            .select("id");
+          const { data: insRows, error: insErr } = await itinSafeInsert(insertRow);
           if(insErr) throw insErr;
-          if(insRows && insRows[0]){
-            itin.id = insRows[0].id;
-            saveAppData();
-          }
+          if(insRows && insRows[0]){ itin.id = insRows[0].id; saveAppData(); }
         }
         showItineraryMsg("✅ 일정표 수정 완료!", "");
       } catch(e){
-        const msg = e.message || e.code || JSON.stringify(e);
-        console.warn("일정표 저장 오류:", msg);
-        alert("저장 오류:\n" + msg);
+        console.warn("일정표 저장 오류:", e.message);
         showItineraryMsg("⚠️ 저장 실패 — 다시 시도해 주세요", "error");
       }
     }
