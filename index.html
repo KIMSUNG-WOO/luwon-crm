@@ -6693,8 +6693,13 @@
         // realtime 억제 타임스탬프 설정 (3초간 덮어쓰기 방지)
         _itinLocalUpdateTs = Date.now();
 
+        console.log("[DEBUG] itin.id raw:", itin.id, typeof itin.id);
+        console.log("[DEBUG] _id (Number):", _id, "isNaN:", isNaN(_id));
+        console.log("[DEBUG] updateData payload:", JSON.stringify(payload));
+
         // 없는 컬럼 자동 감지·제거 후 재시도 (update만, row count 체크 없음)
         const { error: upErr } = await itinSafeUpdate(_id, payload);
+        console.log("[DEBUG] itinSafeUpdate upErr:", upErr);
         if(upErr){
           // update 실패 → 행이 없는 경우 insert 시도
           const insertRow = {
