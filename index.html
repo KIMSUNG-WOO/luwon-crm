@@ -5458,13 +5458,18 @@
       if(!l) return;
       if(!isCompanyAllowed(l.company)){ showInspectionBlocked(); return; }
       l.status = l.status === "점검제외처리" ? "교육 이수" : "점검제외처리";
-      _leadsLocalUpdateTs = Date.now(); // realtime 덮어쓰기 억제
+      _pendingLeadStatus.set(String(l.id), l.status); // loadData 덮어쓰기 방지
+      _leadsLocalUpdateTs = Date.now();
       renderLeads();
       saveAppData();
       try{
         const { error } = await sbClient.from("education_db").update({ status: l.status }).eq("id", l.id);
         if(error) throw error;
-      } catch(err){ console.warn("상태 변경 오류:", err.message); }
+        setTimeout(() => _pendingLeadStatus.delete(String(l.id)), 1000); // DB 확정 후 해제
+      } catch(err){
+        _pendingLeadStatus.delete(String(l.id)); // 실패 시 즉시 해제
+        console.warn("상태 변경 오류:", err.message);
+      }
     }
 
     // ── Supabase 함수 ─────────────────────────────────────────
@@ -5507,6 +5512,13 @@
           cleanBiz:  row.clean_biz || false
         }));
 
+        // pending 상태 보존: DB update 진행 중인 항목은 로컬 값 유지
+        if(_pendingLeadStatus.size > 0){
+          leads.forEach(l => {
+            const pending = _pendingLeadStatus.get(String(l.id));
+            if(pending !== undefined) l.status = pending;
+          });
+        }
         saveAppData(); // 최신 상태를 로컬에도 저장
         renderLeads();
         runHomeSummary();
@@ -5986,6 +5998,7 @@
     // ── 결과값 + 일정픽스 ─────────────────────────────────────────
 
     let _leadsLocalUpdateTs = 0; // realtime 억제용 타임스탬프
+    const _pendingLeadStatus = new Map(); // id→status: loadData 덮어쓰기 방지
     let _resultFixLeadId = null;
     let _resultFixAmPm = "오전";
 
