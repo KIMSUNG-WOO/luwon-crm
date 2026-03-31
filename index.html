@@ -6556,7 +6556,7 @@
       _itineraryEditId = null;
     }
 
-    function saveItineraryEdit(){
+    async function saveItineraryEdit(){
       const itin = itineraries.find(x => String(x.id) === String(_itineraryEditId));
       if(!itin) return;
 
@@ -6582,34 +6582,64 @@
       closeItineraryEditModal();
       renderItineraries();
       saveAppData();
-      // upsert 대신 update().eq() — id 컬럼 충돌 없이 안전하게 수정
-      if(sbClient){
+
+      if(!sbClient){ showItineraryMsg("✅ 일정표 수정 완료!", ""); return; }
+
+      try{
         const _id = Math.floor(Number(itin.id));
-        (async()=>{
-          const { error } = await sbClient.from("itineraries").update({
-            company:          itin.company         || "",
-            address:          itin.address         || "",
-            biz_phone:        itin.bizPhone        || "",
-            manager:          itin.manager         || "",
-            manager_phone:    itin.managerPhone    || "",
-            date:             itin.date            || "",
-            time:             itin.time            || "",
-            people:           itin.people          || "",
-            age:              itin.age             || "",
-            assignee:         itin.assignee        || "",
-            sub_code:         itin.subCode         || "",
-            subject:          itin.subject         || "",
-            industry:         itin.industry        || "",
-            education_place:  itin.educationPlace  || "",
-            foreigner_count:  itin.foreignerCount  || "",
-            support_content:  itin.supportContent  || "",
-            etc_note:         itin.etcNote         || "",
-            special_note:     itin.specialNote     || ""
-          }).eq("id", _id);
-          if(error) console.warn("일정표 수정 저장 오류:", error.message);
-        })();
+        const payload = {
+          company:          itin.company         || "",
+          address:          itin.address         || "",
+          biz_phone:        itin.bizPhone        || "",
+          manager:          itin.manager         || "",
+          manager_phone:    itin.managerPhone    || "",
+          date:             itin.date            || "",
+          time:             itin.time            || "",
+          people:           itin.people          || "",
+          age:              itin.age             || "",
+          assignee:         itin.assignee        || "",
+          sub_code:         itin.subCode         || "",
+          subject:          itin.subject         || "",
+          industry:         itin.industry        || "",
+          education_place:  itin.educationPlace  || "",
+          foreigner_count:  itin.foreignerCount  || "",
+          support_content:  itin.supportContent  || "",
+          etc_note:         itin.etcNote         || "",
+          special_note:     itin.specialNote     || ""
+        };
+
+        // ① update 시도 — 결과 행 수 확인
+        const { data: updRows, error: upErr } = await sbClient
+          .from("itineraries")
+          .update(payload)
+          .eq("id", _id)
+          .select("id");
+
+        if(upErr) throw upErr;
+
+        if(!updRows || updRows.length === 0){
+          // ② Supabase에 해당 행 없음 → insert
+          const { data: insRows, error: insErr } = await sbClient
+            .from("itineraries")
+            .insert([{ ...payload, id: _id, schedule_id: String(itin.scheduleId||""), created_by_no: itin.createdByNo||"", created_at: itin.createdAt||"" }])
+            .select("id");
+          if(insErr){
+            // insert도 실패(id 충돌 등) → upsert로 최종 시도
+            const { error: upsErr } = await sbClient
+              .from("itineraries")
+              .upsert([itinToRow(itin)], {onConflict:"id"});
+            if(upsErr) throw upsErr;
+          } else if(insRows && insRows[0]){
+            // Supabase가 새 id 할당했으면 로컬도 동기화
+            itin.id = insRows[0].id;
+            saveAppData();
+          }
+        }
+        showItineraryMsg("✅ 일정표 수정 완료!", "");
+      } catch(e){
+        console.warn("일정표 저장 오류:", e.message);
+        showItineraryMsg("⚠️ 저장 실패 — 다시 시도해 주세요", "error");
       }
-      showItineraryMsg("✅ 일정표 수정 완료!", "");
     }
 
     function showItineraryMsg(text, type){
