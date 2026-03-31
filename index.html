@@ -3553,7 +3553,21 @@
           cleanDeletedSchedIds(schedRes.data.map(r => r.id));
         }
         if(!perfRes.error  && perfRes.data?.length)     performances    = perfRes.data.map(rowToPerf);
-        if(!itinRes.error  && itinRes.data)             itineraries     = itinRes.data.map(rowToItin);
+        if(!itinRes.error  && itinRes.data){
+          const prevItins = itineraries.slice();
+          itineraries = itinRes.data.map(row => {
+            const n = rowToItin(row);
+            const p = prevItins.find(i => String(i.id) === String(n.id));
+            if(p){
+              if(!n.age)            n.age            = p.age            || "";
+              if(!n.educationPlace) n.educationPlace = p.educationPlace || "사무실";
+              if(!n.specialNote)    n.specialNote    = p.specialNote    || "";
+              if(!n.bizPhone)       n.bizPhone       = p.bizPhone       || "";
+              if(!n.managerPhone)   n.managerPhone   = p.managerPhone   || "";
+            }
+            return n;
+          });
+        }
         if(!inspRes.error  && inspRes.data?.length)     inspectionRules = inspRes.data.map(r=>({id:r.id, company:r.company, type:r.type}));
         if(!onlRes.error   && onlRes.data?.length)      onlineEduRules  = onlRes.data.map(r=>({id:r.id, company:r.company}));
         if(!settRes.error  && settRes.data){
