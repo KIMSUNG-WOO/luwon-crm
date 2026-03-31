@@ -3503,7 +3503,7 @@
     function perfToRow(p){ return { id:Number(p.id), staff:p.staff||"", staff_no:p.staffNo||"", type:p.type||"", value:String(p.value||""), amount:Number(p.amount||0), take:Number(p.take||0), memo:p.memo||"", date:p.date||"", created_by_no:p.createdByNo||"" }; }
     function rowToPerf(r){ return { id:r.id, staff:r.staff, staffNo:r.staff_no, type:r.type, value:r.value, amount:r.amount, take:r.take, memo:r.memo, date:r.date, createdByNo:r.created_by_no }; }
 
-    function itinToRow(i){ return { id:Math.floor(Number(i.id)), schedule_id:String(i.scheduleId||""), company:i.company||"", address:i.address||"", biz_phone:i.bizPhone||"", manager:i.manager||"", manager_phone:i.managerPhone||"", date:i.date||"", time:i.time||"", people:i.people||"", age:i.age||"", assignee:i.assignee||"", sub_code:i.subCode||"", subject:i.subject||"", industry:i.industry||"", education_place:i.educationPlace||"", foreigner_count:i.foreignerCount||"", support_content:i.supportContent||"", etc_note:i.etcNote||"", special_note:i.specialNote||"", created_by_no:i.createdByNo||"", created_at:i.createdAt||"" }; }
+    function itinToRow(i){ return { id:Math.floor(Number(i.id)), schedule_id:String(i.scheduleId||""), company:i.company||"", address:i.address||"", biz_phone:i.bizPhone||"", manager:i.manager||"", manager_phone:i.managerPhone||"", date:i.date||"", time:i.time||"", people:i.people||"", assignee:i.assignee||"", sub_code:i.subCode||"", subject:i.subject||"", industry:i.industry||"", education_place:i.educationPlace||"", foreigner_count:i.foreignerCount||"", support_content:i.supportContent||"", etc_note:i.etcNote||"", special_note:i.specialNote||"", created_by_no:i.createdByNo||"", created_at:i.createdAt||"" }; }
     function rowToItin(r){ return { id:r.id, scheduleId:r.schedule_id, company:r.company, address:r.address, bizPhone:r.biz_phone, manager:r.manager, managerPhone:r.manager_phone, date:r.date, time:r.time, people:r.people, age:r.age, assignee:r.assignee, subCode:r.sub_code, subject:r.subject, industry:r.industry, educationPlace:r.education_place, foreignerCount:r.foreigner_count, supportContent:r.support_content, etcNote:r.etc_note, specialNote:r.special_note, createdByNo:r.created_by_no, createdAt:r.created_at }; }
 
     // Supabase 전체 로드 완료 전에는 row 데이터 upsert 금지 (로컬 캐시로 삭제된 데이터 부활 방지)
@@ -6596,7 +6596,6 @@
           date:             itin.date            || "",
           time:             itin.time            || "",
           people:           itin.people          || "",
-          age:              itin.age             || "",
           assignee:         itin.assignee        || "",
           sub_code:         itin.subCode         || "",
           subject:          itin.subject         || "",
@@ -6639,8 +6638,7 @@
       } catch(e){
         const msg = e.message || e.code || JSON.stringify(e);
         console.warn("일정표 저장 오류:", msg);
-        alert("일정표 저장 오류:\n" + msg);
-        showItineraryMsg("⚠️ 저장 실패: " + msg, "error");
+        showItineraryMsg("⚠️ 저장 실패 — 다시 시도해 주세요", "error");
       }
     }
 
