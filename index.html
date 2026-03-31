@@ -3693,8 +3693,24 @@
         // 일정표
         .on("postgres_changes", { event:"*", schema:"public", table:"itineraries" }, async () => {
           try{
+            // 내가 방금 수정한 경우 3초간 realtime 덮어쓰기 억제
+            if(Date.now() - _itinLocalUpdateTs < 3000) return;
             const { data, error } = await sbClient.from("itineraries").select("*");
-            if(!error && data){ itineraries = data.map(rowToItin); if(state.currentUser) renderItineraries(); }
+            if(!error && data){
+              const prev = itineraries.slice();
+              itineraries = data.map(row => {
+                const n = rowToItin(row);
+                // Supabase에 없는 컬럼(biz_phone, age, education_place 등)은 로컬 값 보존
+                const p = prev.find(i => String(i.id) === String(n.id));
+                if(p){
+                  if(!n.bizPhone)       n.bizPhone       = p.bizPhone       || "";
+                  if(!n.age)            n.age            = p.age            || "";
+                  if(!n.educationPlace) n.educationPlace = p.educationPlace || "사무실";
+                }
+                return n;
+              });
+              if(state.currentUser) renderItineraries();
+            }
           }catch(e){}
         })
         // 점검제외 규칙
@@ -6525,31 +6541,31 @@
     let _itineraryEditId = null;
 
     // 없는 컬럼 오류 자동 감지·제거 후 재시도 — 어떤 스키마든 대응
+    let _itinLocalUpdateTs = 0; // realtime 덮어쓰기 억제용
     const _itinBadCols = new Set(); // 확인된 없는 컬럼 캐시
     async function itinSafeUpdate(rowId, payload){
       let p = Object.assign({}, payload);
-      // 이전에 확인된 없는 컬럼 미리 제거
       _itinBadCols.forEach(c => delete p[c]);
       for(let retry = 0; retry < 20; retry++){
-        const { data, error } = await sbClient.from("itineraries").update(p).eq("id", rowId).select("id");
-        if(!error) return { data, error: null };
+        const { error } = await sbClient.from("itineraries").update(p).eq("id", rowId);
+        if(!error) return { error: null };
         const m = (error.message||"").match(/Could not find the '(\w+)' column/);
         if(m){ _itinBadCols.add(m[1]); delete p[m[1]]; }
-        else return { data: null, error };
+        else return { error };
       }
-      return { data: null, error: new Error("컬럼 오류 반복") };
+      return { error: new Error("컬럼 오류 반복") };
     }
     async function itinSafeInsert(row){
       let p = Object.assign({}, row);
       _itinBadCols.forEach(c => delete p[c]);
       for(let retry = 0; retry < 20; retry++){
-        const { data, error } = await sbClient.from("itineraries").insert([p]).select("id");
-        if(!error) return { data, error: null };
+        const { error } = await sbClient.from("itineraries").insert([p]);
+        if(!error) return { error: null };
         const m = (error.message||"").match(/Could not find the '(\w+)' column/);
         if(m){ _itinBadCols.add(m[1]); delete p[m[1]]; }
-        else return { data: null, error };
+        else return { error };
       }
-      return { data: null, error: new Error("컬럼 오류 반복") };
+      return { error: new Error("컬럼 오류 반복") };
     }
 
     function openItineraryEditModal(id){
@@ -6636,12 +6652,13 @@
           special_note:     itin.specialNote     || ""
         };
 
-        // 없는 컬럼 자동 감지·제거 후 재시도
-        const { data: updRows, error: upErr } = await itinSafeUpdate(_id, payload);
-        if(upErr) throw upErr;
+        // realtime 억제 타임스탬프 설정 (3초간 덮어쓰기 방지)
+        _itinLocalUpdateTs = Date.now();
 
-        if(!updRows || updRows.length === 0){
-          // 행이 없으면 insert
+        // 없는 컬럼 자동 감지·제거 후 재시도 (update만, row count 체크 없음)
+        const { error: upErr } = await itinSafeUpdate(_id, payload);
+        if(upErr){
+          // update 실패 → 행이 없는 경우 insert 시도
           const insertRow = {
             ...payload,
             id:             _id,
@@ -6649,9 +6666,8 @@
             created_by_no:  itin.createdByNo||"",
             created_at:     itin.createdAt||""
           };
-          const { data: insRows, error: insErr } = await itinSafeInsert(insertRow);
+          const { error: insErr } = await itinSafeInsert(insertRow);
           if(insErr) throw insErr;
-          if(insRows && insRows[0]){ itin.id = insRows[0].id; saveAppData(); }
         }
         showItineraryMsg("✅ 일정표 수정 완료!", "");
       } catch(e){
