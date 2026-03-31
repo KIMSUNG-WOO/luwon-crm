@@ -5390,44 +5390,70 @@
       const l = leads.find(x => String(x.id) === String(_editLeadId));
       if(!l) return;
 
-      l.company   = $("editLeadCompany").value.trim();
-      l.ownerName = $("editLeadOwnerName").value.trim();
-      l.address   = $("editLeadAddress").value.trim();
-      l.manager   = $("editLeadManager").value.trim();
-      l.repName   = $("editLeadRepName").value.trim();
-      l.phone     = $("editLeadPhone").value.trim();
-      l.people    = $("editLeadPeople").value.trim();
-      l.age       = $("editLeadAge").value.trim();
-      l.subject   = $("editLeadSubject").value.trim();
-      l.industry  = $("editLeadIndustry").value.trim();
-      l.status    = $("editLeadStatus").value;
-      l.result    = $("editLeadResult").value;
-      l.memo      = $("editLeadMemo").value.trim();
+      // 폼에서 읽은 수정값
+      const edited = {
+        company:   $("editLeadCompany").value.trim(),
+        ownerName: $("editLeadOwnerName").value.trim(),
+        address:   $("editLeadAddress").value.trim(),
+        manager:   $("editLeadManager").value.trim(),
+        repName:   $("editLeadRepName").value.trim(),
+        phone:     $("editLeadPhone").value.trim(),
+        people:    $("editLeadPeople").value.trim(),
+        age:       $("editLeadAge").value.trim(),
+        subject:   $("editLeadSubject").value.trim(),
+        industry:  $("editLeadIndustry").value.trim(),
+        status:    $("editLeadStatus").value,
+        result:    $("editLeadResult").value,
+        memo:      $("editLeadMemo").value.trim(),
+      };
+
+      // 로컬 leads 반영 (빈 값이면 기존 유지)
+      l.company   = edited.company   || l.company;
+      l.ownerName = edited.ownerName || l.ownerName;
+      l.address   = edited.address   || l.address;
+      l.manager   = edited.manager   || l.manager;
+      l.repName   = edited.repName   || l.repName;
+      l.phone     = edited.phone     || l.phone;
+      l.people    = edited.people    || l.people;
+      l.age       = edited.age       || l.age;
+      l.subject   = edited.subject   || l.subject;
+      l.industry  = edited.industry  || l.industry;
+      l.status    = edited.status;
+      l.result    = edited.result;
+      l.memo      = edited.memo      || l.memo;
 
       closeLeadEditModal();
       renderLeads();
       saveAppData();
 
-      // Supabase 업데이트
+      // Supabase 업데이트 — 기존 DB 조회 후 merge
       try{
-        const { error } = await sbClient.from("education_db").update({
-          company:    l.company,
-          staff_name: l.ownerName,
-          address:    l.address,
-          manager:    l.manager,
-          rep_name:   l.repName,
-          phone:      l.phone,
-          people:     l.people,
-          age_group:  l.age,
-          subject:    l.subject,
-          industry:   l.industry,
+        const { data: existing, error: fetchErr } = await sbClient
+          .from("education_db").select("*").eq("id", l.id).single();
+        if(fetchErr) throw fetchErr;
+
+        const updateData = {
+          company:    l.company    || existing.company    || "",
+          staff_name: l.ownerName  || existing.staff_name || "",
+          address:    l.address    || existing.address    || "",
+          manager:    l.manager    || existing.manager    || "",
+          rep_name:   l.repName    || existing.rep_name   || "",
+          phone:      l.phone      || existing.phone      || "",
+          people:     l.people     || existing.people     || "",
+          age_group:  l.age        || existing.age_group  || "",
+          subject:    l.subject    || existing.subject    || "",
+          industry:   l.industry   || existing.industry   || "",
           status:     l.status,
           result:     l.result,
-          result_entered_at: (l.result && l.result !== "" && l.result !== "선택") ? new Date().toISOString() : null,
-          memo:       l.memo
-        }).eq("id", l.id);
+          memo:       l.memo       || existing.memo       || "",
+        };
+        if(l.result && l.result !== "" && l.result !== "선택"){
+          updateData.result_entered_at = new Date().toISOString();
+          l.resultEnteredAt = updateData.result_entered_at;
+        }
+
+        const { error } = await sbClient.from("education_db").update(updateData).eq("id", l.id);
         if(error) throw error;
-        if(l.result && l.result !== "" && l.result !== "선택") l.resultEnteredAt = new Date().toISOString();
         runHomeSummary();
         showLeadMsg("✅ 수정 완료!", "");
       } catch(err){
