@@ -3557,6 +3557,7 @@
           const prevItins = itineraries.slice();
           itineraries = itinRes.data.map(row => {
             const n = rowToItin(row);
+            // 1순위: 로컬 캐시에서 복원
             const p = prevItins.find(i => String(i.id) === String(n.id));
             if(p){
               if(!n.age)            n.age            = p.age            || "";
@@ -3565,6 +3566,16 @@
               if(!n.bizPhone)       n.bizPhone       = p.bizPhone       || "";
               if(!n.managerPhone)   n.managerPhone   = p.managerPhone   || "";
             }
+            // 2순위: 부모 schedule에서 복원 (로컬도 없는 경우)
+            if(!n.bizPhone || !n.managerPhone){
+              const s = schedules.find(s => String(s.id) === String(n.id));
+              if(s){
+                if(!n.bizPhone)     n.bizPhone     = s.phone || "";
+                if(!n.managerPhone) n.managerPhone = s.phone || "";
+              }
+            }
+            if(!n.specialNote) n.specialNote = buildDefaultSpecialNote();
+            if(!n.educationPlace) n.educationPlace = "사무실";
             return n;
           });
         }
