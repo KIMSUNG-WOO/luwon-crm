@@ -4170,8 +4170,16 @@
       $("homeCardDesc4").textContent  = `${calLabel} 전직원 일정 (진행일 기준)`;
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today)).length;
-      // 콜량: 결과값이 있고, 오늘 입력된 건수 (resultEnteredAt 또는 resultDate 기준)
-      const _todayCalls = leads.filter(l => l.result && l.result !== "" && l.result !== "선택" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today)));
+      // 콜량: 결과값이 있고, 오늘 입력된 건수 (resultEnteredAt → 로컬 날짜 변환 비교, 없으면 resultDate)
+      const _todayCalls = leads.filter(l => {
+        if(!l.result || l.result === "" || l.result === "선택") return false;
+        if(l.resultEnteredAt){
+          const d = new Date(l.resultEnteredAt);
+          const localDate = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+          return localDate === today;
+        }
+        return l.resultDate === today;
+      });
       $("homeValue2").textContent = _todayCalls.length;
       renderCallRanking(_todayCalls);
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
@@ -4205,8 +4213,17 @@
       $("homeCardDesc4").textContent  = `${calLabel} 내 일정 (진행일 기준)`;
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
-      // 콜량: 내 DB 중 결과값 입력된 건수
-      $("homeValue2").textContent = leads.filter(l => (l.ownerNo === no || l.ownerName === currentStaffName()) && l.result && l.result !== "" && l.result !== "선택" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today))).length;
+      // 콜량: 내 DB 중 결과값 입력된 건수 (resultEnteredAt → 로컬 날짜 변환 비교)
+      $("homeValue2").textContent = leads.filter(l => {
+        if(!(l.ownerNo === no || l.ownerName === currentStaffName())) return false;
+        if(!l.result || l.result === "" || l.result === "선택") return false;
+        if(l.resultEnteredAt){
+          const d = new Date(l.resultEnteredAt);
+          const localDate = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+          return localDate === today;
+        }
+        return l.resultDate === today;
+      }).length;
       renderCallRanking(null); // 직원 모드: 랭킹 숨김
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => {
