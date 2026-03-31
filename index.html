@@ -6637,8 +6637,10 @@
         }
         showItineraryMsg("✅ 일정표 수정 완료!", "");
       } catch(e){
-        console.warn("일정표 저장 오류:", e.message);
-        showItineraryMsg("⚠️ 저장 실패 — 다시 시도해 주세요", "error");
+        const msg = e.message || e.code || JSON.stringify(e);
+        console.warn("일정표 저장 오류:", msg);
+        alert("일정표 저장 오류:\n" + msg);
+        showItineraryMsg("⚠️ 저장 실패: " + msg, "error");
       }
     }
 
