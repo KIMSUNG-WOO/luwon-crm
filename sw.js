@@ -1,5 +1,5 @@
 // LUWON CRM Service Worker — Network First (캐시 완전 우회)
-const CACHE_NAME = "luwon-crm-v20";
+const CACHE_NAME = "luwon-crm-v21";
 
 // 설치 — skipWaiting으로 즉시 활성화
 self.addEventListener("install", e => {
