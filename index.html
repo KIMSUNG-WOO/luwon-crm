@@ -3503,7 +3503,7 @@
     function perfToRow(p){ return { id:Number(p.id), staff:p.staff||"", staff_no:p.staffNo||"", type:p.type||"", value:String(p.value||""), amount:Number(p.amount||0), take:Number(p.take||0), memo:p.memo||"", date:p.date||"", created_by_no:p.createdByNo||"" }; }
     function rowToPerf(r){ return { id:r.id, staff:r.staff, staffNo:r.staff_no, type:r.type, value:r.value, amount:r.amount, take:r.take, memo:r.memo, date:r.date, createdByNo:r.created_by_no }; }
 
-    function itinToRow(i){ return { id:i.id ? Number(i.id) : null, schedule_id:String(i.scheduleId||""), company:i.company||"", address:i.address||"", manager:i.manager||"", manager_phone:i.managerPhone||"", date:i.date||"", time:i.time||"", people:i.people||"", assignee:i.assignee||"", sub_code:i.subCode||"", subject:i.subject||"", industry:i.industry||"", education_place:i.educationPlace||"", foreigner_count:i.foreignerCount||"", support_content:i.supportContent||"", etc_note:i.etcNote||"", special_note:i.specialNote||"", created_at:i.createdAt||"" }; }
+    function itinToRow(i){ return { id:i.id, schedule_id:String(i.scheduleId||""), company:i.company||"", address:i.address||"", manager:i.manager||"", date:i.date||"", time:i.time||"", people:i.people||"", assignee:i.assignee||"", subject:i.subject||"", created_at:i.createdAt||"" }; }
     function rowToItin(r){ return { id:r.id, scheduleId:r.schedule_id, company:r.company, address:r.address, bizPhone:r.biz_phone, manager:r.manager, managerPhone:r.manager_phone, date:r.date, time:r.time, people:r.people, age:r.age, assignee:r.assignee, subCode:r.sub_code, subject:r.subject, industry:r.industry, educationPlace:r.education_place, foreignerCount:r.foreigner_count, supportContent:r.support_content, etcNote:r.etc_note, specialNote:r.special_note, createdByNo:r.created_by_no, createdAt:r.created_at }; }
 
     // Supabase 전체 로드 완료 전에는 row 데이터 upsert 금지 (로컬 캐시로 삭제된 데이터 부활 방지)
@@ -6671,25 +6671,16 @@
       try{
         const _id = itin.id;
         if(!_id){ console.error("❌ ID 없음", itin.id); showItineraryMsg("⚠️ ID 오류 — 저장 불가", "error"); return; }
+        // 화이트리스트: DB에 실제 존재하는 컬럼만 포함
         const payload = {
-          company:          itin.company         || "",
-          address:          itin.address         || "",
-          biz_phone:        itin.bizPhone        || "",
-          manager:          itin.manager         || "",
-          manager_phone:    itin.managerPhone    || "",
-          date:             itin.date            || "",
-          time:             itin.time            || "",
-          people:           itin.people          || "",
-          age:              itin.age             || "",
-          assignee:         itin.assignee        || "",
-          sub_code:         itin.subCode         || "",
-          subject:          itin.subject         || "",
-          industry:         itin.industry        || "",
-          education_place:  itin.educationPlace  || "",
-          foreigner_count:  itin.foreignerCount  || "",
-          support_content:  itin.supportContent  || "",
-          etc_note:         itin.etcNote         || "",
-          special_note:     itin.specialNote     || ""
+          company:     itin.company    || "",
+          address:     itin.address   || "",
+          manager:     itin.manager   || "",
+          date:        itin.date      || "",
+          time:        itin.time      || "",
+          people:      itin.people    || "",
+          assignee:    itin.assignee  || "",
+          subject:     itin.subject   || ""
         };
 
         // realtime 억제 타임스탬프 설정 (3초간 덮어쓰기 방지)
