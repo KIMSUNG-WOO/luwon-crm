@@ -6638,6 +6638,7 @@
       } catch(e){
         const msg = e.message || e.code || JSON.stringify(e);
         console.warn("일정표 저장 오류:", msg);
+        alert("저장 오류 (개발자 확인용):\n" + msg);
         showItineraryMsg("⚠️ 저장 실패 — 다시 시도해 주세요", "error");
       }
     }
