@@ -6585,13 +6585,14 @@
       let p = Object.assign({}, payload);
       _itinBadCols.forEach(c => delete p[c]);
       for(let retry = 0; retry < 20; retry++){
-        const { error } = await sbClient.from("itineraries").update(p).eq("id", rowId);
-        if(!error) return { error: null };
+        const { data, error, count } = await sbClient.from("itineraries").update(p, { count: "exact" }).eq("id", rowId);
+        console.log("[DEBUG] update result:", data, "| count:", count, "| error:", error, "| rowId:", rowId, typeof rowId);
+        if(!error) return { error: null, count };
         const m = (error.message||"").match(/Could not find the '(\w+)' column/);
         if(m){ _itinBadCols.add(m[1]); delete p[m[1]]; }
-        else return { error };
+        else return { error, count };
       }
-      return { error: new Error("컬럼 오류 반복") };
+      return { error: new Error("컬럼 오류 반복"), count: 0 };
     }
     async function itinSafeInsert(row){
       let p = Object.assign({}, row);
@@ -6695,7 +6696,10 @@
         _itinLocalUpdateTs = Date.now();
 
         console.log("[DEBUG] itin.id raw:", itin.id, typeof itin.id);
-        console.log("[DEBUG] _id used:", _id);
+        console.log("[DEBUG] _id used:", _id, typeof _id);
+        // DB 실제 id 샘플 확인
+        const { data: idSample } = await sbClient.from("itineraries").select("id").limit(5);
+        console.log("[DEBUG] DB id samples:", idSample);
         console.log("[DEBUG] updateData payload:", JSON.stringify(payload));
 
         // 없는 컬럼 자동 감지·제거 후 재시도 (update만, row count 체크 없음)
