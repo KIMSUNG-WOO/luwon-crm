@@ -5198,7 +5198,19 @@
     let _leadRowHeights = {};      // { leadId: px } — 세션 유지, 새로고침 시 초기화
     let _leadTableResizeInit = false; // 열 리사이즈 핸들 한 번만 부착
 
+    // 렌더 전 현재 DOM 상태 → leads 데이터로 동기화
+    function syncDomToData(){
+      document.querySelectorAll("#leadTableBody tr[data-id]").forEach(tr => {
+        const id = tr.dataset.id;
+        const item = leads.find(x => String(x.id) === String(id));
+        if(!item) return;
+        const chk = tr.querySelector(".lead-chk");
+        if(chk) item._checked = chk.checked;
+      });
+    }
+
     function renderLeads(){
+      syncDomToData(); // DOM 상태 먼저 leads에 반영
       const body = $("leadTableBody");
       const allRows = getVisibleLeads();
       const admin = isAdminMode();
@@ -5264,7 +5276,7 @@
 
         const rowNum = start + rows.indexOf(l) + 1;
         const numCell = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;">${rowNum}</td>`;
-        const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>`;
+        const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"${l._checked ? " checked" : ""}></td>`;
         const actionCell = admin
           ? `<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`
           : "";
