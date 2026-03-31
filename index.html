@@ -5457,17 +5457,35 @@
       const l = leads.find(x => x.id === id);
       if(!l) return;
       if(!isCompanyAllowed(l.company)){ showInspectionBlocked(); return; }
-      l.status = l.status === "점검제외처리" ? "교육 이수" : "점검제외처리";
-      _pendingLeadStatus.set(String(l.id), l.status); // loadData 덮어쓰기 방지
+      const newStatus = l.status === "점검제외처리" ? "교육 이수" : "점검제외처리";
+      // 낙관적 UI 업데이트
+      l.status = newStatus;
+      _pendingLeadStatus.set(String(l.id), newStatus);
       _leadsLocalUpdateTs = Date.now();
       renderLeads();
       saveAppData();
       try{
-        const { error } = await sbClient.from("education_db").update({ status: l.status }).eq("id", l.id);
+        // DB 저장 후 응답값으로 state 확정
+        const { data: updated, error } = await sbClient
+          .from("education_db")
+          .update({ status: newStatus })
+          .eq("id", l.id)
+          .select()
+          .single();
         if(error) throw error;
-        setTimeout(() => _pendingLeadStatus.delete(String(l.id)), 1000); // DB 확정 후 해제
+        // DB 확정값으로 leads 배열 고정 (응답이 있을 때만)
+        if(updated){
+          const idx = leads.findIndex(x => x.id === id);
+          if(idx !== -1) leads[idx].status = updated.status || newStatus;
+        }
+        _pendingLeadStatus.delete(String(l.id));
+        saveAppData();
       } catch(err){
-        _pendingLeadStatus.delete(String(l.id)); // 실패 시 즉시 해제
+        // 실패 시 낙관적 값 롤백
+        l.status = newStatus === "점검제외처리" ? "교육 이수" : "점검제외처리";
+        _pendingLeadStatus.delete(String(l.id));
+        renderLeads();
+        saveAppData();
         console.warn("상태 변경 오류:", err.message);
       }
     }
@@ -5484,33 +5502,51 @@
 
         if(error) throw error;
 
+        // 타임스탬프 비교용 이전 상태 스냅샷
+        const prevLeads = leads.slice();
+
         // Supabase가 소스오브트루스 — 로컬 병합 없이 완전 교체
         // 이렇게 해야 삭제된 항목이 새로고침 후 복원되지 않음
-        leads = (data || []).map(row => ({
-          id:        row.id,
-          type:      row.type || "교육섭외",
-          date:      row.date || "",
-          time:      row.time || "",
-          company:   row.company || "",
-          address:   row.address || "",
-          manager:   row.manager || "",
-          repName:   row.rep_name || "",
-          phone:     row.phone || "",
-          people:    row.people || "",
-          age:       row.age_group || "",
-          subject:   row.subject || "",
-          industry:  row.industry || "",
-          status:    row.status || "",
-          ownerNo:   row.staff_no || "",
-          ownerName: row.staff_name || "",
-          memo:      row.memo || "",
-          result:    row.result || "",
-          resultDate: row.result_date || "",
-          resultTime: row.result_time || "",
-          resultEnteredAt: row.result_entered_at || "",
-          createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr(),
-          cleanBiz:  row.clean_biz || false
-        }));
+        leads = (data || []).map(row => {
+          const serverItem = {
+            id:        row.id,
+            type:      row.type || "교육섭외",
+            date:      row.date || "",
+            time:      row.time || "",
+            company:   row.company || "",
+            address:   row.address || "",
+            manager:   row.manager || "",
+            repName:   row.rep_name || "",
+            phone:     row.phone || "",
+            people:    row.people || "",
+            age:       row.age_group || "",
+            subject:   row.subject || "",
+            industry:  row.industry || "",
+            status:    row.status || "",
+            ownerNo:   row.staff_no || "",
+            ownerName: row.staff_name || "",
+            memo:      row.memo || "",
+            result:    row.result || "",
+            resultDate: row.result_date || "",
+            resultTime: row.result_time || "",
+            resultEnteredAt: row.result_entered_at || "",
+            createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr(),
+            cleanBiz:  row.clean_biz || false
+          };
+          // 타임스탬프 비교: 로컬이 더 최신이면 result 관련 필드는 로컬 값 유지
+          const localItem = prevLeads.find(x => x.id === serverItem.id);
+          if(localItem) {
+            const serverTime = new Date(serverItem.resultEnteredAt || 0).getTime();
+            const localTime  = new Date(localItem.resultEnteredAt  || 0).getTime();
+            if(localTime > serverTime) {
+              serverItem.result          = localItem.result;
+              serverItem.resultDate      = localItem.resultDate;
+              serverItem.resultEnteredAt = localItem.resultEnteredAt;
+              serverItem.resultTime      = localItem.resultTime;
+            }
+          }
+          return serverItem;
+        });
 
         // pending 보존: DB update 진행 중인 항목은 로컬 값 유지 (덮어쓰기 방지)
         leads.forEach(l => {
@@ -6030,10 +6066,30 @@
         renderLeads();
         runHomeSummary();
         crmAddLog("info", "결과값 변경", `${l.company||""} → ${value||"선택"}`);
-        sbClient.from("education_db").update({ result: value, result_date: rDate, result_time: "", result_entered_at: rEnteredAt }).eq("id", l.id).then(({error}) => {
-          if(error) { _pendingLeadResult.delete(String(l.id)); console.warn(error); }
-          else setTimeout(() => _pendingLeadResult.delete(String(l.id)), 1000);
-        });
+        sbClient.from("education_db")
+          .update({ result: value, result_date: rDate, result_time: "", result_entered_at: rEnteredAt })
+          .eq("id", l.id)
+          .select()
+          .single()
+          .then(({data: updated, error}) => {
+            if(error){
+              _pendingLeadResult.delete(String(l.id));
+              console.warn(error);
+            } else {
+              // DB 확정값으로 leads 배열 고정
+              if(updated){
+                const idx = leads.findIndex(x => x.id === l.id);
+                if(idx !== -1){
+                  leads[idx].result          = updated.result          || "";
+                  leads[idx].resultDate      = updated.result_date     || "";
+                  leads[idx].resultTime      = updated.result_time     || "";
+                  leads[idx].resultEnteredAt = updated.result_entered_at || "";
+                }
+              }
+              _pendingLeadResult.delete(String(l.id));
+              saveAppData();
+            }
+          });
       }
     }
 
@@ -6062,14 +6118,37 @@
       l.resultDate = date;
       l.resultTime = timeStr;
       l.resultEnteredAt = enteredAt;
+      _pendingLeadResult.set(String(l.id), { result:"일정픽스", resultDate: date, resultTime: timeStr, resultEnteredAt: enteredAt });
+      _leadsLocalUpdateTs = Date.now();
       $("resultFixModal").classList.remove("show");
       _resultFixLeadId = null;
       renderLeads();
       runHomeSummary();
       try{
-        await sbClient.from("education_db").update({ result:"일정픽스", result_date: date, result_time: timeStr, result_entered_at: enteredAt }).eq("id", l.id);
+        const { data: updated, error } = await sbClient
+          .from("education_db")
+          .update({ result:"일정픽스", result_date: date, result_time: timeStr, result_entered_at: enteredAt })
+          .eq("id", l.id)
+          .select()
+          .single();
+        if(error) throw error;
+        // DB 확정값으로 leads 배열 고정
+        if(updated){
+          const idx = leads.findIndex(x => x.id === l.id);
+          if(idx !== -1){
+            leads[idx].result          = updated.result          || "";
+            leads[idx].resultDate      = updated.result_date     || "";
+            leads[idx].resultTime      = updated.result_time     || "";
+            leads[idx].resultEnteredAt = updated.result_entered_at || "";
+          }
+        }
+        _pendingLeadResult.delete(String(l.id));
+        saveAppData();
         showLeadMsg("📅 일정픽스 저장 완료!", "");
-      } catch(e){ console.warn(e); }
+      } catch(e){
+        _pendingLeadResult.delete(String(l.id));
+        console.warn(e);
+      }
     }
 
     function openNaverMap(idx){
