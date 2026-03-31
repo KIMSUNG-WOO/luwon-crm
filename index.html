@@ -1387,6 +1387,18 @@
       border:1px solid var(--line);background:#fff;
       font-size:11px;font-weight:600;cursor:pointer;min-width:90px;
     }
+    .result-input{
+      height:27px;padding:0 6px;border-radius:5px;
+      border:1px solid var(--line);background:#fff;
+      font-size:11px;font-weight:600;min-width:90px;width:100%;
+      box-sizing:border-box;font-family:inherit;
+    }
+    .result-input:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 2px rgba(99,102,241,.15);}
+    .result-fix-btn{
+      height:22px;padding:0 6px;border-radius:5px;font-size:10px;font-weight:700;
+      background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;cursor:pointer;
+      margin-left:3px;white-space:nowrap;font-family:inherit;vertical-align:middle;
+    }
     .memo-btn{
       height:23px;padding:0 7px;border-radius:5px;font-size:11px;font-weight:700;
       background:#f1f5f9;color:#475569;border:1px solid var(--line);
@@ -5207,22 +5219,27 @@
           ? `<span class="addr-link" onclick="openNaverMap(leads.findIndex(x=>x.id===${l.id}))">${escapeHtml(l.address)}</span>`
           : "";
 
-        const allowed = isCompanyAllowed(l.company);
+        // 점검제외 체크: 관리자=상태 텍스트 표시, 직원=결과 입력 여부 기반 read-only 체크박스
         const statusCell = admin
           ? `<span class="edu-toggle-btn ${sc}" style="cursor:default;">${escapeHtml(l.status || "미지정")}</span>`
-          : l.status === "점검제외처리"
-            ? allowed
-              ? `<button class="edu-toggle-btn edu-fail" onclick="staffToggleLeadStatus(${l.id})">${escapeHtml(l.status)}</button>`
-              : `<button class="edu-toggle-btn edu-fail" onclick="showInspectionBlocked()">${escapeHtml(l.status)}</button>`
-            : `${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}`;
+          : `<input type="checkbox" ${(l.result && l.result !== "") ? "checked" : ""} readonly
+               style="width:18px;height:18px;cursor:default;pointer-events:none;vertical-align:middle;"
+               title="${(l.result && l.result !== "") ? "결과 입력됨" : "결과 미입력"}">`;
 
-        const resultOpts = RESULT_OPTIONS.map(o =>
-          `<option value="${o}" ${l.result===o?"selected":""}>${o||"선택"}</option>`).join("");
-        const resultLabel = l.result === "일정픽스" && l.resultDate
-          ? `<div style="font-size:10px;color:#2563eb;margin-top:2px;">${escapeHtml(l.resultDate)} ${escapeHtml(l.resultTime||"")}</div>`
-          : (l.result && l.result !== "" && l.result !== "선택" && l.resultEnteredAt)
-            ? `<div style="font-size:10px;color:#64748b;margin-top:2px;">${formatDateTime(l.resultEnteredAt)}</div>` : "";
-        const resultCell = `<td><select class="result-select" onfocus="setLeadResultEditing(${l.id})" onblur="clearLeadResultEditing()" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>${resultLabel}</td>`;
+        // 결과값: 텍스트 입력 (blur 시 저장) + 일정픽스 버튼
+        const resultLabel = (l.result && l.result !== "") && l.resultDate
+          ? `<div style="font-size:10px;color:#64748b;margin-top:2px;">${l.resultDate}${l.resultTime ? " "+escapeHtml(l.resultTime) : ""}${l.resultEnteredAt ? " "+formatDateTime(l.resultEnteredAt).slice(11,16) : ""}</div>`
+          : "";
+        const resultCell = `<td style="min-width:105px;">
+          <input type="text" class="result-input"
+            value="${escapeHtml(l.result||"")}"
+            placeholder="결과 입력"
+            onfocus="setLeadResultEditing(${l.id})"
+            onblur="onResultBlur(${l.id},this.value)"
+            onkeydown="if(event.key==='Enter')this.blur()">
+          <button class="result-fix-btn" onclick="openResultFixModal(${l.id})" title="일정픽스">📅</button>
+          ${resultLabel}
+        </td>`;
 
         const hasMemo = !!(l.memo && l.memo.trim());
         const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})">${hasMemo?"📝 메모":"메모"}</button></td>`;
@@ -6088,6 +6105,62 @@
             }
           });
       }
+    }
+
+    // ── 결과 텍스트 입력 blur 저장 (드롭다운 대체) ────────────────
+    function onResultBlur(id, value){
+      const l = leads.find(x => String(x.id) === String(id));
+      if(!l) return;
+      clearLeadResultEditing();
+      const trimmed = (value || "").trim();
+      // 변경 없으면 그냥 re-render만 (입력창 초기화)
+      if(trimmed === (l.result || "").trim()){ renderLeads(); return; }
+
+      const rDate     = trimmed ? todayStr() : "";
+      const rEnteredAt = trimmed ? new Date().toISOString() : null;
+      // 결과 입력 여부로 status 자동 결정 (체크박스 = read-only, result 기반)
+      const newStatus = trimmed ? "점검제외처리" : "교육 이수";
+
+      l.result          = trimmed;
+      l.resultDate      = rDate;
+      l.resultEnteredAt = rEnteredAt || "";
+      l.resultTime      = "";
+      l.status          = newStatus;
+
+      _pendingLeadResult.set(String(l.id), { result: trimmed, resultDate: rDate, resultEnteredAt: rEnteredAt || "", resultTime: "" });
+      _pendingLeadStatus.set(String(l.id), newStatus);
+      _leadsLocalUpdateTs = Date.now();
+      renderLeads();
+      runHomeSummary();
+      crmAddLog("info", "결과값 변경", `${l.company||""} → ${trimmed||"(삭제)"}`);
+
+      sbClient.from("education_db")
+        .update({ result: trimmed, result_date: rDate, result_time: "", result_entered_at: rEnteredAt, status: newStatus })
+        .eq("id", l.id)
+        .then(({error}) => {
+          if(error){
+            _pendingLeadResult.delete(String(l.id));
+            _pendingLeadStatus.delete(String(l.id));
+            console.warn("결과 저장 오류:", error);
+          } else {
+            _pendingLeadResult.delete(String(l.id));
+            _pendingLeadStatus.delete(String(l.id));
+            saveAppData();
+          }
+        });
+    }
+
+    // 일정픽스 모달 열기 버튼 (텍스트 입력 옆 📅 버튼)
+    function openResultFixModal(id){
+      const l = leads.find(x => String(x.id) === String(id));
+      if(!l) return;
+      _resultFixLeadId = id;
+      _resultFixAmPm = "오전";
+      $("rfAmBtn").classList.add("active");
+      $("rfPmBtn").classList.remove("active");
+      $("resultFixDate").value = "";
+      $("resultFixCompanyLabel").textContent = l.company || "";
+      $("resultFixModal").classList.add("show");
     }
 
     function setResultAmPm(v){
