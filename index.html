@@ -5205,7 +5205,7 @@
           ? `<div style="font-size:10px;color:#2563eb;margin-top:2px;">${escapeHtml(l.resultDate)} ${escapeHtml(l.resultTime||"")}</div>`
           : (l.result && l.result !== "" && l.result !== "선택" && l.resultEnteredAt)
             ? `<div style="font-size:10px;color:#64748b;margin-top:2px;">${formatDateTime(l.resultEnteredAt)}</div>` : "";
-        const resultCell = `<td><select class="result-select" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>${resultLabel}</td>`;
+        const resultCell = `<td><select class="result-select" onfocus="setLeadResultEditing(${l.id})" onblur="clearLeadResultEditing()" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>${resultLabel}</td>`;
 
         const hasMemo = !!(l.memo && l.memo.trim());
         const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})">${hasMemo?"📝 메모":"메모"}</button></td>`;
@@ -5520,7 +5520,8 @@
           if(pendingResult !== undefined) Object.assign(l, pendingResult);
         });
         saveAppData(); // 최신 상태를 로컬에도 저장
-        renderLeads();
+        // 드롭다운 열려있으면 renderLeads 건너뜀 (DOM 재생성 → 드롭다운 강제 닫힘 방지)
+        if(!_leadEditingResultId) renderLeads();
         runHomeSummary();
         loadProgress();
       } catch(err){
@@ -6000,6 +6001,9 @@
     let _leadsLocalUpdateTs = 0; // realtime 억제용 타임스탬프
     const _pendingLeadStatus = new Map(); // id→status: loadData 덮어쓰기 방지
     const _pendingLeadResult = new Map(); // id→{result,resultDate,resultEnteredAt}: loadData 덮어쓰기 방지
+    let _leadEditingResultId = null; // 드롭다운 열림 상태: renderLeads 차단용
+    function setLeadResultEditing(id){ _leadEditingResultId = id; }
+    function clearLeadResultEditing(){ _leadEditingResultId = null; }
     let _resultFixLeadId = null;
     let _resultFixAmPm = "오전";
 
@@ -7617,7 +7621,7 @@
             : `${l.status?`<span class="${sc}">${escapeHtml(l.status)}</span>`:""}`;
         const resultOpts = RESULT_OPTIONS.map(o=>`<option value="${o}" ${l.result===o?"selected":""}>${o||"선택"}</option>`).join("");
         const resultLabel = l.result==="일정픽스"&&l.resultDate?`<div style="font-size:10px;color:#2563eb;margin-top:2px;">${escapeHtml(l.resultDate)} ${escapeHtml(l.resultTime||"")}</div>`:"";
-        const resultCell = `<td><select class="result-select" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>${resultLabel}</td>`;
+        const resultCell = `<td><select class="result-select" onfocus="setLeadResultEditing(${l.id})" onblur="clearLeadResultEditing()" onchange="onResultChange(${l.id},this.value)">${resultOpts}</select>${resultLabel}</td>`;
         const hasMemo = !!(l.memo&&l.memo.trim());
         const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})">${hasMemo?"📝 메모":"메모"}</button></td>`;
         const rowNum   = start + idx + 1;
