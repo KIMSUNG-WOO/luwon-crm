@@ -6668,7 +6668,8 @@
       if(!sbClient){ showItineraryMsg("✅ 일정표 수정 완료!", ""); return; }
 
       try{
-        const _id = Math.floor(Number(itin.id));
+        const _id = itin.id;
+        if(!_id){ console.error("❌ ID 없음", itin.id); showItineraryMsg("⚠️ ID 오류 — 저장 불가", "error"); return; }
         const payload = {
           company:          itin.company         || "",
           address:          itin.address         || "",
@@ -6694,7 +6695,7 @@
         _itinLocalUpdateTs = Date.now();
 
         console.log("[DEBUG] itin.id raw:", itin.id, typeof itin.id);
-        console.log("[DEBUG] _id (Number):", _id, "isNaN:", isNaN(_id));
+        console.log("[DEBUG] _id used:", _id);
         console.log("[DEBUG] updateData payload:", JSON.stringify(payload));
 
         // 없는 컬럼 자동 감지·제거 후 재시도 (update만, row count 체크 없음)
