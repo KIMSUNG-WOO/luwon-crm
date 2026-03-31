@@ -3503,7 +3503,7 @@
     function perfToRow(p){ return { id:Number(p.id), staff:p.staff||"", staff_no:p.staffNo||"", type:p.type||"", value:String(p.value||""), amount:Number(p.amount||0), take:Number(p.take||0), memo:p.memo||"", date:p.date||"", created_by_no:p.createdByNo||"" }; }
     function rowToPerf(r){ return { id:r.id, staff:r.staff, staffNo:r.staff_no, type:r.type, value:r.value, amount:r.amount, take:r.take, memo:r.memo, date:r.date, createdByNo:r.created_by_no }; }
 
-    function itinToRow(i){ return { id:i.id, company:i.company||"", address:i.address||"", manager:i.manager||"", date:i.date||"", time:i.time||"", people:i.people||"", assignee:i.assignee||"", subject:i.subject||"", created_at:i.createdAt||"" }; }
+    function itinToRow(i){ return { id:Math.floor(Number(i.id)), schedule_id:String(i.scheduleId||""), company:i.company||"", address:i.address||"", manager:i.manager||"", manager_phone:i.managerPhone||"", date:i.date||"", time:i.time||"", people:i.people||"", assignee:i.assignee||"", sub_code:i.subCode||"", subject:i.subject||"", industry:i.industry||"", education_place:i.educationPlace||"", foreigner_count:i.foreignerCount||"", support_content:i.supportContent||"", etc_note:i.etcNote||"", special_note:i.specialNote||"", created_by_no:i.createdByNo||"", created_at:i.createdAt||"" }; }
     function rowToItin(r){ return { id:r.id, scheduleId:r.schedule_id, company:r.company, address:r.address, bizPhone:r.biz_phone, manager:r.manager, managerPhone:r.manager_phone, date:r.date, time:r.time, people:r.people, age:r.age, assignee:r.assignee, subCode:r.sub_code, subject:r.subject, industry:r.industry, educationPlace:r.education_place, foreignerCount:r.foreigner_count, supportContent:r.support_content, etcNote:r.etc_note, specialNote:r.special_note, createdByNo:r.created_by_no, createdAt:r.created_at }; }
 
     // Supabase 전체 로드 완료 전에는 row 데이터 upsert 금지 (로컬 캐시로 삭제된 데이터 부활 방지)
@@ -5198,19 +5198,7 @@
     let _leadRowHeights = {};      // { leadId: px } — 세션 유지, 새로고침 시 초기화
     let _leadTableResizeInit = false; // 열 리사이즈 핸들 한 번만 부착
 
-    // 렌더 전 현재 DOM 상태 → leads 데이터로 동기화
-    function syncDomToData(){
-      document.querySelectorAll("#leadTableBody tr[data-id]").forEach(tr => {
-        const id = tr.dataset.id;
-        const item = leads.find(x => String(x.id) === String(id));
-        if(!item) return;
-        const chk = tr.querySelector(".lead-chk");
-        if(chk) item._checked = chk.checked;
-      });
-    }
-
     function renderLeads(){
-      syncDomToData(); // DOM 상태 먼저 leads에 반영
       const body = $("leadTableBody");
       const allRows = getVisibleLeads();
       const admin = isAdminMode();
@@ -5276,7 +5264,7 @@
 
         const rowNum = start + rows.indexOf(l) + 1;
         const numCell = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;">${rowNum}</td>`;
-        const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"${l._checked ? " checked" : ""}></td>`;
+        const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>`;
         const actionCell = admin
           ? `<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`
           : "";
@@ -5399,73 +5387,47 @@
 
     async function saveLeadEdit(){
       if(!_editLeadId) return;
-      const l = leads.find(x => String(x.id) === String(_editLeadId));
+      const l = leads.find(x => x.id === _editLeadId);
       if(!l) return;
 
-      // 폼에서 읽은 수정값
-      const edited = {
-        company:   $("editLeadCompany").value.trim(),
-        ownerName: $("editLeadOwnerName").value.trim(),
-        address:   $("editLeadAddress").value.trim(),
-        manager:   $("editLeadManager").value.trim(),
-        repName:   $("editLeadRepName").value.trim(),
-        phone:     $("editLeadPhone").value.trim(),
-        people:    $("editLeadPeople").value.trim(),
-        age:       $("editLeadAge").value.trim(),
-        subject:   $("editLeadSubject").value.trim(),
-        industry:  $("editLeadIndustry").value.trim(),
-        status:    $("editLeadStatus").value,
-        result:    $("editLeadResult").value,
-        memo:      $("editLeadMemo").value.trim(),
-      };
-
-      // 로컬 leads 반영 (빈 값이면 기존 유지)
-      l.company   = edited.company   || l.company;
-      l.ownerName = edited.ownerName || l.ownerName;
-      l.address   = edited.address   || l.address;
-      l.manager   = edited.manager   || l.manager;
-      l.repName   = edited.repName   || l.repName;
-      l.phone     = edited.phone     || l.phone;
-      l.people    = edited.people    || l.people;
-      l.age       = edited.age       || l.age;
-      l.subject   = edited.subject   || l.subject;
-      l.industry  = edited.industry  || l.industry;
-      l.status    = edited.status;
-      l.result    = edited.result;
-      l.memo      = edited.memo      || l.memo;
+      l.company   = $("editLeadCompany").value.trim();
+      l.ownerName = $("editLeadOwnerName").value.trim();
+      l.address   = $("editLeadAddress").value.trim();
+      l.manager   = $("editLeadManager").value.trim();
+      l.repName   = $("editLeadRepName").value.trim();
+      l.phone     = $("editLeadPhone").value.trim();
+      l.people    = $("editLeadPeople").value.trim();
+      l.age       = $("editLeadAge").value.trim();
+      l.subject   = $("editLeadSubject").value.trim();
+      l.industry  = $("editLeadIndustry").value.trim();
+      l.status    = $("editLeadStatus").value;
+      l.result    = $("editLeadResult").value;
+      l.memo      = $("editLeadMemo").value.trim();
 
       closeLeadEditModal();
       renderLeads();
       saveAppData();
 
-      // Supabase 업데이트 — 기존 DB 조회 후 merge
+      // Supabase 업데이트
       try{
-        const { data: existing, error: fetchErr } = await sbClient
-          .from("education_db").select("*").eq("id", l.id).single();
-        if(fetchErr) throw fetchErr;
-
-        const updateData = {
-          company:    l.company    || existing.company    || "",
-          staff_name: l.ownerName  || existing.staff_name || "",
-          address:    l.address    || existing.address    || "",
-          manager:    l.manager    || existing.manager    || "",
-          rep_name:   l.repName    || existing.rep_name   || "",
-          phone:      l.phone      || existing.phone      || "",
-          people:     l.people     || existing.people     || "",
-          age_group:  l.age        || existing.age_group  || "",
-          subject:    l.subject    || existing.subject    || "",
-          industry:   l.industry   || existing.industry   || "",
+        const { error } = await sbClient.from("education_db").update({
+          company:    l.company,
+          staff_name: l.ownerName,
+          address:    l.address,
+          manager:    l.manager,
+          rep_name:   l.repName,
+          phone:      l.phone,
+          people:     l.people,
+          age_group:  l.age,
+          subject:    l.subject,
+          industry:   l.industry,
           status:     l.status,
           result:     l.result,
-          memo:       l.memo       || existing.memo       || "",
-        };
-        if(l.result && l.result !== "" && l.result !== "선택"){
-          updateData.result_entered_at = new Date().toISOString();
-          l.resultEnteredAt = updateData.result_entered_at;
-        }
-
-        const { error } = await sbClient.from("education_db").update(updateData).eq("id", l.id);
+          result_entered_at: (l.result && l.result !== "" && l.result !== "선택") ? new Date().toISOString() : null,
+          memo:       l.memo
+        }).eq("id", l.id);
         if(error) throw error;
+        if(l.result && l.result !== "" && l.result !== "선택") l.resultEnteredAt = new Date().toISOString();
         runHomeSummary();
         showLeadMsg("✅ 수정 완료!", "");
       } catch(err){
@@ -6585,14 +6547,13 @@
       let p = Object.assign({}, payload);
       _itinBadCols.forEach(c => delete p[c]);
       for(let retry = 0; retry < 20; retry++){
-        const { data, error, count } = await sbClient.from("itineraries").update(p, { count: "exact" }).eq("id", rowId);
-        console.log("[DEBUG] update result:", data, "| count:", count, "| error:", error, "| rowId:", rowId, typeof rowId);
-        if(!error) return { error: null, count };
+        const { error } = await sbClient.from("itineraries").update(p).eq("id", rowId);
+        if(!error) return { error: null };
         const m = (error.message||"").match(/Could not find the '(\w+)' column/);
         if(m){ _itinBadCols.add(m[1]); delete p[m[1]]; }
-        else return { error, count };
+        else return { error };
       }
-      return { error: new Error("컬럼 오류 반복"), count: 0 };
+      return { error: new Error("컬럼 오류 반복") };
     }
     async function itinSafeInsert(row){
       let p = Object.assign({}, row);
@@ -6669,33 +6630,33 @@
       if(!sbClient){ showItineraryMsg("✅ 일정표 수정 완료!", ""); return; }
 
       try{
-        const _id = itin.id;
-        if(!_id){ console.error("❌ ID 없음", itin.id); showItineraryMsg("⚠️ ID 오류 — 저장 불가", "error"); return; }
-        // 화이트리스트: DB에 실제 존재하는 컬럼만 포함
+        const _id = Math.floor(Number(itin.id));
         const payload = {
-          company:     itin.company    || "",
-          address:     itin.address   || "",
-          manager:     itin.manager   || "",
-          date:        itin.date      || "",
-          time:        itin.time      || "",
-          people:      itin.people    || "",
-          assignee:    itin.assignee  || "",
-          subject:     itin.subject   || ""
+          company:          itin.company         || "",
+          address:          itin.address         || "",
+          biz_phone:        itin.bizPhone        || "",
+          manager:          itin.manager         || "",
+          manager_phone:    itin.managerPhone    || "",
+          date:             itin.date            || "",
+          time:             itin.time            || "",
+          people:           itin.people          || "",
+          age:              itin.age             || "",
+          assignee:         itin.assignee        || "",
+          sub_code:         itin.subCode         || "",
+          subject:          itin.subject         || "",
+          industry:         itin.industry        || "",
+          education_place:  itin.educationPlace  || "",
+          foreigner_count:  itin.foreignerCount  || "",
+          support_content:  itin.supportContent  || "",
+          etc_note:         itin.etcNote         || "",
+          special_note:     itin.specialNote     || ""
         };
 
         // realtime 억제 타임스탬프 설정 (3초간 덮어쓰기 방지)
         _itinLocalUpdateTs = Date.now();
 
-        console.log("[DEBUG] itin.id raw:", itin.id, typeof itin.id);
-        console.log("[DEBUG] _id used:", _id, typeof _id);
-        // DB 실제 id 샘플 확인
-        const { data: idSample } = await sbClient.from("itineraries").select("id").limit(5);
-        console.log("[DEBUG] DB id samples:", idSample);
-        console.log("[DEBUG] updateData payload:", JSON.stringify(payload));
-
         // 없는 컬럼 자동 감지·제거 후 재시도 (update만, row count 체크 없음)
         const { error: upErr } = await itinSafeUpdate(_id, payload);
-        console.log("[DEBUG] itinSafeUpdate upErr:", upErr);
         if(upErr){
           // update 실패 → 행이 없는 경우 insert 시도
           const insertRow = {
