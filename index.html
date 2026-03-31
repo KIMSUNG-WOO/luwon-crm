@@ -5512,13 +5512,13 @@
           cleanBiz:  row.clean_biz || false
         }));
 
-        // pending 상태 보존: DB update 진행 중인 항목은 로컬 값 유지
-        if(_pendingLeadStatus.size > 0){
-          leads.forEach(l => {
-            const pending = _pendingLeadStatus.get(String(l.id));
-            if(pending !== undefined) l.status = pending;
-          });
-        }
+        // pending 보존: DB update 진행 중인 항목은 로컬 값 유지 (덮어쓰기 방지)
+        leads.forEach(l => {
+          const pendingStatus = _pendingLeadStatus.get(String(l.id));
+          if(pendingStatus !== undefined) l.status = pendingStatus;
+          const pendingResult = _pendingLeadResult.get(String(l.id));
+          if(pendingResult !== undefined) Object.assign(l, pendingResult);
+        });
         saveAppData(); // 최신 상태를 로컬에도 저장
         renderLeads();
         runHomeSummary();
@@ -5999,6 +5999,7 @@
 
     let _leadsLocalUpdateTs = 0; // realtime 억제용 타임스탬프
     const _pendingLeadStatus = new Map(); // id→status: loadData 덮어쓰기 방지
+    const _pendingLeadResult = new Map(); // id→{result,resultDate,resultEnteredAt}: loadData 덮어쓰기 방지
     let _resultFixLeadId = null;
     let _resultFixAmPm = "오전";
 
@@ -6020,11 +6021,15 @@
         l.resultDate = rDate;
         l.resultEnteredAt = rEnteredAt || "";
         l.resultTime = "";
-        _leadsLocalUpdateTs = Date.now(); // realtime 덮어쓰기 억제
+        _pendingLeadResult.set(String(l.id), { result: value, resultDate: rDate, resultEnteredAt: rEnteredAt || "", resultTime: "" }); // loadData 덮어쓰기 방지
+        _leadsLocalUpdateTs = Date.now();
         renderLeads();
         runHomeSummary();
         crmAddLog("info", "결과값 변경", `${l.company||""} → ${value||"선택"}`);
-        sbClient.from("education_db").update({ result: value, result_date: rDate, result_time: "", result_entered_at: rEnteredAt }).eq("id", l.id).then(({error}) => { if(error) console.warn(error); });
+        sbClient.from("education_db").update({ result: value, result_date: rDate, result_time: "", result_entered_at: rEnteredAt }).eq("id", l.id).then(({error}) => {
+          if(error) { _pendingLeadResult.delete(String(l.id)); console.warn(error); }
+          else setTimeout(() => _pendingLeadResult.delete(String(l.id)), 1000);
+        });
       }
     }
 
