@@ -5219,12 +5219,14 @@
           ? `<span class="addr-link" onclick="openNaverMap(leads.findIndex(x=>x.id===${l.id}))">${escapeHtml(l.address)}</span>`
           : "";
 
-        // 점검제외 체크: 관리자=상태 텍스트 표시, 직원=결과 입력 여부 기반 read-only 체크박스
+        const allowed = isCompanyAllowed(l.company);
         const statusCell = admin
           ? `<span class="edu-toggle-btn ${sc}" style="cursor:default;">${escapeHtml(l.status || "미지정")}</span>`
-          : `<input type="checkbox" ${(l.result && l.result !== "") ? "checked" : ""} readonly
-               style="width:18px;height:18px;cursor:default;pointer-events:none;vertical-align:middle;"
-               title="${(l.result && l.result !== "") ? "결과 입력됨" : "결과 미입력"}">`;
+          : l.status === "점검제외처리"
+            ? allowed
+              ? `<button class="edu-toggle-btn edu-fail" onclick="staffToggleLeadStatus(${l.id})">${escapeHtml(l.status)}</button>`
+              : `<button class="edu-toggle-btn edu-fail" onclick="showInspectionBlocked()">${escapeHtml(l.status)}</button>`
+            : `${l.status ? `<span class="${sc}">${escapeHtml(l.status)}</span>` : ""}`;
 
         // 결과값: 텍스트 입력 (blur 시 저장) + 일정픽스 버튼
         const resultLabel = (l.result && l.result !== "") && l.resultDate
@@ -6116,35 +6118,29 @@
       // 변경 없으면 그냥 re-render만 (입력창 초기화)
       if(trimmed === (l.result || "").trim()){ renderLeads(); return; }
 
-      const rDate     = trimmed ? todayStr() : "";
+      const rDate      = trimmed ? todayStr() : "";
       const rEnteredAt = trimmed ? new Date().toISOString() : null;
-      // 결과 입력 여부로 status 자동 결정 (체크박스 = read-only, result 기반)
-      const newStatus = trimmed ? "점검제외처리" : "교육 이수";
 
       l.result          = trimmed;
       l.resultDate      = rDate;
       l.resultEnteredAt = rEnteredAt || "";
       l.resultTime      = "";
-      l.status          = newStatus;
 
       _pendingLeadResult.set(String(l.id), { result: trimmed, resultDate: rDate, resultEnteredAt: rEnteredAt || "", resultTime: "" });
-      _pendingLeadStatus.set(String(l.id), newStatus);
       _leadsLocalUpdateTs = Date.now();
       renderLeads();
       runHomeSummary();
       crmAddLog("info", "결과값 변경", `${l.company||""} → ${trimmed||"(삭제)"}`);
 
       sbClient.from("education_db")
-        .update({ result: trimmed, result_date: rDate, result_time: "", result_entered_at: rEnteredAt, status: newStatus })
+        .update({ result: trimmed, result_date: rDate, result_time: "", result_entered_at: rEnteredAt })
         .eq("id", l.id)
         .then(({error}) => {
           if(error){
             _pendingLeadResult.delete(String(l.id));
-            _pendingLeadStatus.delete(String(l.id));
             console.warn("결과 저장 오류:", error);
           } else {
             _pendingLeadResult.delete(String(l.id));
-            _pendingLeadStatus.delete(String(l.id));
             saveAppData();
           }
         });
