@@ -3925,32 +3925,36 @@
 
       showMsg("로그인 중...", "info");
 
-      // 1. Supabase에서 직접 확인 (항상 최신 데이터 기준)
       let user = null;
-      try{
-        const { data, error } = await sbClient.from("staff_accounts")
-          .select("*").eq("staff_no", staffNo).eq("password", password).maybeSingle();
-        if(!error && data){
-          user = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch };
-          // 로컬 배열 동기화
-          const idx = authUsers.findIndex(u => u.staffNo === user.staffNo);
-          if(idx >= 0) authUsers[idx] = user;
-          else authUsers.unshift(user);
-          const si = staffs.findIndex(s => s.no === data.staff_no);
-          if(si >= 0){ staffs[si].rank = data.rank; staffs[si].name = data.name; }
-          else staffs.unshift({ name:data.name, no:data.staff_no, role:data.role, branch:data.branch, rank:data.rank||"대리" });
-          staffRanks[data.staff_no] = data.rank || "대리";
-          saveAppData();
-        }
-      }catch(e){ console.warn("Supabase 로그인 확인 실패:", e.message); }
 
-      // 2. Supabase 실패 시 로컬 캐시에서 확인
-      if(!user){
-        user = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+      // 1. 로컬 캐시에서 먼저 확인 → 캐시 히트 시 즉시 진입 (Supabase 대기 없음)
+      const cachedUser = authUsers.find(u => u.staffNo === staffNo && u.password === password);
+      if(cachedUser){
+        user = cachedUser;
+      } else {
+        // 2. 캐시 없을 때만 Supabase 대기 (최초 로그인 또는 캐시 없는 경우)
+        try{
+          const { data, error } = await sbRetry(() =>
+            sbClient.from("staff_accounts")
+              .select("*").eq("staff_no", staffNo).eq("password", password).maybeSingle()
+          );
+          if(!error && data){
+            user = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch };
+            // 로컬 배열 동기화
+            const idx = authUsers.findIndex(u => u.staffNo === user.staffNo);
+            if(idx >= 0) authUsers[idx] = user; else authUsers.unshift(user);
+            const si = staffs.findIndex(s => s.no === data.staff_no);
+            if(si >= 0){ staffs[si].rank = data.rank; staffs[si].name = data.name; }
+            else staffs.unshift({ name:data.name, no:data.staff_no, role:data.role, branch:data.branch, rank:data.rank||"대리" });
+            staffRanks[data.staff_no] = data.rank || "대리";
+            saveAppData();
+          }
+        }catch(e){ console.warn("Supabase 로그인 확인 실패:", e.message); }
       }
 
       if(!user) return showMsg("사번 또는 비밀번호가 틀렸습니다.", "error");
 
+      // 즉시 화면 전환
       state.currentUser = user;
       state.currentMode = user.staffNo === ADMIN_JIJUMJANG_NO ? "admin" : "staff";
       clearMsg();
@@ -3961,6 +3965,8 @@
       hydrateUserUI();
       renderAll();
       setView("home");
+
+      // 데이터 로딩 및 동기화는 화면 전환 후 비동기 실행
       loadData();
       setupRealtimeSync(); // 실시간 동기화 시작
       // 활동 로그 기록
@@ -3974,6 +3980,20 @@
       }, 5 * 60 * 1000); // 5분
       // 쪽지함 초기화 (로그인 후)
       msgInit().catch(e => console.error("쪽지 초기화 오류:", e));
+
+      // 캐시 히트로 로그인한 경우 → 백그라운드에서 Supabase 정보 갱신
+      if(cachedUser){
+        sbRetry(() => sbClient.from("staff_accounts").select("*").eq("staff_no", staffNo).maybeSingle())
+          .then(({ data, error }) => {
+            if(!error && data){
+              const u = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch };
+              const idx = authUsers.findIndex(x => x.staffNo === u.staffNo);
+              if(idx >= 0) authUsers[idx] = u; else authUsers.unshift(u);
+              staffRanks[data.staff_no] = data.rank || "대리";
+              saveAppData();
+            }
+          }).catch(e => console.warn("백그라운드 Supabase 동기화 실패:", e.message));
+      }
     }
 
     function logout(){
@@ -5477,11 +5497,12 @@
     async function deleteLead(id){
       if(!isAdminMode()) return;
       if(!confirm("이 데이터를 삭제할까요?")) return;
+      const numId = Number(id); // 타입 통일 (string → number)
       try{
         // Supabase 먼저 삭제 → 성공 확인 후 로컬 반영
-        const { error } = await sbClient.from("education_db").delete().eq("id", id);
+        const { error } = await sbRetry(() => sbClient.from("education_db").delete().eq("id", numId));
         if(error) throw error;
-        leads = leads.filter(x => x.id !== id);
+        leads = leads.filter(x => x.id !== numId);
         renderLeads();
         runHomeSummary();
         saveAppData();
@@ -5713,19 +5734,20 @@
     // 엑셀 컬럼명 → 시스템 필드 매핑 테이블
     const EXCEL_COL_MAP = {
       "사업장":"company","업체":"company","회사":"company","업체명":"company","사업장명":"company",
-      "주소":"address","소재지":"address",
-      "키맨":"manager","담당자":"manager","키맨(담당자)":"manager",
-      "대표자명":"repName","대표자":"repName","대표":"repName",
+      "상호":"company","상호명":"company","사업자명":"company","기관명":"company","법인명":"company",
+      "주소":"address","소재지":"address","주소지":"address","사업장주소":"address",
+      "키맨":"manager","담당자":"manager","키맨(담당자)":"manager","담당":"manager","실무자":"manager",
+      "대표자명":"repName","대표자":"repName","대표":"repName","대표명":"repName","사장":"repName",
       "연락처":"phone","연락처1":"phone","연락처 1":"phone","번호":"phone","전화":"phone","전화번호":"phone",
-      "연락처2":"phone","연락처 2":"phone",   // 연락처2가 뒤에 있어서 덮어씀 (우선순위 높음)
-      "인원":"people","인원수":"people",
-      "연령대":"age","나이":"age",
-      "교육과목":"subject","과목":"subject","교육명":"subject",
-      "업종":"industry","업태":"industry",
-      "섭외자":"ownerName","담당":"ownerName",
-      "섭외":"type",
-      "날짜":"date","교육일":"date",
-      "시간":"time"
+      "연락처2":"phone","연락처 2":"phone","핸드폰":"phone","휴대폰":"phone","휴대전화":"phone","모바일":"phone",
+      "인원":"people","인원수":"people","교육인원":"people","참가인원":"people",
+      "연령대":"age","나이":"age","연령":"age",
+      "교육과목":"subject","과목":"subject","교육명":"subject","교육내용":"subject","과정명":"subject",
+      "업종":"industry","업태":"industry","업종명":"industry",
+      "섭외자":"ownerName","담당직원":"ownerName",
+      "섭외":"type","교육유형":"type","분류":"type",
+      "날짜":"date","교육일":"date","교육날짜":"date","일자":"date",
+      "시간":"time","교육시간":"time"
     };
 
     function parseExcelFile(input){
@@ -5759,7 +5781,7 @@
             const item = {};
             Object.keys(row).forEach(col => {
               const key = EXCEL_COL_MAP[col.trim()] || null;
-              if(key) item[key] = String(row[col] || "").trim();
+              if(key && !item[key]) item[key] = String(row[col] || "").trim(); // 먼저 매핑된 컬럼 우선
             });
 
             if(!item.company) return; // 사업장명 없으면 스킵
@@ -5781,13 +5803,17 @@
 
           input.value = "";
 
+          // 업로드 중 피드백
+          showLeadMsg(`⏳ ${added}건 업로드 중... 잠시만 기다려 주세요.`, "");
+
           // Supabase에 업로드 → 내부에서 loadData() 호출로 실제 ID 동기화
           try{
             await syncAfterUpload(newItems);
+            showLeadMsg(`✅ 엑셀 업로드 완료! ${added}건 추가됨`, "");
             alert(`✅ 엑셀 업로드 완료!\n${added}건이 추가되었습니다.`);
           } catch(uploadErr){
-            alert(`❌ 업로드 실패
-${uploadErr.message}`);
+            showLeadMsg("❌ 업로드 실패", "error");
+            alert(`❌ 업로드 실패\n${uploadErr.message}`);
           }
         } catch(err){
           alert("엑셀 파일을 읽는 중 오류가 발생했습니다.\n" + err.message);
