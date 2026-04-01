@@ -5669,32 +5669,28 @@
     }
 
     async function syncAfterUpload(rows){
-      try{
-        // id 필드 제외 — GENERATED ALWAYS IDENTITY 컬럼이므로 Supabase가 자동 할당
-        const inserts = rows.map(row => ({
-          type:       row.type || "교육섭외",
-          date:       row.date || "",
-          time:       row.time || "",
-          company:    row.company || "",
-          address:    row.address || "",
-          manager:    row.manager || "",
-          rep_name:   row.repName || "",
-          phone:      row.phone || "",
-          people:     row.people || "",
-          age_group:  row.age || "",
-          subject:    row.subject || "",
-          industry:   row.industry || "",
-          status:     row.status || "",
-          staff_no:   row.ownerNo || "",
-          staff_name: row.ownerName || ""
-        }));
-        const { error } = await sbClient.from("education_db").insert(inserts);
-        if(error) throw error;
-        // 업로드 후 Supabase 실제 ID로 leads 동기화 → 이후 삭제 정상 동작
-        await loadData();
-      } catch(err){
-        console.warn("Supabase syncAfterUpload 오류:", err.message);
-      }
+      // id 필드 제외 — GENERATED ALWAYS IDENTITY 컴럼이므로 Supabase가 자동 할당
+      const inserts = rows.map(row => ({
+        type:       row.type || "교육섭외",
+        date:       row.date || "",
+        time:       row.time || "",
+        company:    row.company || "",
+        address:    row.address || "",
+        manager:    row.manager || "",
+        rep_name:   row.repName || "",
+        phone:      row.phone || "",
+        people:     row.people || "",
+        age_group:  row.age || "",
+        subject:    row.subject || "",
+        industry:   row.industry || "",
+        status:     row.status || "",
+        staff_no:   row.ownerNo || "",
+        staff_name: row.ownerName || "",
+        clean_biz:  false
+      }));
+      const { error } = await sbClient.from("education_db").insert(inserts);
+      if(error) throw error; // 에러를 상위로 전달
+      await loadData();
     }
 
     // ─────────────────────────────────────────────────────────
@@ -5771,8 +5767,13 @@
           input.value = "";
 
           // Supabase에 업로드 → 내부에서 loadData() 호출로 실제 ID 동기화
-          await syncAfterUpload(newItems);
-          alert(`✅ 엑셀 업로드 완료!\n${added}건이 추가되었습니다.`);
+          try{
+            await syncAfterUpload(newItems);
+            alert(`✅ 엑셀 업로드 완료!\n${added}건이 추가되었습니다.`);
+          } catch(uploadErr){
+            alert(`❌ 업로드 실패
+${uploadErr.message}`);
+          }
         } catch(err){
           alert("엑셀 파일을 읽는 중 오류가 발생했습니다.\n" + err.message);
         }
@@ -5834,10 +5835,15 @@
       renderLeads();
       showLeadMsg(`✅ ${checked.length}건 교육 이수 처리 완료!`, "");
       try{
-        for(const id of checked){
-          await sbClient.from("education_db").update({ status:"교육 이수" }).eq("id", id);
-        }
-      }catch(e){ console.warn(e); }
+        // 한 번의 DB 호출로 전체 처리 — 루프 방식은 중간 실패 시 나머지 저장 안 됨
+        const { error } = await sbClient.from("education_db")
+          .update({ status:"교육 이수" })
+          .in("id", checked);
+        if(error) throw error;
+      }catch(e){
+        console.warn("교육 이수 처리 오류:", e.message);
+        showLeadMsg("⚠️ 일부 저장 실패 — 다시 시도해 주세요", "error");
+      }
     }
 
     function toggleLeadCheckAll(chk){
