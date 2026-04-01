@@ -5846,17 +5846,21 @@
 
     async function deleteSelectedLeads(){
       if(!isAdminMode()) return;
-      const checked = Array.from(document.querySelectorAll('.lead-chk:checked')).map(c => Number(c.dataset.id));
-      if(!checked.length) return alert("삭제할 항목을 먼저 선택해 주세요.");
-      if(!confirm(`선택한 ${checked.length}건을 삭제할까요?`)) return;
+      // .lead-chk 클래스 + data-id 속성 기준으로 체크된 항목 수집
+      const ids = Array.from(document.querySelectorAll('.lead-chk:checked'))
+        .map(c => Number(c.dataset.id))
+        .filter(id => !isNaN(id) && id > 0); // 유효한 id만
+      if(!ids.length) return alert("삭제할 항목을 먼저 선택해 주세요.");
+      if(!confirm(`선택한 ${ids.length}건을 삭제할까요?`)) return;
       try{
-        // Supabase 먼저 삭제 → 성공 확인 후 로컬 반영
-        const { error } = await sbRetry(() => sbClient.from("education_db").delete().in("id", checked));
+        // Supabase 먼저 삭제 → in()으로 다중 삭제, sbRetry로 cold start 대응
+        const { error } = await sbRetry(() => sbClient.from("education_db").delete().in("id", ids));
         if(error) throw error;
-        checked.forEach(id => { leads = leads.filter(x => x.id !== id); });
+        // 로컬 배열에서 한 번에 제거 (타입 통일: Number vs Number 비교)
+        leads = leads.filter(x => !ids.includes(Number(x.id)));
         saveAppData();
         renderLeads(); runHomeSummary();
-        showLeadMsg(`🗑 ${checked.length}건 삭제 완료!`, "");
+        showLeadMsg(`🗑 ${ids.length}건 삭제 완료!`, "");
       } catch(e){
         console.warn("선택삭제 오류:", e.message);
         alert("삭제 중 오류가 발생했습니다.\n" + e.message);
