@@ -1,5 +1,5 @@
 // LUWON CRM Service Worker — Network First (캐시 완전 우회)
-const CACHE_NAME = "luwon-crm-v22";
+const CACHE_NAME = "luwon-crm-v23";
 
 // 설치 — skipWaiting으로 즉시 활성화
 self.addEventListener("install", e => {
@@ -16,14 +16,20 @@ self.addEventListener("activate", e => {
 });
 
 // fetch — 같은 도메인 요청만 Network First (외부 도메인은 브라우저 직접 처리)
-self.addEventListener("fetch", e => {
+self.addEventListener("fetch", function(e) {
+  const url = e.request.url;
+
+  // Supabase API 요청은 절대 가로채지 않음 → 브라우저가 직접 처리
+  if (url.includes("supabase.co")) return;
+
   // POST 등 non-GET은 SW 개입하지 않음
   if (e.request.method !== "GET") return;
 
-  // 외부 도메인(Supabase, CDN 등)은 SW가 개입하지 않음
-  // → 브라우저가 직접 처리해야 CORS 오류 없음
-  const url = new URL(e.request.url);
-  if (url.origin !== location.origin) return;
+  // 외부 도메인(CDN 등)도 SW가 개입하지 않음
+  try {
+    const parsedUrl = new URL(url);
+    if (parsedUrl.origin !== location.origin) return;
+  } catch(err) { return; }
 
   e.respondWith(
     fetch(e.request, { cache: "no-store" })
