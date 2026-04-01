@@ -5689,8 +5689,13 @@
         created_at: row.createdAt || new Date().toISOString().slice(0,10),
         clean_biz:  false
       }));
-      const { error } = await sbClient.from("education_db").insert(inserts);
-      if(error) throw error; // 에러를 상위로 전달
+      // 한 번에 너무 많으면 "Failed to fetch" 발생 → 100행씩 나눠서 전송
+      const CHUNK = 100;
+      for(let i = 0; i < inserts.length; i += CHUNK){
+        const chunk = inserts.slice(i, i + CHUNK);
+        const { error } = await sbClient.from("education_db").insert(chunk);
+        if(error) throw error;
+      }
       await loadData();
     }
 
