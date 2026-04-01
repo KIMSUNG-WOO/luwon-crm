@@ -15,14 +15,21 @@ self.addEventListener("activate", e => {
   );
 });
 
-// fetch — Supabase/CDN 포함 모든 요청 Network First
+// fetch — 같은 도메인 요청만 Network First (외부 도메인은 브라우저 직접 처리)
 self.addEventListener("fetch", e => {
   // POST 등 non-GET은 SW 개입하지 않음
   if (e.request.method !== "GET") return;
 
+  // 외부 도메인(Supabase, CDN 등)은 SW가 개입하지 않음
+  // → 브라우저가 직접 처리해야 CORS 오류 없음
+  const url = new URL(e.request.url);
+  if (url.origin !== location.origin) return;
+
   e.respondWith(
     fetch(e.request, { cache: "no-store" })
-      .catch(() => caches.match(e.request)) // 오프라인 폴백만 허용
+      .catch(() => caches.match(e.request)
+        .then(r => r || new Response("", { status: 503, statusText: "Offline" }))
+      )
   );
 });
 
