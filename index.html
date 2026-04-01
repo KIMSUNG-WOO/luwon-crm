@@ -3308,6 +3308,15 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiY2J1ZW5zaWNzc2l5b2JmdXVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxODc1MzEsImV4cCI6MjA4OTc2MzUzMX0.Bg1ioGO0K2KhVS3nKMhs_8gcrPRGnIJyU2PbFzOQtxo";
     const { createClient } = window.supabase;
     const sbClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+    // 네트워크 불안정(Failed to fetch) 시 자동 재시도 헬퍼
+    async function sbRetry(fn, maxRetries = 3, delay = 2000){
+      for(let i = 0; i <= maxRetries; i++){
+        const res = await fn();
+        if(!res.error || !(res.error.message||String(res.error)).includes("fetch")) return res;
+        if(i < maxRetries){ console.warn("Supabase 연결 불안정, " + (i+1) + "초 후 재시도..."); await new Promise(r => setTimeout(r, delay)); }
+      }
+      return await fn();
+    }
     // ─────────────────────────────────────────────────────────
 
     const HOLIDAYS_2026 = new Set([
@@ -5693,7 +5702,7 @@
       const CHUNK = 100;
       for(let i = 0; i < inserts.length; i += CHUNK){
         const chunk = inserts.slice(i, i + CHUNK);
-        const { error } = await sbClient.from("education_db").insert(chunk);
+        const { error } = await sbRetry(() => sbClient.from("education_db").insert(chunk));
         if(error) throw error;
       }
       await loadData();
@@ -5797,7 +5806,7 @@ ${uploadErr.message}`);
       if(!ids.length) return;
       try{
         // Supabase 먼저 삭제 → 성공 확인 후 로컬 반영
-        const { error } = await sbClient.from("education_db").delete().in("id", ids);
+        const { error } = await sbRetry(() => sbClient.from("education_db").delete().in("id", ids));
         if(error) throw error;
         ids.forEach(id => { leads = leads.filter(x => x.id !== id); });
         saveAppData();
@@ -5816,7 +5825,7 @@ ${uploadErr.message}`);
       if(!confirm(`선택한 ${checked.length}건을 삭제할까요?`)) return;
       try{
         // Supabase 먼저 삭제 → 성공 확인 후 로컬 반영
-        const { error } = await sbClient.from("education_db").delete().in("id", checked);
+        const { error } = await sbRetry(() => sbClient.from("education_db").delete().in("id", checked));
         if(error) throw error;
         checked.forEach(id => { leads = leads.filter(x => x.id !== id); });
         saveAppData();
@@ -5842,9 +5851,9 @@ ${uploadErr.message}`);
       showLeadMsg(`✅ ${checked.length}건 교육 이수 처리 완료!`, "");
       try{
         // 한 번의 DB 호출로 전체 처리 — 루프 방식은 중간 실패 시 나머지 저장 안 됨
-        const { error } = await sbClient.from("education_db")
+        const { error } = await sbRetry(() => sbClient.from("education_db")
           .update({ status:"교육 이수" })
-          .in("id", checked);
+          .in("id", checked));
         if(error) throw error;
       }catch(e){
         console.warn("교육 이수 처리 오류:", e.message);
