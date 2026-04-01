@@ -5686,6 +5686,7 @@
         status:     row.status || "",
         staff_no:   row.ownerNo || "",
         staff_name: row.ownerName || "",
+        created_at: row.createdAt || new Date().toISOString().slice(0,10),
         clean_biz:  false
       }));
       const { error } = await sbClient.from("education_db").insert(inserts);
