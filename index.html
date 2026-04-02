@@ -2124,13 +2124,14 @@
             <button class="btn-add-sched" onclick="openScheduleModal()">📅 일정등록</button>
           </div>
 
-          <!-- [추가] 일정등록현황 검색 + 엑셀 -->
+          <!-- [추가] 일정등록현황 검색 + 직원 필터 + 엑셀 -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center;">
             <div class="crm-search-wrap">
               <span style="font-size:14px;opacity:.5;">🔍</span>
               <input class="crm-search-input" id="schedSearchInput" placeholder="업체명 · 섭외자 · 날짜 검색" oninput="crmFilterSchedules()">
               <button class="crm-search-clear" onclick="crmClearSchedSearch()" title="초기화">✕</button>
             </div>
+            <select id="schedStaffFilter" class="hidden" onchange="onSchedStaffFilter()" style="height:38px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:700;cursor:pointer;"></select>
             <button id="crmSchedExcelBtn" class="ghost-btn hidden" onclick="crmExportSchedExcel()">📥 엑셀 다운로드</button>
           </div>
 
@@ -4358,6 +4359,7 @@
 
       if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !canExcelUpload);
       if(canExcelUpload) refreshLeadStaffDropdown();
+      refreshSchedStaffDropdown();
       // 일정표 관리 직원 필터
       const canShowItinFilter = canSchedFilter || hasPermission('itinerary_view_team') || hasPermission('itinerary_view_all') || hasPermission('schedule_view_team') || hasPermission('schedule_view_all');
       if($("itineraryFilterBox")) $("itineraryFilterBox").classList.toggle("hidden", !canShowItinFilter);
@@ -4580,10 +4582,34 @@
     }
 
     let _leadStaffFilter = "";
+    let _schedStaffFilter = "";
 
     function onLeadStaffFilter(){
       _leadStaffFilter = ($("excelTargetStaff") || {}).value || "";
       renderLeads();
+    }
+
+    function onSchedStaffFilter(){
+      _schedStaffFilter = ($("schedStaffFilter") || {}).value || "";
+      renderSchedules();
+    }
+
+    function refreshSchedStaffDropdown(){
+      const sel = $("schedStaffFilter");
+      if(!sel) return;
+      const canFilter = isSuperAdmin() || hasPermission('schedule_view_all') || hasPermission('schedule_staff_filter') || hasPermission('schedule_view_team');
+      sel.classList.toggle("hidden", !canFilter);
+      if(!canFilter) return;
+      let visibleStaffs;
+      if(isSuperAdmin() || hasPermission('schedule_view_all')){
+        visibleStaffs = staffs;
+      } else {
+        const teamNos = getMyTeamMemberNos();
+        visibleStaffs = staffs.filter(s => teamNos.includes(s.no) || s.no === state.currentUser?.staffNo);
+      }
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">👥 전체 직원</option>` +
+        visibleStaffs.map(s => `<option value="${escapeHtml(s.name)}" ${cur===s.name?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
     }
 
     function getVisibleLeads(){
@@ -5034,7 +5060,9 @@
     function renderSchedules(){
       const body = $("scheduleTableBody");
       // 최신 등록순 내림차순 정렬
-      const allRows = getVisibleSchedules().sort((a,b) => {
+      let allRows = getVisibleSchedules();
+      if(_schedStaffFilter) allRows = allRows.filter(s => s.assignee === _schedStaffFilter || s.createdBy === _schedStaffFilter);
+      allRows = allRows.sort((a,b) => {
         const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return tb - ta;
@@ -8458,16 +8486,21 @@
 
     function crmClearSchedSearch(){
       _crmSchedSearchTerm = "";
+      _schedStaffFilter = "";
       if($("schedSearchInput")) $("schedSearchInput").value = "";
+      if($("schedStaffFilter")) $("schedStaffFilter").value = "";
       renderSchedules();
     }
 
     function crmRenderFilteredSchedules(){
-      if(!_crmSchedSearchTerm){ renderSchedules(); return; }
+      if(!_crmSchedSearchTerm && !_schedStaffFilter){ renderSchedules(); return; }
       const q    = _crmSchedSearchTerm;
       const qPhone = q.replace(/[^0-9]/g,"");
       const body = $("scheduleTableBody");
-      const allRows = getVisibleSchedules().filter(s =>
+      let allRows = getVisibleSchedules();
+      if(_schedStaffFilter) allRows = allRows.filter(s => s.assignee === _schedStaffFilter || s.createdBy === _schedStaffFilter);
+      allRows = allRows.filter(s =>
+        !q ||
         (s.company||"").toLowerCase().includes(q) ||
         (s.assignee||"").toLowerCase().includes(q) ||
         (s.date||"").includes(q) ||
