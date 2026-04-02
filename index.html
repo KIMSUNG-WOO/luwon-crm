@@ -2849,7 +2849,7 @@
 
           <!-- [추가] 목표설정 탭 패널 -->
           <div id="settingsPaneGoal" class="hidden">
-            <div id="crmGoalFormArea" class="panel" style="margin-bottom:16px;">
+            <div class="panel" style="margin-bottom:16px;">
               <h5 style="margin:0 0 6px;font-size:15px;">🎯 직원별 목표 설정</h5>
               <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원별 금일·이번달 목표를 설정합니다. 직원 홈 화면 및 지정목표 메뉴에서 달성률을 확인합니다.</p>
               <div style="margin-bottom:14px;">
@@ -2885,8 +2885,8 @@
               </div>
               <div class="table-wrap">
                 <table>
-                  <thead><tr><th>직원명</th><th>금일 콜량</th><th>금일 섭외</th><th>이번달 섭외</th></tr></thead>
-                  <tbody id="crmGoalTableBody"><tr><td colspan="4"><div class="empty">설정된 목표가 없습니다.</div></td></tr></tbody>
+                  <thead><tr><th>직원명</th><th>금일 콜 목표</th><th>금일 섭외 목표</th><th>이번달 섭외 목표</th><th>현황</th></tr></thead>
+                  <tbody id="crmGoalTableBody"><tr><td colspan="5"><div class="empty">설정된 목표가 없습니다.</div></td></tr></tbody>
                 </table>
               </div>
             </div>
@@ -3454,7 +3454,6 @@
       { key:'aggregate_all',         label:'전체 직원 익일취합 조회',         group:'익일취합' },
       // 목표 설정
       { key:'goal_manage',           label:'직원 목표 설정 관리',             group:'목표 설정' },
-      { key:'goal_view_team',        label:'팀 지정목표 현황 조회',           group:'목표 설정' },
       // 모드
       { key:'mode_switch',           label:'관리자 ↔ 직원 모드 전환',        group:'모드' },
     ];
@@ -4435,33 +4434,10 @@
         </div>${rows}</div>`;
     }
 
-    // ── 콜량 집계 helper: 결과값 입력 건수 + 오늘 등록 일정 건수 ──
-    function _localDateStr(isoStr){
-      if(!isoStr) return "";
-      const d = new Date(isoStr);
-      return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-    }
-    function calcTodayCallCount(staffNo, staffName){
-      const today = todayStr();
-      const resultCalls = leads.filter(l => {
-        if(!(l.ownerNo===staffNo || l.ownerName===staffName)) return false;
-        if(!l.result || l.result==="" || l.result==="선택") return false;
-        if(l.resultEnteredAt) return _localDateStr(l.resultEnteredAt) === today;
-        return l.resultDate === today;
-      }).length;
-      const itinCalls = schedules.filter(s =>
-        s.createdByNo === staffNo && String(s.createdAt||"").startsWith(today)
-      ).length;
-      return resultCalls + itinCalls;
-    }
-
     function runHomeSummary(){
       if(hasPermission('home_stats_all')) runAdminSummary();
       else if(hasPermission('home_stats_team')) runTeamSummary();
       else runMySummary();
-      // goals 뷰가 열려있으면 실시간 갱신
-      const gv = $("view-goals");
-      if(gv && !gv.classList.contains("hidden")) renderGoals();
     }
 
     function runAdminSummary(){
@@ -4482,14 +4458,11 @@
       $("homeCardDesc4").textContent  = `${calLabel} 전직원 일정 (진행일 기준)`;
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today)).length;
-      // 콜량: 결과값 입력 건수 + 오늘 등록 일정 건수 (전직원)
-      const _todayCalls = leads.filter(l => {
-        if(!l.result || l.result === "" || l.result === "선택") return false;
-        if(l.resultEnteredAt) return _localDateStr(l.resultEnteredAt) === today;
-        return l.resultDate === today;
-      });
-      const _todayItinCalls = schedules.filter(s => String(s.createdAt||"").startsWith(today)).length;
-      $("homeValue2").textContent = _todayCalls.length + _todayItinCalls;
+      // 콜량: 결과값이 있고, 오늘 result_date 기준
+      const _todayCalls = leads.filter(l =>
+        l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
+      );
+      $("homeValue2").textContent = _todayCalls.length;
       if(hasPermission('home_call_ranking')) renderCallRanking(_todayCalls);
       else { const el = $("homeCallRanking"); if(el) el.style.display = "none"; }
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
@@ -4526,16 +4499,11 @@
         String(s.createdAt||"").startsWith(today) && teamNos.includes(s.createdByNo)
       ).length;
 
-      const _teamCalls = leads.filter(l => {
-        if(!(teamNos.includes(l.ownerNo) || teamNames.includes(l.ownerName))) return false;
-        if(!l.result || l.result === "" || l.result === "선택") return false;
-        if(l.resultEnteredAt) return _localDateStr(l.resultEnteredAt) === today;
-        return l.resultDate === today;
-      });
-      const _teamItinCalls = schedules.filter(s =>
-        teamNos.includes(s.createdByNo) && String(s.createdAt||"").startsWith(today)
-      ).length;
-      $("homeValue2").textContent = _teamCalls.length + _teamItinCalls;
+      const _teamCalls = leads.filter(l =>
+        (teamNos.includes(l.ownerNo) || teamNames.includes(l.ownerName)) &&
+        l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
+      );
+      $("homeValue2").textContent = _teamCalls.length;
 
       if(hasPermission('home_call_ranking')){
         renderCallRanking(_teamCalls);
@@ -4572,8 +4540,11 @@
       $("homeCardDesc4").textContent  = `${calLabel} 내 일정 (진행일 기준)`;
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
-      // 콜량: 결과값 입력 건수 + 오늘 등록 일정 건수
-      $("homeValue2").textContent = calcTodayCallCount(no, currentStaffName());
+      // 콜량: 내 DB 중 결과값 입력된 건수 (resultEnteredAt → 로컬 날짜 변환 비교)
+      $("homeValue2").textContent = leads.filter(l =>
+        (l.ownerNo === no || l.ownerName === currentStaffName()) &&
+        l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
+      ).length;
       renderCallRanking(null); // 직원 모드: 랭킹 숨김
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => {
@@ -7503,9 +7474,6 @@
       if(tab === "cleanBiz")   renderCleanBizRules();
       if(tab === "system")     renderSystemInfo();
       if(tab === "goal"){
-        // 목표 설정 폼: goal_manage 권한자(슈퍼관리자 포함)만 표시
-        const formArea = $("crmGoalFormArea");
-        if(formArea) formArea.style.display = (isSuperAdmin() || hasPermission('goal_manage')) ? "" : "none";
         crmRefreshGoalStaffDropdown();
         crmRenderGoalTable();
       }
@@ -7872,10 +7840,9 @@
       const sel = $("teamAdminSelect");
       if(!sel) return;
       const cur = sel.value;
-      // 슈퍼관리자 포함 — 직할팀 설정 가능
       sel.innerHTML = `<option value="">-- 관리자 선택 --</option>` +
-        staffs.filter(s => s.role === "admin").map(s =>
-          `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)}${s.no===ADMIN_JIJUMJANG_NO?" (지점장)":""} (${escapeHtml(s.no)})</option>`
+        staffs.filter(s => s.no !== ADMIN_JIJUMJANG_NO && s.role === "admin").map(s =>
+          `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)} (${escapeHtml(s.no)})</option>`
         ).join("");
       if(cur) sel.value = cur;
     }
@@ -8720,65 +8687,37 @@
     function crmRenderGoalTable(){
       const tbody = $("crmGoalTableBody");
       if(!tbody) return;
-
-      const canAll  = isSuperAdmin() || hasPermission('goal_manage');
-      const canTeam = hasPermission('goal_view_team');
-      if(!canAll && !canTeam){
-        tbody.innerHTML = `<tr><td colspan="4"><div class="empty">권한이 없습니다.</div></td></tr>`;
+      const nos = Object.keys(staffGoals);
+      if(!nos.length){
+        tbody.innerHTML = `<tr><td colspan="5"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
         return;
       }
-
-      // 보여줄 직원 목록 결정
-      let targetNos;
-      if(canAll){
-        targetNos = Object.keys(staffGoals);
-      } else {
-        // goal_view_team: 내 팀원만
-        const teamNos = getMyTeamMemberNos();
-        targetNos = teamNos.filter(no => staffGoals[no]);
-      }
-
-      if(!targetNos.length){
-        tbody.innerHTML = `<tr><td colspan="4"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
-        return;
-      }
-
       const today = todayStr();
       const month = monthPrefix();
-
-      const makeBar = (cur, tgt) => {
-        if(!tgt) return `<span style="color:var(--muted);font-size:12px;">미설정</span>`;
-        const pct = Math.min(100, Math.round(cur / tgt * 100));
-        const c = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
-        const label = pct >= 100 ? "달성!" : `${pct}%`;
-        return `<div style="min-width:90px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-            <span style="font-size:13px;font-weight:800;color:${c};">${cur}</span>
-            <span style="font-size:11px;color:var(--muted);">/ ${tgt}건</span>
-            <span style="font-size:11px;font-weight:700;color:${c};">${label}</span>
-          </div>
-          <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">
-            <div style="height:100%;width:${pct}%;background:${c};border-radius:3px;transition:width .4s;"></div>
-          </div>
-        </div>`;
-      };
-
-      tbody.innerHTML = targetNos.map(no => {
+      tbody.innerHTML = nos.map(no => {
         const s = staffs.find(x => x.no === no);
         const g = staffGoals[no];
-        if(!g) return "";
         const name = escapeHtml(s ? s.name : no);
-        const todayCalls  = calcTodayCallCount(no, s ? s.name : "");
-        const todayScheds = schedules.filter(sc => String(sc.createdAt||"").startsWith(today) && sc.createdByNo === no).length;
-        const monthScheds = schedules.filter(sc => String(sc.createdAt||"").startsWith(month) && sc.createdByNo === no).length;
+        // 현황: 이번달 등록 일정 수
+        const curMonthScheds = schedules.filter(sc =>
+          String(sc.createdAt||"").startsWith(month) && sc.createdByNo === no
+        ).length;
+        const pct = g.scheds > 0 ? Math.min(100, Math.round(curMonthScheds / g.scheds * 100)) : 0;
+        const pctColor = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
+        const bar = g.scheds > 0
+          ? `<div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;min-width:80px;">
+               <div style="height:100%;width:${pct}%;background:${pctColor};border-radius:4px;"></div>
+             </div>
+             <div style="font-size:11px;color:${pctColor};font-weight:700;">${curMonthScheds}/${g.scheds} (${pct}%)</div>`
+          : `<span style="color:var(--muted);font-size:11px;">미설정</span>`;
         return `<tr>
-          <td><b>${name}</b></td>
-          <td>${makeBar(todayCalls,  g.calls      || 0)}</td>
-          <td>${makeBar(todayScheds, g.dailyScheds || 0)}</td>
-          <td>${makeBar(monthScheds, g.scheds      || 0)}</td>
+          <td>${name}</td>
+          <td style="text-align:center;">${g.calls||0}건</td>
+          <td style="text-align:center;">${g.dailyScheds||0}건</td>
+          <td style="text-align:center;">${g.scheds||0}건</td>
+          <td>${bar}</td>
         </tr>`;
-      }).filter(Boolean).join("") ||
-        `<tr><td colspan="4"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
+      }).join("");
     }
 
     function crmUpdateGoalBadges(){
@@ -8793,8 +8732,9 @@
       const b1 = $("crmGoalBadge1");
       if(b1){
         if(goal && goal.calls > 0){
-          const val1 = calcTodayCallCount(no, currentStaffName());
-          const pct1 = Math.round((val1/goal.calls)*100);
+          const today = todayStr();
+          const val1  = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
+          const pct1  = Math.round((val1/goal.calls)*100);
           b1.innerHTML = `<span class="crm-goal-badge${pct1>=100?" done":pct1>=50?" warn":""}">목표 ${goal.calls}건 · ${pct1}%</span>`;
         } else { b1.innerHTML = ""; }
       }
@@ -8803,7 +8743,10 @@
       const b2 = $("crmGoalBadge2");
       if(b2){
         if(goal && goal.calls > 0){
-          const val2 = calcTodayCallCount(no, currentStaffName());
+          const val2 = leads.filter(l =>
+            (l.ownerNo===no||l.ownerName===currentStaffName()) &&
+            l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
+          ).length;
           const pct2 = Math.round((val2/goal.calls)*100);
           b2.innerHTML = `<span class="crm-goal-badge${pct2>=100?" done":pct2>=50?" warn":""}">목표 ${goal.calls}건 · ${pct2}%</span>`;
         } else { b2.innerHTML = ""; }
@@ -8837,18 +8780,27 @@
       const today = todayStr();
       const month = monthPrefix();
 
-      // 금일 콜량: 결과값 입력 건수 + 오늘 등록 일정 건수
-      const todayCalls  = calcTodayCallCount(no, currentStaffName());
-      // 금일 섭외건수: 오늘 등록한 일정 수
+      // 금일 콜량: 오늘 결과값 입력 건수 (result_date = today, 내 담당 lead)
+      const todayCalls  = leads.filter(l =>
+        (l.ownerNo === no || l.ownerName === user.name) &&
+        l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
+      ).length;
+      // 이번달 콜량: 이번달 결과값 입력 건수
+      const monthCalls  = leads.filter(l =>
+        (l.ownerNo === no || l.ownerName === user.name) &&
+        l.result && l.result !== "" && l.result !== "선택" && (l.resultDate||"").startsWith(month)
+      ).length;
+      // 금일 섭외건수: 오늘 일정 등록 건수
       const todayScheds = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 이번달 섭외건수
       const monthScheds = schedules.filter(s => String(s.createdAt||"").startsWith(month) && s.createdByNo === no).length;
 
       const items = [
-        { label:"📞 금일 목표 콜량",      current:todayCalls,  target:goal.calls||0 },
-        { label:"📅 금일 목표 섭외건수",   current:todayScheds, target:goal.dailyScheds||0 },
-        { label:"🗓 이번달 목표 섭외건수", current:monthScheds, target:goal.scheds||0 }
-      ].filter(i => i.target > 0);
+        { label:"📞 금일 콜량",           current:todayCalls,  target:goal.calls||0 },
+        { label:"📞 이번달 콜량",          current:monthCalls,  target:goal.monthCalls||0 },
+        { label:"📅 금일 일정등록",        current:todayScheds, target:goal.dailyScheds||0 },
+        { label:"🗓 이번달 일정등록",      current:monthScheds, target:goal.scheds||0 }
+      ].filter(i => i.target > 0 || i.current > 0);
 
       if(!items.length){
         el.innerHTML = `<div class="panel"><div class="empty">설정된 목표 항목이 없습니다.</div></div>`;
@@ -8856,21 +8808,26 @@
       }
 
       el.innerHTML = items.map(item => {
-        const pct   = Math.min(100, Math.round(item.current / item.target * 100));
-        const color = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
-        const label = pct >= 100 ? "달성!" : pct >= 50 ? "절반 이상" : "진행 중";
+        const hasTarget = item.target > 0;
+        const pct   = hasTarget ? Math.min(100, Math.round(item.current / item.target * 100)) : 0;
+        const color = !hasTarget ? "#3b82f6" : pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
+        const label = !hasTarget ? `${item.current}건` : pct >= 100 ? "달성!" : pct >= 50 ? "절반 이상" : "진행 중";
+        const rightVal = hasTarget ? `${pct}%` : `${item.current}건`;
+        const barHtml = hasTarget
+          ? `<div style="height:14px;background:var(--line2);border-radius:8px;overflow:hidden;margin-bottom:8px;">
+               <div style="height:100%;width:${pct}%;background:${color};border-radius:8px;transition:width .6s ease;"></div>
+             </div>` : "";
+        const bottomHtml = hasTarget
+          ? `<span style="font-size:13px;color:var(--muted);">현재 <b style="color:var(--text);">${item.current}건</b> / 목표 <b style="color:var(--text);">${item.target}건</b></span>
+             <span style="font-size:12px;font-weight:700;color:${color};background:${color}18;padding:3px 10px;border-radius:999px;">${label}</span>`
+          : `<span style="font-size:13px;color:var(--muted);">목표 미설정 — 참고용</span>`;
         return `<div class="panel" style="margin-bottom:14px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${hasTarget?'12':'6'}px;">
             <div style="font-size:15px;font-weight:700;">${item.label}</div>
-            <div style="font-size:22px;font-weight:900;color:${color};">${pct}%</div>
+            <div style="font-size:22px;font-weight:900;color:${color};">${rightVal}</div>
           </div>
-          <div style="height:14px;background:var(--line2);border-radius:8px;overflow:hidden;margin-bottom:8px;">
-            <div style="height:100%;width:${pct}%;background:${color};border-radius:8px;transition:width .6s ease;"></div>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:13px;color:var(--muted);">현재 <b style="color:var(--text);">${item.current}건</b> / 목표 <b style="color:var(--text);">${item.target}건</b></span>
-            <span style="font-size:12px;font-weight:700;color:${color};background:${color}18;padding:3px 10px;border-radius:999px;">${label}</span>
-          </div>
+          ${barHtml}
+          <div style="display:flex;justify-content:space-between;align-items:center;">${bottomHtml}</div>
         </div>`;
       }).join("");
     }
