@@ -3522,6 +3522,13 @@
     function markSchedDeleted(id){ try{ const s=getDeletedSchedIds(); s.add(String(id)); localStorage.setItem(DELETED_SCHED_KEY,JSON.stringify([...s])); }catch(e){} }
     function cleanDeletedSchedIds(activeIds){ try{ const active=new Set(activeIds.map(String)); const remaining=[...getDeletedSchedIds()].filter(id=>active.has(id)); localStorage.setItem(DELETED_SCHED_KEY,JSON.stringify(remaining)); }catch(e){} }
 
+    // ─── 삭제된 일정표 레지스트리 (자동복구 방지) ───
+    // 일정표를 삭제하면 해당 itinerary ID를 여기에 등록 → loadFromSupabase 자동복구가 재생성 안 함
+    const DELETED_ITIN_KEY = "luwon_deleted_itin_ids";
+    function getDeletedItinIds(){ try{ return new Set(JSON.parse(localStorage.getItem(DELETED_ITIN_KEY)||"[]").map(String)); }catch(e){ return new Set(); } }
+    function markItinDeleted(itinId){ try{ const s=getDeletedItinIds(); s.add(String(itinId)); localStorage.setItem(DELETED_ITIN_KEY,JSON.stringify([...s])); }catch(e){} }
+    function cleanDeletedItinIds(activeSchedIds){ try{ const active=new Set(activeSchedIds.map(String)); const remaining=[...getDeletedItinIds()].filter(id=>active.has(id)); localStorage.setItem(DELETED_ITIN_KEY,JSON.stringify(remaining)); }catch(e){} }
+
     // ─── 앱 데이터 localStorage 저장/복원 ───
     const APP_DATA_KEY = "luwon_app_data";
 
@@ -3707,16 +3714,52 @@
             if(row.key==="notices"        && Array.isArray(row.value)) notices        = row.value;
           });
         }
-        // 스케줄은 있는데 대응하는 일정표가 없으면 자동 복구 (직원 로컬에만 있던 데이터 보완)
+        // ── 중복 제거: 같은 id가 여러 개 있으면 하나만 남김 (데이터 많은 쪽 우선) ──
+        {
+          const seen = new Map(); // id → itinerary (데이터가 더 많은 쪽 유지)
+          const idsToDelete = []; // DB에서도 삭제할 중복 IDs
+          for(const i of itineraries){
+            const key = String(Math.floor(Number(i.id)));
+            if(!seen.has(key)){
+              seen.set(key, i);
+            } else {
+              // 기존 것과 비교해 데이터가 더 많은 쪽 유지
+              const existing = seen.get(key);
+              const existScore = [existing.specialNote, existing.bizPhone, existing.age, existing.educationPlace].filter(Boolean).length;
+              const newScore   = [i.specialNote, i.bizPhone, i.age, i.educationPlace].filter(Boolean).length;
+              if(newScore > existScore){
+                idsToDelete.push(existing.id); // 기존 것 삭제 예약
+                seen.set(key, i);
+              } else {
+                idsToDelete.push(i.id); // 새 것 삭제 예약
+              }
+            }
+          }
+          itineraries = [...seen.values()];
+          // 중복된 것들을 DB에서도 삭제 (비동기 fire-and-forget)
+          if(idsToDelete.length && sbClient){
+            console.log(`🧹 일정표 중복 ${idsToDelete.length}건 DB 정리`);
+            idsToDelete.forEach(dupId => sbClient.from("itineraries").delete().eq("id", Number(dupId)).then(() => {}));
+          }
+        }
+
+        // ── 자동복구: 스케줄은 있는데 대응하는 일정표가 없으면 복구 ──
+        // (단, 사용자가 직접 삭제한 일정표는 재생성하지 않음)
         if(schedules.length){
-          const itinIds = new Set(itineraries.map(i => String(i.id)));
-          const missing = schedules.filter(s => !itinIds.has(String(s.id)));
+          const itinIds      = new Set(itineraries.map(i => String(Math.floor(Number(i.id)))));
+          const deletedItins = getDeletedItinIds();
+          const missing = schedules.filter(s =>
+            !itinIds.has(String(s.id)) &&
+            !deletedItins.has(String(s.id))
+          );
           if(missing.length){
-            const recovered = missing.map(s => { const itin = buildItineraryFromSchedule(s); itin.id = Number(s.id); return itin; });
+            const recovered = missing.map(s => buildItineraryFromSchedule(s)); // id = Number(s.id)
             itineraries.push(...recovered);
             if(sbClient){ const { error: _recErr } = await sbClient.from("itineraries").upsert(recovered.map(itinToRow), {onConflict:"id"}); if(_recErr) console.warn("일정표 자동복구 오류:", _recErr); }
             console.log(`🔄 일정표 자동복구: ${recovered.length}건`);
           }
+          // 스케줄이 없어진 일정표는 삭제 레지스트리에서 정리
+          cleanDeletedItinIds(schedules.map(s => s.id));
         }
         _sbFullyLoaded = true; // 이제부터 sbSyncAll이 row 데이터 upsert 허용
         saveAppData();
@@ -3832,17 +3875,26 @@
             const { data, error } = await sbClient.from("itineraries").select("*");
             if(!error && data){
               const prev = itineraries.slice();
-              itineraries = data.map(row => {
-                const n = rowToItin(row);
-                // Supabase에 없는 컬럼(biz_phone, age, education_place 등)은 로컬 값 보존
-                const p = prev.find(i => String(i.id) === String(n.id));
-                if(p){
-                  if(!n.bizPhone)       n.bizPhone       = p.bizPhone       || "";
-                  if(!n.age)            n.age            = p.age            || "";
-                  if(!n.educationPlace) n.educationPlace = p.educationPlace || "사무실";
-                }
-                return n;
-              });
+              const deletedItins = getDeletedItinIds();
+              const seen = new Set();
+              itineraries = data
+                .filter(row => !deletedItins.has(String(row.id))) // 삭제된 것 제외
+                .map(row => {
+                  const n = rowToItin(row);
+                  const p = prev.find(i => String(i.id) === String(n.id));
+                  if(p){
+                    if(!n.bizPhone)       n.bizPhone       = p.bizPhone       || "";
+                    if(!n.age)            n.age            = p.age            || "";
+                    if(!n.educationPlace) n.educationPlace = p.educationPlace || "사무실";
+                  }
+                  return n;
+                })
+                .filter(n => { // 중복 id 제거
+                  const key = String(Math.floor(Number(n.id)));
+                  if(seen.has(key)) return false;
+                  seen.add(key);
+                  return true;
+                });
               if(state.currentUser) renderItineraries();
             }
           }catch(e){}
@@ -6650,7 +6702,7 @@
 
     function buildItineraryFromSchedule(sched){
       return {
-        id:             Date.now() + Math.random(),
+        id:             Number(sched.id),   // 일정표 ID = 일정 ID (중복 방지 핵심)
         scheduleId:     sched.id,
         company:        sched.company  || "",
         address:        sched.address  || "",
@@ -6838,8 +6890,12 @@
     function deleteItinerary(id){
       if(!isSuperAdmin() && !hasPermission('itinerary_delete') && !hasPermission('schedule_delete')) return;
       if(!confirm("이 일정표를 삭제할까? 복구 불가!")) return;
-      sbDeleteRecord("itineraries", id);
-      itineraries = itineraries.filter(x => String(x.id) !== String(id));
+      // 삭제 레지스트리에 등록 → loadFromSupabase 자동복구가 재생성하지 않음
+      markItinDeleted(id);
+      // 같은 id 또는 scheduleId를 가진 중복 항목도 함께 삭제
+      const toDelete = itineraries.filter(x => String(x.id) === String(id) || String(x.scheduleId) === String(id));
+      toDelete.forEach(x => sbDeleteRecord("itineraries", x.id));
+      itineraries = itineraries.filter(x => String(x.id) !== String(id) && String(x.scheduleId) !== String(id));
       renderItineraries();
       saveAppData();
     }
