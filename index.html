@@ -4942,26 +4942,25 @@
         const filtered = schedules.filter(s => String(s.createdAt||"").startsWith(today));
         rows = buildStaffCount(filtered, s => s.assignee || s.createdBy || "미상");
       } else if(cardNo === 2){
-        // 오늘 콜량 → 오늘 결과값 입력된 건, 직원별 건수 + 마지막 체크 시간/사업장
-        const filtered = leads.filter(l => l.result && l.result !== "" && ((l.resultEnteredAt && l.resultEnteredAt.startsWith(today)) || (!l.resultEnteredAt && l.resultDate === today)));
+        // 오늘 콜량 → resultDate === today 기준 (카드 숫자와 동일 기준)
+        const filtered = leads.filter(l =>
+          l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
+        );
         const map = {};
         // 전체 직원 0건으로 초기화 → 콜 없어도 이름 표시
-        staffs.forEach(s => { map[s.name] = { count:0, lastAt:"", lastCompany:"" }; });
+        staffs.forEach(s => { map[s.name] = { count:0, lastAt:"" }; });
         filtered.forEach(l => {
           const name = l.ownerName || "미상";
-          if(!map[name]) map[name] = { count:0, lastAt:"", lastCompany:"" };
+          if(!map[name]) map[name] = { count:0, lastAt:"" };
           map[name].count++;
           const _curT = l.resultEnteredAt ? new Date(l.resultEnteredAt).getTime() : 0;
           const _preT = map[name].lastAt ? new Date(map[name].lastAt).getTime() : 0;
-          if(_curT > _preT){
-            map[name].lastAt = l.resultEnteredAt;
-            map[name].lastCompany = l.company || "";
-          }
+          if(_curT > _preT) map[name].lastAt = l.resultEnteredAt;
         });
         rows = Object.entries(map).map(([name, v]) => {
           let timeStr = "";
-          if(v.lastAt){ try{ const d=new Date(v.lastAt); timeStr=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`; }catch(e){} }
-          return { name, count:v.count, lastTime:timeStr, lastCompany:v.lastCompany };
+          if(v.lastAt){ try{ const d=new Date(v.lastAt); timeStr=`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`; }catch(e){} }
+          return { name, count:v.count, lastTime:timeStr };
         }).sort((a,b) => b.count - a.count);
       } else if(cardNo === 3){
         // 전직원 익일 일정 → schedules.date === tomorrow, 섭외자별
@@ -4981,15 +4980,14 @@
         $("homeDetailBody").innerHTML = `<div class="empty">데이터가 없습니다.</div>`;
       } else if(cardNo === 2){
         $("homeDetailBody").innerHTML = rows.map((r,i) => `
-          <div style="padding:10px 14px;border-radius:10px;margin-bottom:6px;
+          <div style="display:flex;align-items:center;justify-content:space-between;
+                      padding:10px 14px;border-radius:10px;margin-bottom:6px;
                       background:${i%2===0?"#f8fafc":"#fff"};border:1px solid #f1f5f9;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-              <span style="font-size:14px;font-weight:700;color:#1e293b;">${escapeHtml(r.name)}</span>
+            <span style="font-size:14px;font-weight:700;color:#1e293b;">${escapeHtml(r.name)}</span>
+            <span style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:11px;color:#64748b;">${r.lastTime ? "마지막 "+r.lastTime : ""}</span>
               <span style="font-size:15px;font-weight:800;color:#3b82f6;">${r.count}건</span>
-            </div>
-            <div style="font-size:11px;color:#64748b;">
-              마지막 체크 ${r.lastTime ? r.lastTime : "-"} &nbsp;·&nbsp; ${escapeHtml(r.lastCompany||"-")}
-            </div>
+            </span>
           </div>
         `).join("");
       } else {
@@ -8948,11 +8946,6 @@
         (l.ownerNo === no || l.ownerName === user.name) &&
         l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
       ).length;
-      // 이번달 콜량: 이번달 결과값 입력 건수
-      const monthCalls  = leads.filter(l =>
-        (l.ownerNo === no || l.ownerName === user.name) &&
-        l.result && l.result !== "" && l.result !== "선택" && (l.resultDate||"").startsWith(month)
-      ).length;
       // 금일 섭외건수: 오늘 진행일 기준, createdByNo 또는 섭외자(assignee) 매칭
       const todayScheds = schedules.filter(s => s.date === today && (s.createdByNo === no || s.assignee === user.name)).length;
       // 이번달 섭외건수: 진행일 기준, createdByNo 또는 섭외자 매칭
@@ -8960,7 +8953,6 @@
 
       const items = [
         { label:"📞 금일 콜량",           current:todayCalls,  target:goal.calls||0 },
-        { label:"📞 이번달 콜량",          current:monthCalls,  target:goal.monthCalls||0 },
         { label:"📅 금일 일정등록",        current:todayScheds, target:goal.dailyScheds||0 },
         { label:"🗓 이번달 일정등록",      current:monthScheds, target:goal.scheds||0 }
       ].filter(i => i.target > 0 || i.current > 0);
@@ -9105,7 +9097,7 @@
     (function patchRunHomeSummary(){
       const _origAdmin = runAdminSummary;
       const _origMine  = runMySummary;
-      runAdminSummary = function(){ _origAdmin(); crmUpdateGoalBadges(); };
+      runAdminSummary = function(){ _origAdmin(); };
       runMySummary    = function(){ _origMine();  crmUpdateGoalBadges(); };
     })();
 
