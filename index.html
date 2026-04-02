@@ -5773,6 +5773,7 @@
 
       // Supabase 업데이트
       try{
+        const _rEnteredAt = (l.result && l.result !== "" && l.result !== "선택") ? new Date().toISOString() : null;
         const { error } = await sbClient.from("education_db").update({
           company:    l.company,
           staff_name: l.ownerName,
@@ -5786,12 +5787,12 @@
           industry:   l.industry,
           status:     l.status,
           result:     l.result,
-          result_entered_at: (l.result && l.result !== "" && l.result !== "선택") ? new Date().toISOString() : null,
           memo:       l.memo
         }).eq("id", l.id);
         if(error) throw error;
-        if(l.result && l.result !== "" && l.result !== "선택"){
-          l.resultEnteredAt = new Date().toISOString();
+        if(_rEnteredAt){
+          l.resultEnteredAt = _rEnteredAt;
+          sbClient.from("education_db").update({ result_entered_at: _rEnteredAt }).eq("id", l.id).then(()=>{});
         } else {
           l.resultEnteredAt = "";
         }
@@ -5939,7 +5940,8 @@
             result:    row.result || "",
             resultDate: row.result_date || "",
             resultTime: row.result_time || "",
-            resultEnteredAt: row.result_entered_at || "",
+            // result_entered_at 없으면 result_date로 대체 (콜량 집계 fallback)
+            resultEnteredAt: row.result_entered_at || (row.result && row.result_date ? row.result_date + "T12:00:00" : ""),
             createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr(),
             cleanBiz:  row.clean_biz || false
           };
@@ -6516,12 +6518,13 @@
         runHomeSummary();
         // DB 저장 — .select() 없이 단순 update (RLS 오류 방지)
         sbClient.from("education_db")
-          .update({ result: value, result_date: rDate, result_time: "", result_entered_at: rEnteredAt })
+          .update({ result: value, result_date: rDate, result_time: "" })
           .eq("id", l.id)
           .then(({error}) => {
             if(error){ _pendingLeadResult.delete(String(l.id)); console.warn(error); }
             else {
               _pendingLeadResult.delete(String(l.id));
+              if(rEnteredAt) sbClient.from("education_db").update({ result_entered_at: rEnteredAt }).eq("id", l.id).then(()=>{});
               saveAppData();
             }
           });
@@ -6556,7 +6559,7 @@
       }, 0);
 
       sbClient.from("education_db")
-        .update({ result: trimmed, result_date: rDate, result_time: "", result_entered_at: rEnteredAt })
+        .update({ result: trimmed, result_date: rDate, result_time: "" })
         .eq("id", l.id)
         .then(({error}) => {
           if(error){
@@ -6564,6 +6567,7 @@
             console.warn("결과 저장 오류:", error);
           } else {
             _pendingLeadResult.delete(String(l.id));
+            if(rEnteredAt) sbClient.from("education_db").update({ result_entered_at: rEnteredAt }).eq("id", l.id).then(()=>{});
             saveAppData();
           }
         });
@@ -6616,11 +6620,13 @@
       try{
         const { data: updated, error } = await sbClient
           .from("education_db")
-          .update({ result:"일정픽스", result_date: date, result_time: timeStr, result_entered_at: enteredAt })
+          .update({ result:"일정픽스", result_date: date, result_time: timeStr })
           .eq("id", l.id)
           .select()
           .single();
         if(error) throw error;
+        // result_entered_at은 별도 업데이트 (컬럼 없어도 나머지 저장 보장)
+        if(enteredAt) sbClient.from("education_db").update({ result_entered_at: enteredAt }).eq("id", l.id).then(()=>{});
         // DB 확정값으로 leads 배열 고정
         if(updated){
           const idx = leads.findIndex(x => x.id === l.id);
@@ -6628,7 +6634,7 @@
             leads[idx].result          = updated.result          || "";
             leads[idx].resultDate      = updated.result_date     || "";
             leads[idx].resultTime      = updated.result_time     || "";
-            leads[idx].resultEnteredAt = updated.result_entered_at || "";
+            leads[idx].resultEnteredAt = updated.result_entered_at || enteredAt || "";
           }
         }
         _pendingLeadResult.delete(String(l.id));
