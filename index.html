@@ -3673,12 +3673,12 @@
         try{ await msgInit(); }catch(e){}  // 새로고침 후에도 쪽지 로드
         // 새로고침 후 세션 복원 시 즉시 접속 기록 → 관리자 활동 로그에 바로 반영
         crmAddLog("ok", "접속중", state.currentUser.name);
-        // heartbeat: 5분마다 접속 상태 갱신
+        // heartbeat: 30분마다 접속 상태 갱신 (DB 부하 감소 — 로컬만 기록)
         if(window._heartbeatTimer) clearInterval(window._heartbeatTimer);
         window._heartbeatTimer = setInterval(() => {
           if(!state.currentUser) return clearInterval(window._heartbeatTimer);
-          crmAddLog("ok", "접속중", state.currentUser.name);
-        }, 5 * 60 * 1000);
+          crmAddLogLocal("ok", "접속중", state.currentUser.name);
+        }, 30 * 60 * 1000);
       }
 
       // 7. 최종 화면 복원 ── 모든 비동기 처리 완료 후 실행
@@ -3972,12 +3972,12 @@
       // 활동 로그 기록
       crmAddLog("ok", "로그인", user.name);
       saveAppData();
-      // 접속 유지 heartbeat: 5분마다 Supabase에 접속 상태 갱신 → 관리자 화면에 실시간 반영
+      // 접속 유지 heartbeat: 30분마다 갱신 (DB 부하 감소 — 로컬만 기록)
       if(window._heartbeatTimer) clearInterval(window._heartbeatTimer);
       window._heartbeatTimer = setInterval(() => {
         if(!state.currentUser) return clearInterval(window._heartbeatTimer);
-        crmAddLog("ok", "접속중", state.currentUser.name);
-      }, 5 * 60 * 1000); // 5분
+        crmAddLogLocal("ok", "접속중", state.currentUser.name);
+      }, 30 * 60 * 1000); // 30분
       // 쪽지함 초기화 (로그인 후)
       msgInit().catch(e => console.error("쪽지 초기화 오류:", e));
 
@@ -8316,6 +8316,23 @@
         }catch(_){}
         saveAppData();
       })();
+    }
+
+    // Supabase 저장 없이 로컬에만 기록 (heartbeat용 — DB 부하 방지)
+    function crmAddLogLocal(level, action, detail){
+      const now = new Date();
+      const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
+      const device  = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? "📱모바일" : "🖥️PC";
+      const detailFull = [detail, device].filter(Boolean).join(" · ");
+      activityLogs.unshift({
+        level, action,
+        detail: detailFull,
+        time: timeStr,
+        user: state.currentUser ? state.currentUser.name : (detail||""),
+        online: true
+      });
+      if(activityLogs.length > 200) activityLogs = activityLogs.slice(0,200);
+      saveAppData();
     }
 
     function crmRenderLogs(){
