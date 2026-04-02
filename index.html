@@ -3444,6 +3444,16 @@
       // 쪽지
       { key:'msg_send_team',         label:'팀 쪽지 발송',                   group:'쪽지' },
       { key:'msg_send_all',          label:'전체 직원 쪽지 발송',            group:'쪽지' },
+      // 일정표 관리
+      { key:'itinerary_view_team',   label:'담당 팀 일정표 조회',            group:'일정표 관리' },
+      { key:'itinerary_view_all',    label:'전체 직원 일정표 조회',           group:'일정표 관리' },
+      { key:'itinerary_edit',        label:'일정표 수정',                    group:'일정표 관리' },
+      { key:'itinerary_delete',      label:'일정표 삭제',                    group:'일정표 관리' },
+      // 익일취합
+      { key:'aggregate_team',        label:'담당 팀 익일취합 조회',           group:'익일취합' },
+      { key:'aggregate_all',         label:'전체 직원 익일취합 조회',         group:'익일취합' },
+      // 목표 설정
+      { key:'goal_manage',           label:'직원 목표 설정 관리',             group:'목표 설정' },
       // 모드
       { key:'mode_switch',           label:'관리자 ↔ 직원 모드 전환',        group:'모드' },
     ];
@@ -4105,7 +4115,10 @@
       $("profileName").textContent   = user.name;
       $("profileRank").textContent   = rank;
       $("profileRank").className     = `profile-rank ${rankColor}`;
-      $("profileBranch").textContent = user.branch || "루원지점";
+      const _teamLabel = getStaffTeamName(user.staffNo);
+      $("profileBranch").textContent = _teamLabel
+        ? `${user.branch || "루원지점"} ${_teamLabel}`
+        : (user.branch || "루원지점");
 
       // 아바타 이니셜
       const av = $("profileAvatar");
@@ -4201,6 +4214,15 @@
       return false;
     }
 
+    // 특정 staffNo가 속한 팀 이름 반환
+    function getStaffTeamName(staffNo){
+      const asAdmin = staffTeams.find(t => t.adminNo === staffNo);
+      if(asAdmin) return asAdmin.name;
+      const asMember = staffTeams.find(t => (t.memberNos||[]).includes(staffNo));
+      if(asMember) return asMember.name;
+      return null;
+    }
+
     // 현재 관리자의 담당 팀 멤버 staffNo 배열 반환
     function getMyTeamMemberNos(){
       if(!state.currentUser) return [];
@@ -4277,14 +4299,16 @@
       $("perfReportScope").querySelector('option[value="all"]').disabled = !canPerfViewTeamOrAll;
       if(!canPerfViewTeamOrAll) $("perfReportScope").value = "mine";
 
-      $("aggScope").querySelector('option[value="all"]').disabled = !canPerfViewTeamOrAll;
-      if(!canPerfViewTeamOrAll) $("aggScope").value = "mine";
+      const canAggViewTeamOrAll = hasPermission('aggregate_all') || hasPermission('schedule_view_all') || hasPermission('aggregate_team') || hasPermission('schedule_view_team');
+      $("aggScope").querySelector('option[value="all"]').disabled = !canAggViewTeamOrAll;
+      if(!canAggViewTeamOrAll) $("aggScope").value = "mine";
 
       if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !canExcelUpload);
       if(canExcelUpload) refreshLeadStaffDropdown();
       // 일정표 관리 직원 필터
-      if($("itineraryFilterBox")) $("itineraryFilterBox").classList.toggle("hidden", !canSchedFilter);
-      if(canSchedFilter) refreshItineraryStaffDropdown();
+      const canShowItinFilter = canSchedFilter || hasPermission('itinerary_view_team') || hasPermission('itinerary_view_all') || hasPermission('schedule_view_team') || hasPermission('schedule_view_all');
+      if($("itineraryFilterBox")) $("itineraryFilterBox").classList.toggle("hidden", !canShowItinFilter);
+      if(canShowItinFilter) refreshItineraryStaffDropdown();
       onPerformanceTypeChange();
     }
 
@@ -4358,7 +4382,8 @@
     }
 
     function runHomeSummary(){
-      if(hasPermission('home_stats_all') || hasPermission('home_stats_team')) runAdminSummary();
+      if(hasPermission('home_stats_all')) runAdminSummary();
+      else if(hasPermission('home_stats_team')) runTeamSummary();
       else runMySummary();
     }
 
@@ -4391,7 +4416,8 @@
         return l.resultDate === today;
       });
       $("homeValue2").textContent = _todayCalls.length;
-      renderCallRanking(_todayCalls);
+      if(hasPermission('home_call_ranking')) renderCallRanking(_todayCalls);
+      else { const el = $("homeCallRanking"); if(el) el.style.display = "none"; }
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
       $("homeValue4").textContent = schedules.filter(s => {
         if(!s.date) return false;
@@ -4402,6 +4428,56 @@
       if(_openDetailCardNo && $("homeDetailOverlay")?.classList.contains("open")){
         onHomeCardDblClick(_openDetailCardNo);
       }
+    }
+
+    function runTeamSummary(){
+      const today    = todayStr();
+      const tomorrow = tomorrowStr();
+      const calY     = state.calendarYear, calM = state.calendarMonth;
+      const calLabel = getMonthLabel(calY, calM);
+      const teamNos  = getMyTeamMemberNos();
+      const teamNames = staffs.filter(s => teamNos.includes(s.no)).map(s => s.name);
+      const teamLabel = (() => { const t = staffTeams.find(x => x.adminNo === state.currentUser?.staffNo); return t ? t.name : "팀"; })();
+
+      $("homeCardLabel1").textContent = `${teamLabel} 금일 등록 일정`;
+      $("homeCardDesc1").textContent  = `오늘 ${teamLabel} 전체 등록 일정`;
+      $("homeCardLabel2").textContent = `${teamLabel} 오늘 콜량`;
+      $("homeCardDesc2").textContent  = `결과값 입력된 DB 건수 (${teamLabel})`;
+      $("homeCardLabel3").textContent = `${teamLabel} 익일 일정`;
+      $("homeCardDesc3").textContent  = `내일 ${teamLabel} 나가는 일정`;
+      $("homeCardLabel4").textContent = `${teamLabel} ${calLabel} 일정`;
+      $("homeCardDesc4").textContent  = `${calLabel} ${teamLabel} 일정`;
+
+      $("homeValue1").textContent = schedules.filter(s =>
+        String(s.createdAt||"").startsWith(today) && teamNos.includes(s.createdByNo)
+      ).length;
+
+      const _teamCalls = leads.filter(l => {
+        if(!(teamNos.includes(l.ownerNo) || teamNames.includes(l.ownerName))) return false;
+        if(!l.result || l.result === "" || l.result === "선택") return false;
+        if(l.resultEnteredAt){
+          const d = new Date(l.resultEnteredAt);
+          const localDate = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+          return localDate === today;
+        }
+        return l.resultDate === today;
+      });
+      $("homeValue2").textContent = _teamCalls.length;
+
+      if(hasPermission('home_call_ranking')){
+        renderCallRanking(_teamCalls);
+      } else {
+        const el = $("homeCallRanking"); if(el) el.style.display = "none";
+      }
+
+      $("homeValue3").textContent = schedules.filter(s =>
+        s.date === tomorrow && teamNos.includes(s.createdByNo)
+      ).length;
+      $("homeValue4").textContent = schedules.filter(s => {
+        if(!s.date) return false;
+        const d = new Date(s.date + "T00:00:00");
+        return d.getFullYear() === calY && d.getMonth() === calM && teamNos.includes(s.createdByNo);
+      }).length;
     }
 
     function runMySummary(){
@@ -5022,7 +5098,13 @@
 
       const rows = schedules.filter(row => {
         if(row.date !== nextDate) return false;
-        if(scope === "all" && hasPermission('perf_view_all')) return true;
+        if(scope === "all"){
+          if(isSuperAdmin() || hasPermission('aggregate_all') || hasPermission('schedule_view_all')) return true;
+          if(hasPermission('aggregate_team') || hasPermission('schedule_view_team')){
+            const teamNos = getMyTeamMemberNos();
+            return teamNos.includes(row.createdByNo) || row.createdByNo === currentStaffNo();
+          }
+        }
         return row.createdByNo === currentStaffNo();
       }).sort((a,b) => `${a.assignee} ${a.time}`.localeCompare(`${b.assignee} ${b.time}`, "ko"));
 
@@ -5375,10 +5457,18 @@
     function refreshLeadStaffDropdown(){
       const sel = $("excelTargetStaff");
       if(!sel) return;
-      const prev = sel.value; // 현재 선택값 유지
+      const cur = sel.value;
+      let visibleStaffs;
+      if(isSuperAdmin() || hasPermission('excel_upload')){
+        visibleStaffs = staffs;
+      } else if(hasPermission('lead_view_team')){
+        const teamNos = getMyTeamMemberNos();
+        visibleStaffs = staffs.filter(s => teamNos.includes(s.no) || s.no === state.currentUser?.staffNo);
+      } else {
+        visibleStaffs = [staffs.find(s => s.no === state.currentUser?.staffNo)].filter(Boolean);
+      }
       sel.innerHTML = `<option value="">전체 보기</option>` +
-        staffs.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join("");
-      if(prev) sel.value = prev;
+        visibleStaffs.map(s => `<option value="${escapeHtml(s.name)}" ${cur===s.name?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
     }
 
     function addStaff(){
@@ -6598,8 +6688,16 @@
     function getVisibleItinerariesBase(){
       const staffFilter = $("itineraryStaffFilter") ? $("itineraryStaffFilter").value : "";
       let result;
-      if(hasPermission('schedule_view_all')){
+      if(isSuperAdmin() || hasPermission('itinerary_view_all') || hasPermission('schedule_view_all')){
         result = itineraries.slice();
+        if(staffFilter) result = result.filter(i => i.assignee === staffFilter);
+      } else if(hasPermission('itinerary_view_team') || hasPermission('schedule_view_team')){
+        const teamNos   = getMyTeamMemberNos();
+        const teamNames = staffs.filter(s => teamNos.includes(s.no)).map(s => s.name);
+        result = itineraries.filter(i =>
+          teamNos.includes(i.createdByNo) || teamNames.includes(i.assignee) ||
+          i.createdByNo === currentStaffNo() || i.assignee === currentStaffName()
+        );
         if(staffFilter) result = result.filter(i => i.assignee === staffFilter);
       } else {
         result = itineraries.filter(i => i.createdByNo === currentStaffNo() || i.assignee === currentStaffName());
@@ -6617,8 +6715,17 @@
       const sel = $("itineraryStaffFilter");
       if(!sel) return;
       const cur = sel.value;
+      let visibleStaffs;
+      if(isSuperAdmin() || hasPermission('itinerary_view_all') || hasPermission('schedule_view_all')){
+        visibleStaffs = staffs;
+      } else if(hasPermission('itinerary_view_team') || hasPermission('schedule_view_team')){
+        const teamNos = getMyTeamMemberNos();
+        visibleStaffs = staffs.filter(s => teamNos.includes(s.no) || s.no === state.currentUser?.staffNo);
+      } else {
+        visibleStaffs = staffs.filter(s => s.no === state.currentUser?.staffNo);
+      }
       sel.innerHTML = `<option value="">전체 보기</option>` +
-        staffs.map(s => `<option value="${escapeHtml(s.name)}" ${cur===s.name?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
+        visibleStaffs.map(s => `<option value="${escapeHtml(s.name)}" ${cur===s.name?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
     }
 
     function renderItineraryMiniCal(){
@@ -6692,7 +6799,8 @@
       const body = $("itineraryTableBody");
       if(!body) return;
       const rows  = getVisibleItineraries().sort((a,b) => (a.date||'').localeCompare(b.date||''));
-      const admin = hasPermission('schedule_delete');
+      const canEdit   = isSuperAdmin() || hasPermission('itinerary_edit') || hasPermission('schedule_view_team') || hasPermission('schedule_view_all');
+      const canDelete = isSuperAdmin() || hasPermission('itinerary_delete') || hasPermission('schedule_delete');
 
       const emptyMsg = itinCalState.selectedDate
         ? `${itinCalState.selectedDate} 날짜에 등록된 일정표가 없습니다.`
@@ -6719,8 +6827,8 @@
           <td>
             <div style="display:flex;gap:4px;flex-wrap:wrap;">
               <button class="small-btn" type="button" onclick="openItineraryCard('${itin.id}')">섭외지</button>
-              <button class="ghost-btn" type="button" onclick="openItineraryEditModal('${itin.id}')">수정</button>
-              ${admin ? `<button class="danger-btn" type="button" onclick="deleteItinerary('${itin.id}')">삭제</button>` : ""}
+              ${canEdit ? `<button class="ghost-btn" type="button" onclick="openItineraryEditModal('${itin.id}')">수정</button>` : ""}
+              ${canDelete ? `<button class="danger-btn" type="button" onclick="deleteItinerary('${itin.id}')">삭제</button>` : ""}
             </div>
           </td>
         </tr>
@@ -6728,7 +6836,7 @@
     }
 
     function deleteItinerary(id){
-      if(!hasPermission('schedule_delete')) return;
+      if(!isSuperAdmin() && !hasPermission('itinerary_delete') && !hasPermission('schedule_delete')) return;
       if(!confirm("이 일정표를 삭제할까? 복구 불가!")) return;
       sbDeleteRecord("itineraries", id);
       itineraries = itineraries.filter(x => String(x.id) !== String(id));
@@ -8517,7 +8625,7 @@
     }
 
     function crmSaveGoal(){
-      if(!isAdminMode()) return;
+      if(!hasPermission('goal_manage')) return;
       const no = ($("crmGoalStaffSelect")||{}).value||"";
       if(!no) return alert("직원을 선택해 주세요.");
       staffGoals[no] = {
