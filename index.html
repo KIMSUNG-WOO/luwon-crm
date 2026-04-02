@@ -2506,6 +2506,25 @@
           <div id="itinPagination" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0;flex-wrap:wrap;"></div>
         </div>
 
+        <!-- ── 목표 현황 뷰 (관리자용) ── -->
+        <div class="view hidden" id="view-goalProgress">
+          <div class="section-head">
+            <div>
+              <h4>🎯 직원별 목표 현황</h4>
+              <p>직원별 금일 콜량·섭외건수·이번달 섭외건수 달성 현황입니다.</p>
+            </div>
+            <button class="small-btn" onclick="crmRenderGoalTable()">🔄 새로고침</button>
+          </div>
+          <div class="panel">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>직원명</th><th>금일 콜량</th><th>금일 섭외</th><th>이번달 섭외</th></tr></thead>
+                <tbody id="crmGoalTableBody2"><tr><td colspan="4"><div class="empty">목표 데이터를 불러오는 중...</div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- ── 지정목표 뷰 (직원용) ── -->
         <div class="view hidden" id="view-goals">
           <div class="section-head">
@@ -3458,6 +3477,7 @@
       { key:'aggregate_all',         label:'전체 직원 익일취합 조회',         group:'익일취합' },
       // 목표 설정
       { key:'goal_manage',           label:'직원 목표 설정 관리',             group:'목표 설정' },
+      { key:'goal_view_team',        label:'팀 지정목표 현황 조회',           group:'목표 설정' },
       // 모드
       { key:'mode_switch',           label:'관리자 ↔ 직원 모드 전환',        group:'모드' },
     ];
@@ -4303,6 +4323,7 @@
       // admin-role 직원이 관리자 모드인지 확인
       const isElevated = isAdmin || (state.currentUser?.role === "admin" && state.currentMode === "admin");
 
+      const canSeeGoalProgress = isSuperAdmin() || hasPermission('goal_manage') || hasPermission('goal_view_team');
       const menus = isElevated ? [
         ["home","🏠","홈"],
         ["notice","📢","공지사항"],
@@ -4311,6 +4332,7 @@
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
         ...(isAdmin ? [["progress","📈","진행률"],["staff","👥","직원관리"],["settings","⚙️","관리자설정"]] : []),
+        ...(canSeeGoalProgress ? [["goalProgress","🎯","목표 현황"]] : []),
         ["lead","🗂","교육섭외 DB"],
         ["itinerary","📋","일정표 관리"],
       ] : [
@@ -4395,11 +4417,12 @@
         lead:["교육섭외 DB","교육 사업장 데이터베이스 화면입니다."],
         itinerary:["일정표 관리","등록된 교육섭외 일정표를 관리하는 화면입니다."],
         settings:["관리자설정","관리자용 설정 화면입니다."],
-        goals:["지정목표","관리자가 설정한 나의 목표와 달성률을 확인합니다."]
+        goals:["지정목표","관리자가 설정한 나의 목표와 달성률을 확인합니다."],
+        goalProgress:["목표 현황","직원별 금일·이번달 목표 달성 현황입니다."]
       };
 
-      $("pageTitle").textContent = titles[view][0];
-      $("pageDesc").textContent = titles[view][1];
+      $("pageTitle").textContent = (titles[view]||["",""])[0];
+      $("pageDesc").textContent  = (titles[view]||["",""])[1];
       if($("mobPageTitle")) $("mobPageTitle").textContent = titles[view][0];
       closeMobMenu();
 
@@ -4408,6 +4431,7 @@
       if(view === "itinerary") itinCalState.selectedDate = null;
       renderAll();
       if(view === "goals") renderGoals();
+      if(view === "goalProgress") crmRenderGoalTable();
     }
 
     function renderCallRanking(todayCalls){
@@ -8748,40 +8772,75 @@
     }
 
     function crmRenderGoalTable(){
-      const tbody = $("crmGoalTableBody");
-      if(!tbody) return;
-      const nos = Object.keys(staffGoals);
-      if(!nos.length){
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
-        return;
-      }
+      // 권한에 따라 보여줄 직원 목록 결정
+      const canAll  = isSuperAdmin() || hasPermission('goal_manage');
+      const canTeam = hasPermission('goal_view_team');
       const today = todayStr();
       const month = monthPrefix();
-      tbody.innerHTML = nos.map(no => {
-        const s = staffs.find(x => x.no === no);
-        const g = staffGoals[no];
-        const name = escapeHtml(s ? s.name : no);
-        const staffName = s ? s.name : "";
-        // 현황: 이번달 일정 (진행일 기준, createdByNo 또는 섭외자명 매칭)
-        const curMonthScheds = schedules.filter(sc =>
-          sc.date && sc.date.startsWith(month) && (sc.createdByNo === no || sc.assignee === staffName)
-        ).length;
-        const pct = g.scheds > 0 ? Math.min(100, Math.round(curMonthScheds / g.scheds * 100)) : 0;
-        const pctColor = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
-        const bar = g.scheds > 0
-          ? `<div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;min-width:80px;">
-               <div style="height:100%;width:${pct}%;background:${pctColor};border-radius:4px;"></div>
-             </div>
-             <div style="font-size:11px;color:${pctColor};font-weight:700;">${curMonthScheds}/${g.scheds} (${pct}%)</div>`
-          : `<span style="color:var(--muted);font-size:11px;">미설정</span>`;
-        return `<tr>
-          <td>${name}</td>
-          <td style="text-align:center;">${g.calls||0}건</td>
-          <td style="text-align:center;">${g.dailyScheds||0}건</td>
-          <td style="text-align:center;">${g.scheds||0}건</td>
-          <td>${bar}</td>
-        </tr>`;
-      }).join("");
+
+      let targetNos;
+      if(canAll){
+        targetNos = Object.keys(staffGoals);
+      } else if(canTeam){
+        const teamNos = getMyTeamMemberNos();
+        targetNos = teamNos.filter(no => staffGoals[no]);
+      } else {
+        targetNos = [];
+      }
+
+      // 진행바 헬퍼
+      const makeBar = (cur, tgt) => {
+        if(!tgt) return `<span style="color:var(--muted);font-size:12px;">미설정</span>`;
+        const pct = Math.min(100, Math.round(cur / tgt * 100));
+        const c = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
+        return `<div style="min-width:90px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <span style="font-size:13px;font-weight:800;color:${c};">${cur}</span>
+            <span style="font-size:11px;color:var(--muted);">/ ${tgt}건</span>
+            <span style="font-size:11px;font-weight:700;color:${c};">${pct>=100?"달성!":pct+"%"}</span>
+          </div>
+          <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${c};border-radius:3px;transition:width .4s;"></div>
+          </div>
+        </div>`;
+      };
+
+      const emptyHtml = `<tr><td colspan="4"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
+      const noPermHtml = `<tr><td colspan="4"><div class="empty">권한이 없습니다.</div></td></tr>`;
+
+      const rowsHtml = (!canAll && !canTeam) ? noPermHtml :
+        (targetNos.length === 0 ? emptyHtml :
+          targetNos.map(no => {
+            const s = staffs.find(x => x.no === no);
+            const g = staffGoals[no];
+            if(!g) return "";
+            const name = escapeHtml(s ? s.name : no);
+            const staffName = s ? s.name : "";
+            const todayCalls  = leads.filter(l => {
+              if(!(l.ownerNo===no||l.ownerName===staffName)) return false;
+              if(!l.result||l.result===""||l.result==="선택") return false;
+              if(l.resultEnteredAt){
+                const d=new Date(l.resultEnteredAt);
+                return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")===today;
+              }
+              return l.resultDate===today;
+            }).length + schedules.filter(sc=>sc.createdByNo===no&&String(sc.createdAt||"").startsWith(today)).length;
+            const todayScheds = schedules.filter(sc=>String(sc.createdAt||"").startsWith(today)&&sc.createdByNo===no).length;
+            const monthScheds = schedules.filter(sc=>sc.date&&sc.date.startsWith(month)&&(sc.createdByNo===no||sc.assignee===staffName)).length;
+            return `<tr>
+              <td><b>${name}</b></td>
+              <td>${makeBar(todayCalls,  g.calls||0)}</td>
+              <td>${makeBar(todayScheds, g.dailyScheds||0)}</td>
+              <td>${makeBar(monthScheds, g.scheds||0)}</td>
+            </tr>`;
+          }).filter(Boolean).join("") || emptyHtml
+        );
+
+      // 설정탭 테이블 + 목표현황 뷰 테이블 동시 업데이트
+      const t1 = $("crmGoalTableBody");
+      const t2 = $("crmGoalTableBody2");
+      if(t1) t1.innerHTML = rowsHtml;
+      if(t2) t2.innerHTML = rowsHtml;
     }
 
     function crmUpdateGoalBadges(){
@@ -8822,7 +8881,6 @@
       // 뱃지4: 이번달 섭외 — scheds 목표 게이지
       const b4val = schedules.filter(s => s.date && s.date.startsWith(month) && (s.createdByNo===no || s.assignee===currentStaffName())).length;
       _miniGauge($("crmGoalBadge4"), b4val, goal?.scheds||0, "이번달 섭외");
-      }
     }
 
     /* ══════════════════════════════════════════════════════════
