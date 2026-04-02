@@ -5699,7 +5699,18 @@
     }
 
     async function syncAfterUpload(rows){
-      // id 필드 제외 — GENERATED ALWAYS IDENTITY 컴럼이므로 Supabase가 자동 할당
+      const staffNo = rows[0]?.ownerNo || "";
+
+      // 1단계: 해당 직원의 기존 데이터 전체 삭제 (데이터 축적 방지)
+      if(staffNo){
+        const { error: delErr } = await sbRetry(() =>
+          sbClient.from("education_db").delete().eq("staff_no", staffNo)
+        );
+        if(delErr) throw delErr;
+      }
+
+      // 2단계: 새 데이터 INSERT
+      // id 필드 제외 — GENERATED ALWAYS IDENTITY 컬럼이므로 Supabase가 자동 할당
       const inserts = rows.map(row => ({
         type:       row.type || "교육섭외",
         date:       row.date || "",
