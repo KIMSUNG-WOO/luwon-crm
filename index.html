@@ -5289,7 +5289,17 @@
         return `<tr data-id="${l.id}">${numCell}${chkCell}<td style="position:relative;">${rowResizeHandle}${cleanBizBadge}${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(phone)}">${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
       }).join("");
 
+      // 렌더 전 체크된 ID 저장 → 렌더 후 복원 (renderLeads 호출 시 체크 풀림 방지)
+      const _checkedIds = new Set(
+        Array.from(document.querySelectorAll('.lead-chk:checked')).map(c => c.dataset.id)
+      );
       body.innerHTML = html;  // DOM 업데이트 1회만
+      // 체크 상태 복원
+      if(_checkedIds.size > 0){
+        document.querySelectorAll('.lead-chk').forEach(c => {
+          if(_checkedIds.has(c.dataset.id)) c.checked = true;
+        });
+      }
       renderLeadPagination(allRows.length, totalPages);
       if(!_leadTableResizeInit){
         loadLeadTableLayout();                  // 저장된 열 너비 복원
