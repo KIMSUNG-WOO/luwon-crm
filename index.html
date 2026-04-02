@@ -6188,8 +6188,8 @@
       if(!l) return;
       clearLeadResultEditing();
       const trimmed = (value || "").trim();
-      // 변경 없으면 그냥 re-render만 (입력창 초기화)
-      if(trimmed === (l.result || "").trim()){ renderLeads(); return; }
+      // 변경 없으면 렌더 생략 (불필요한 DOM 재생성 방지 → 체크박스 유지)
+      if(trimmed === (l.result || "").trim()){ return; }
 
       const rDate      = trimmed ? todayStr() : "";
       const rEnteredAt = trimmed ? new Date().toISOString() : null;
@@ -6201,8 +6201,9 @@
 
       _pendingLeadResult.set(String(l.id), { result: trimmed, resultDate: rDate, resultEnteredAt: rEnteredAt || "", resultTime: "" });
       _leadsLocalUpdateTs = Date.now();
-      renderLeads();
-      runHomeSummary();
+      // setTimeout으로 렌더 지연 → 현재 클릭 이벤트 완전히 처리된 후 DOM 재생성
+      // (blur 중 renderLeads 즉시 호출 시 체크박스 클릭 이벤트가 새 DOM에 전달 안 되는 버그 방지)
+      setTimeout(() => { renderLeads(); runHomeSummary(); }, 0);
 
       sbClient.from("education_db")
         .update({ result: trimmed, result_date: rDate, result_time: "", result_entered_at: rEnteredAt })
