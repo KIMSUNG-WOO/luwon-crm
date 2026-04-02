@@ -3714,52 +3714,36 @@
             if(row.key==="notices"        && Array.isArray(row.value)) notices        = row.value;
           });
         }
-        // ── 중복 제거: 같은 id가 여러 개 있으면 하나만 남김 (데이터 많은 쪽 우선) ──
+        // ── 중복 제거: 업체명+날짜+섭외자 기준으로 같은 일정표 중복 제거 ──
+        // (데이터가 더 많은 쪽 유지, 나머지는 DB에서도 삭제)
         {
-          const seen = new Map(); // id → itinerary (데이터가 더 많은 쪽 유지)
-          const idsToDelete = []; // DB에서도 삭제할 중복 IDs
+          const seen = new Map(); // "company|date|assignee" → best itinerary
+          const idsToDelete = []; // DB에서 삭제할 중복 ID 목록
           for(const i of itineraries){
-            const key = String(Math.floor(Number(i.id)));
+            const key = `${(i.company||"").trim()}|${i.date||""}|${(i.assignee||"").trim()}`;
             if(!seen.has(key)){
               seen.set(key, i);
             } else {
-              // 기존 것과 비교해 데이터가 더 많은 쪽 유지
+              // 두 row 중 데이터가 더 풍부한 것을 유지
               const existing = seen.get(key);
-              const existScore = [existing.specialNote, existing.bizPhone, existing.age, existing.educationPlace].filter(Boolean).length;
-              const newScore   = [i.specialNote, i.bizPhone, i.age, i.educationPlace].filter(Boolean).length;
-              if(newScore > existScore){
-                idsToDelete.push(existing.id); // 기존 것 삭제 예약
+              const score = x => [x.specialNote, x.bizPhone, x.managerPhone, x.age, x.educationPlace, x.industry].filter(v => v && v.trim()).length;
+              if(score(i) > score(existing)){
+                idsToDelete.push(existing.id);
                 seen.set(key, i);
               } else {
-                idsToDelete.push(i.id); // 새 것 삭제 예약
+                idsToDelete.push(i.id);
               }
             }
           }
           itineraries = [...seen.values()];
-          // 중복된 것들을 DB에서도 삭제 (비동기 fire-and-forget)
+          // 중복 행을 DB에서도 삭제 (비동기, 백그라운드)
           if(idsToDelete.length && sbClient){
-            console.log(`🧹 일정표 중복 ${idsToDelete.length}건 DB 정리`);
-            idsToDelete.forEach(dupId => sbClient.from("itineraries").delete().eq("id", Number(dupId)).then(() => {}));
+            console.log(`🧹 일정표 중복 ${idsToDelete.length}건 자동 정리`);
+            idsToDelete.forEach(dupId => {
+              const numId = Math.floor(Number(dupId));
+              if(!isNaN(numId) && numId > 0) sbClient.from("itineraries").delete().eq("id", numId).then(()=>{});
+            });
           }
-        }
-
-        // ── 자동복구: 스케줄은 있는데 대응하는 일정표가 없으면 복구 ──
-        // (단, 사용자가 직접 삭제한 일정표는 재생성하지 않음)
-        if(schedules.length){
-          const itinIds      = new Set(itineraries.map(i => String(Math.floor(Number(i.id)))));
-          const deletedItins = getDeletedItinIds();
-          const missing = schedules.filter(s =>
-            !itinIds.has(String(s.id)) &&
-            !deletedItins.has(String(s.id))
-          );
-          if(missing.length){
-            const recovered = missing.map(s => buildItineraryFromSchedule(s)); // id = Number(s.id)
-            itineraries.push(...recovered);
-            if(sbClient){ const { error: _recErr } = await sbClient.from("itineraries").upsert(recovered.map(itinToRow), {onConflict:"id"}); if(_recErr) console.warn("일정표 자동복구 오류:", _recErr); }
-            console.log(`🔄 일정표 자동복구: ${recovered.length}건`);
-          }
-          // 스케줄이 없어진 일정표는 삭제 레지스트리에서 정리
-          cleanDeletedItinIds(schedules.map(s => s.id));
         }
         _sbFullyLoaded = true; // 이제부터 sbSyncAll이 row 데이터 upsert 허용
         saveAppData();
@@ -3875,26 +3859,43 @@
             const { data, error } = await sbClient.from("itineraries").select("*");
             if(!error && data){
               const prev = itineraries.slice();
-              const deletedItins = getDeletedItinIds();
-              const seen = new Set();
+              const seenKey = new Map();
+              const idsToDelete2 = [];
               itineraries = data
-                .filter(row => !deletedItins.has(String(row.id))) // 삭제된 것 제외
                 .map(row => {
                   const n = rowToItin(row);
-                  const p = prev.find(i => String(i.id) === String(n.id));
+                  // Supabase에 없거나 빈 필드는 로컬 캐시에서 복원
+                  const p = prev.find(i =>
+                    String(i.id) === String(n.id) ||
+                    (`${(i.company||"").trim()}|${i.date||""}|${(i.assignee||"").trim()}` ===
+                     `${(n.company||"").trim()}|${n.date||""}|${(n.assignee||"").trim()}`)
+                  );
                   if(p){
                     if(!n.bizPhone)       n.bizPhone       = p.bizPhone       || "";
+                    if(!n.managerPhone)   n.managerPhone   = p.managerPhone   || "";
                     if(!n.age)            n.age            = p.age            || "";
                     if(!n.educationPlace) n.educationPlace = p.educationPlace || "사무실";
+                    if(!n.specialNote)    n.specialNote    = p.specialNote    || "";
+                    if(!n.supportContent) n.supportContent = p.supportContent || "";
+                    if(!n.industry)       n.industry       = p.industry       || "";
                   }
                   return n;
                 })
-                .filter(n => { // 중복 id 제거
-                  const key = String(Math.floor(Number(n.id)));
-                  if(seen.has(key)) return false;
-                  seen.add(key);
+                .filter(n => { // 업체+날짜+섭외자 기준 중복 제거
+                  const key = `${(n.company||"").trim()}|${n.date||""}|${(n.assignee||"").trim()}`;
+                  if(seenKey.has(key)){
+                    idsToDelete2.push(n.id); return false;
+                  }
+                  seenKey.set(key, true);
                   return true;
                 });
+              // 남은 중복 DB 정리
+              if(idsToDelete2.length && sbClient){
+                idsToDelete2.forEach(dupId => {
+                  const numId = Math.floor(Number(dupId));
+                  if(!isNaN(numId) && numId > 0) sbClient.from("itineraries").delete().eq("id", numId).then(()=>{});
+                });
+              }
               if(state.currentUser) renderItineraries();
             }
           }catch(e){}
