@@ -2849,7 +2849,7 @@
 
           <!-- [추가] 목표설정 탭 패널 -->
           <div id="settingsPaneGoal" class="hidden">
-            <div class="panel" style="margin-bottom:16px;">
+            <div id="crmGoalFormArea" class="panel" style="margin-bottom:16px;">
               <h5 style="margin:0 0 6px;font-size:15px;">🎯 직원별 목표 설정</h5>
               <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원별 금일·이번달 목표를 설정합니다. 직원 홈 화면 및 지정목표 메뉴에서 달성률을 확인합니다.</p>
               <div style="margin-bottom:14px;">
@@ -2885,8 +2885,8 @@
               </div>
               <div class="table-wrap">
                 <table>
-                  <thead><tr><th>직원명</th><th>금일 콜 목표</th><th>금일 섭외 목표</th><th>이번달 섭외 목표</th><th>현황</th></tr></thead>
-                  <tbody id="crmGoalTableBody"><tr><td colspan="5"><div class="empty">설정된 목표가 없습니다.</div></td></tr></tbody>
+                  <thead><tr><th>직원명</th><th>금일 콜량</th><th>금일 섭외</th><th>이번달 섭외</th></tr></thead>
+                  <tbody id="crmGoalTableBody"><tr><td colspan="4"><div class="empty">설정된 목표가 없습니다.</div></td></tr></tbody>
                 </table>
               </div>
             </div>
@@ -3454,6 +3454,7 @@
       { key:'aggregate_all',         label:'전체 직원 익일취합 조회',         group:'익일취합' },
       // 목표 설정
       { key:'goal_manage',           label:'직원 목표 설정 관리',             group:'목표 설정' },
+      { key:'goal_view_team',        label:'팀 지정목표 현황 조회',           group:'목표 설정' },
       // 모드
       { key:'mode_switch',           label:'관리자 ↔ 직원 모드 전환',        group:'모드' },
     ];
@@ -7502,6 +7503,9 @@
       if(tab === "cleanBiz")   renderCleanBizRules();
       if(tab === "system")     renderSystemInfo();
       if(tab === "goal"){
+        // 목표 설정 폼: goal_manage 권한자(슈퍼관리자 포함)만 표시
+        const formArea = $("crmGoalFormArea");
+        if(formArea) formArea.style.display = (isSuperAdmin() || hasPermission('goal_manage')) ? "" : "none";
         crmRefreshGoalStaffDropdown();
         crmRenderGoalTable();
       }
@@ -7868,9 +7872,10 @@
       const sel = $("teamAdminSelect");
       if(!sel) return;
       const cur = sel.value;
+      // 슈퍼관리자 포함 — 직할팀 설정 가능
       sel.innerHTML = `<option value="">-- 관리자 선택 --</option>` +
-        staffs.filter(s => s.no !== ADMIN_JIJUMJANG_NO && s.role === "admin").map(s =>
-          `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)} (${escapeHtml(s.no)})</option>`
+        staffs.filter(s => s.role === "admin").map(s =>
+          `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)}${s.no===ADMIN_JIJUMJANG_NO?" (지점장)":""} (${escapeHtml(s.no)})</option>`
         ).join("");
       if(cur) sel.value = cur;
     }
@@ -8715,37 +8720,65 @@
     function crmRenderGoalTable(){
       const tbody = $("crmGoalTableBody");
       if(!tbody) return;
-      const nos = Object.keys(staffGoals);
-      if(!nos.length){
-        tbody.innerHTML = `<tr><td colspan="5"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
+
+      const canAll  = isSuperAdmin() || hasPermission('goal_manage');
+      const canTeam = hasPermission('goal_view_team');
+      if(!canAll && !canTeam){
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty">권한이 없습니다.</div></td></tr>`;
         return;
       }
+
+      // 보여줄 직원 목록 결정
+      let targetNos;
+      if(canAll){
+        targetNos = Object.keys(staffGoals);
+      } else {
+        // goal_view_team: 내 팀원만
+        const teamNos = getMyTeamMemberNos();
+        targetNos = teamNos.filter(no => staffGoals[no]);
+      }
+
+      if(!targetNos.length){
+        tbody.innerHTML = `<tr><td colspan="4"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
+        return;
+      }
+
       const today = todayStr();
       const month = monthPrefix();
-      tbody.innerHTML = nos.map(no => {
+
+      const makeBar = (cur, tgt) => {
+        if(!tgt) return `<span style="color:var(--muted);font-size:12px;">미설정</span>`;
+        const pct = Math.min(100, Math.round(cur / tgt * 100));
+        const c = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
+        const label = pct >= 100 ? "달성!" : `${pct}%`;
+        return `<div style="min-width:90px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <span style="font-size:13px;font-weight:800;color:${c};">${cur}</span>
+            <span style="font-size:11px;color:var(--muted);">/ ${tgt}건</span>
+            <span style="font-size:11px;font-weight:700;color:${c};">${label}</span>
+          </div>
+          <div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${c};border-radius:3px;transition:width .4s;"></div>
+          </div>
+        </div>`;
+      };
+
+      tbody.innerHTML = targetNos.map(no => {
         const s = staffs.find(x => x.no === no);
         const g = staffGoals[no];
+        if(!g) return "";
         const name = escapeHtml(s ? s.name : no);
-        // 현황: 이번달 등록 일정 수
-        const curMonthScheds = schedules.filter(sc =>
-          String(sc.createdAt||"").startsWith(month) && sc.createdByNo === no
-        ).length;
-        const pct = g.scheds > 0 ? Math.min(100, Math.round(curMonthScheds / g.scheds * 100)) : 0;
-        const pctColor = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
-        const bar = g.scheds > 0
-          ? `<div style="height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;min-width:80px;">
-               <div style="height:100%;width:${pct}%;background:${pctColor};border-radius:4px;"></div>
-             </div>
-             <div style="font-size:11px;color:${pctColor};font-weight:700;">${curMonthScheds}/${g.scheds} (${pct}%)</div>`
-          : `<span style="color:var(--muted);font-size:11px;">미설정</span>`;
+        const todayCalls  = calcTodayCallCount(no, s ? s.name : "");
+        const todayScheds = schedules.filter(sc => String(sc.createdAt||"").startsWith(today) && sc.createdByNo === no).length;
+        const monthScheds = schedules.filter(sc => String(sc.createdAt||"").startsWith(month) && sc.createdByNo === no).length;
         return `<tr>
-          <td>${name}</td>
-          <td style="text-align:center;">${g.calls||0}건</td>
-          <td style="text-align:center;">${g.dailyScheds||0}건</td>
-          <td style="text-align:center;">${g.scheds||0}건</td>
-          <td>${bar}</td>
+          <td><b>${name}</b></td>
+          <td>${makeBar(todayCalls,  g.calls      || 0)}</td>
+          <td>${makeBar(todayScheds, g.dailyScheds || 0)}</td>
+          <td>${makeBar(monthScheds, g.scheds      || 0)}</td>
         </tr>`;
-      }).join("");
+      }).filter(Boolean).join("") ||
+        `<tr><td colspan="4"><div class="empty">설정된 목표가 없습니다.</div></td></tr>`;
     }
 
     function crmUpdateGoalBadges(){
