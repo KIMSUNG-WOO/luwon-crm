@@ -5205,6 +5205,10 @@
     let _leadPage = 1;
     const _leadPerPage = 50;
     const _leadCheckedIds = new Set(); // 체크된 lead ID 보관 (DOM 재생성 시에도 유지)
+    function onLeadChkChange(el){ // 인라인 핸들러용 래퍼 (const는 window 스코프 불가)
+      if(el.checked) _leadCheckedIds.add(el.dataset.id);
+      else _leadCheckedIds.delete(el.dataset.id);
+    }
     let _schedPage = 1;
     const _schedPerPage = 30;
     let _leadRowHeights = {};      // { leadId: px } — 세션 유지, 새로고침 시 초기화
@@ -5276,7 +5280,7 @@
 
         const rowNum = start + rows.indexOf(l) + 1;
         const numCell = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;">${rowNum}</td>`;
-        const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"${_leadCheckedIds.has(String(l.id)) ? ' checked' : ''} onchange="_leadCheckedIds[this.checked?'add':'delete'](this.dataset.id)"></td>`;
+        const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"${_leadCheckedIds.has(String(l.id)) ? ' checked' : ''} onchange="onLeadChkChange(this)"></td>`;
         const actionCell = admin
           ? `<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`
           : "";
