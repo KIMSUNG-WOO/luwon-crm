@@ -4195,10 +4195,10 @@
         }
       }
 
-      // 이번달 일정 건수 표시
+      // 이번달 일정 건수 표시 (진행일 기준 — 캘린더와 동일)
       const month = monthPrefix();
       const mySchedCount = schedules.filter(s =>
-        String(s.createdAt || "").startsWith(month) && s.createdByNo === user.staffNo
+        s.date && s.date.startsWith(month) && s.createdByNo === user.staffNo
       ).length;
       const scEl = $("profileStatSchedCount");
       if(scEl) scEl.textContent = mySchedCount + "건";
@@ -4899,8 +4899,8 @@
         const filtered = schedules.filter(s => s.date === tomorrow);
         rows = buildStaffCount(filtered, s => s.assignee || s.createdBy || "미상");
       } else if(cardNo === 4){
-        // 전직원 이번달 등록 일정 → schedules.createdAt.startsWith(month)
-        const filtered = schedules.filter(s => String(s.createdAt||"").startsWith(month));
+        // 전직원 이번달 일정 → schedules.date 진행일 기준 (캘린더와 동일)
+        const filtered = schedules.filter(s => s.date && s.date.startsWith(month));
         rows = buildStaffCount(filtered, s => s.assignee || s.createdBy || "미상");
       }
 
@@ -8700,7 +8700,7 @@
         const name = escapeHtml(s ? s.name : no);
         // 현황: 이번달 등록 일정 수
         const curMonthScheds = schedules.filter(sc =>
-          String(sc.createdAt||"").startsWith(month) && sc.createdByNo === no
+          sc.date && sc.date.startsWith(month) && sc.createdByNo === no
         ).length;
         const pct = g.scheds > 0 ? Math.min(100, Math.round(curMonthScheds / g.scheds * 100)) : 0;
         const pctColor = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
@@ -8756,7 +8756,7 @@
       const b4 = $("crmGoalBadge4");
       if(b4){
         if(goal && goal.scheds > 0){
-          const val4 = schedules.filter(s => String(s.createdAt||"").startsWith(month) && s.createdByNo===no).length;
+          const val4 = schedules.filter(s => s.date && s.date.startsWith(month) && s.createdByNo===no).length;
           const pct4 = Math.round((val4/goal.scheds)*100);
           b4.innerHTML = `<span class="crm-goal-badge${pct4>=100?" done":pct4>=50?" warn":""}">목표 ${goal.scheds}건 · ${pct4}%</span>`;
         } else { b4.innerHTML = ""; }
@@ -8793,7 +8793,7 @@
       // 금일 섭외건수: 오늘 일정 등록 건수
       const todayScheds = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 이번달 섭외건수
-      const monthScheds = schedules.filter(s => String(s.createdAt||"").startsWith(month) && s.createdByNo === no).length;
+      const monthScheds = schedules.filter(s => s.date && s.date.startsWith(month) && s.createdByNo === no).length;
 
       const items = [
         { label:"📞 금일 콜량",           current:todayCalls,  target:goal.calls||0 },
