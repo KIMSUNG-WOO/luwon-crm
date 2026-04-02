@@ -2221,6 +2221,8 @@
             <button class="small-btn" onclick="addPerformance()">실적 저장</button>
           </div>
 
+          <div id="perfUnitPriceHint" style="margin:8px 0;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;font-size:13px;color:var(--muted);display:none;"></div>
+
           <div class="notice-inline">
             <span class="status-badge">상조 입력칸 예시: 구좌</span>
             <span class="status-badge">건식 입력칸 예시: 박스</span>
@@ -2525,6 +2527,56 @@
           </div>
         </div>
 
+        <!-- ── 직원 목표설정 뷰 (관리자용) ── -->
+        <div class="view hidden" id="view-goalSetting">
+          <div class="section-head">
+            <div>
+              <h4>🎯 직원 목표설정</h4>
+              <p>직원별 금일·이번달 목표를 설정하고 현황을 확인합니다.</p>
+            </div>
+          </div>
+          <div class="panel" style="margin-bottom:16px;">
+            <h5 style="margin:0 0 6px;font-size:15px;">🎯 직원별 목표 설정</h5>
+            <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원별 금일·이번달 목표를 설정합니다. 직원 홈 화면 및 지정목표 메뉴에서 달성률을 확인합니다.</p>
+            <div style="margin-bottom:14px;">
+              <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">직원 선택</label>
+              <select id="crmGoalStaffSelect" onchange="crmOnGoalStaffChange()"
+                style="width:100%;max-width:240px;height:42px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font-size:14px;background:var(--panel);color:var(--text);">
+                <option value="">-- 직원 선택 --</option>
+              </select>
+            </div>
+            <div class="form-grid" id="crmGoalFields" style="opacity:.4;pointer-events:none;max-width:560px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+              <div>
+                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">📞 금일 목표 콜량 (건)</label>
+                <input id="crmGoalCalls" type="number" min="0" placeholder="예: 50">
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">📅 금일 목표 섭외건수 (건)</label>
+                <input id="crmGoalDailyScheds" type="number" min="0" placeholder="예: 5">
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">🗓 이번달 목표 섭외건수 (건)</label>
+                <input id="crmGoalScheds" type="number" min="0" placeholder="예: 50">
+              </div>
+            </div>
+            <div style="text-align:right;margin-top:12px;max-width:560px;">
+              <button class="small-btn" onclick="crmSaveGoal()">목표 저장</button>
+            </div>
+          </div>
+          <div class="panel" style="margin-bottom:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <h5 style="font-size:15px;">👥 직원별 목표 현황</h5>
+              <button class="small-btn" onclick="crmRenderGoalTable()">🔄 조회</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>직원명</th><th>금일 콜 목표</th><th>금일 섭외 목표</th><th>이번달 섭외 목표</th><th>현황</th></tr></thead>
+                <tbody id="crmGoalTableBody"><tr><td colspan="5"><div class="empty">설정된 목표가 없습니다.</div></td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <!-- ── 지정목표 뷰 (직원용) ── -->
         <div class="view hidden" id="view-goals">
           <div class="section-head">
@@ -2551,8 +2603,6 @@
             <button class="tab-btn" id="settingsTabInspection" onclick="setSettingsTab('inspection')">점검제외 관리</button>
             <button class="tab-btn" id="settingsTabCleanBiz" onclick="setSettingsTab('cleanBiz')">클린사업장 관리</button>
             <button class="tab-btn" id="settingsTabSystem" onclick="setSettingsTab('system')">시스템</button>
-            <button class="tab-btn" id="settingsTabGoal" onclick="setSettingsTab('goal')">목표 설정</button>
-            <button class="tab-btn" id="settingsTabLog" onclick="setSettingsTab('log')">활동 로그</button>
             <button class="tab-btn" id="settingsTabMsg" onclick="setSettingsTab('msg')">직원 쪽지</button>
             <button class="tab-btn" id="settingsTabPerm" onclick="setSettingsTab('perm')">권한 관리</button>
             <button class="tab-btn" id="settingsTabTeam" onclick="setSettingsTab('team')">팀 관리</button>
@@ -2870,50 +2920,6 @@
             </div>
           </div>
 
-          <!-- [추가] 목표설정 탭 패널 -->
-          <div id="settingsPaneGoal" class="hidden">
-            <div class="panel" style="margin-bottom:16px;">
-              <h5 style="margin:0 0 6px;font-size:15px;">🎯 직원별 목표 설정</h5>
-              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원별 금일·이번달 목표를 설정합니다. 직원 홈 화면 및 지정목표 메뉴에서 달성률을 확인합니다.</p>
-              <div style="margin-bottom:14px;">
-                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">직원 선택</label>
-                <select id="crmGoalStaffSelect" onchange="crmOnGoalStaffChange()"
-                  style="width:100%;max-width:240px;height:42px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font-size:14px;background:var(--panel);color:var(--text);">
-                  <option value="">-- 직원 선택 --</option>
-                </select>
-              </div>
-              <div class="form-grid" id="crmGoalFields" style="opacity:.4;pointer-events:none;max-width:560px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
-                <div>
-                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">📞 금일 목표 콜량 (건)</label>
-                  <input id="crmGoalCalls" type="number" min="0" placeholder="예: 50">
-                </div>
-                <div>
-                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">📅 금일 목표 섭외건수 (건)</label>
-                  <input id="crmGoalDailyScheds" type="number" min="0" placeholder="예: 5">
-                </div>
-                <div>
-                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">🗓 이번달 목표 섭외건수 (건)</label>
-                  <input id="crmGoalScheds" type="number" min="0" placeholder="예: 50">
-                </div>
-              </div>
-              <div style="text-align:right;margin-top:12px;max-width:560px;">
-                <button class="small-btn" onclick="crmSaveGoal()">목표 저장</button>
-              </div>
-            </div>
-            <!-- 직원별 조회 -->
-            <div class="panel" style="margin-bottom:16px;">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                <h5 style="font-size:15px;">👥 직원별 목표 현황</h5>
-                <button class="small-btn" onclick="crmRenderGoalTable()">🔄 조회</button>
-              </div>
-              <div class="table-wrap">
-                <table>
-                  <thead><tr><th>직원명</th><th>금일 콜 목표</th><th>금일 섭외 목표</th><th>이번달 섭외 목표</th><th>현황</th></tr></thead>
-                  <tbody id="crmGoalTableBody"><tr><td colspan="5"><div class="empty">설정된 목표가 없습니다.</div></td></tr></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
 
           <!-- 직원 쪽지 탭 패널 -->
           <div id="settingsPaneMsg" class="hidden">
@@ -3477,6 +3483,8 @@
       { key:'aggregate_all',         label:'전체 직원 익일취합 조회',         group:'익일취합' },
       // 목표 설정
       { key:'goal_manage',           label:'직원 목표 설정 관리',             group:'목표 설정' },
+      { key:'goal_set_team',         label:'본인 팀 목표 설정',               group:'목표 설정' },
+      { key:'goal_set_all',          label:'전체 직원 목표 설정',             group:'목표 설정' },
       { key:'goal_view_team',        label:'팀 지정목표 현황 조회',           group:'목표 설정' },
       // 모드
       { key:'mode_switch',           label:'관리자 ↔ 직원 모드 전환',        group:'모드' },
@@ -4324,6 +4332,7 @@
       const isElevated = isAdmin || (state.currentUser?.role === "admin" && state.currentMode === "admin");
 
       const canSeeGoalProgress = isSuperAdmin() || hasPermission('goal_manage') || hasPermission('goal_view_team');
+      const canSetGoal = isSuperAdmin() || hasPermission('goal_manage') || hasPermission('goal_set_team') || hasPermission('goal_set_all');
       const menus = isElevated ? [
         ["home","🏠","홈"],
         ["notice","📢","공지사항"],
@@ -4331,8 +4340,9 @@
         ["aggregate","📌","익일취합"],
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
-        ...(isAdmin ? [["progress","📈","진행률"],["staff","👥","직원관리"],["settings","⚙️","관리자설정"]] : []),
-        ...(canSeeGoalProgress ? [["goalProgress","🎯","목표 현황"]] : []),
+        ...(isAdmin ? [["staff","👥","직원관리"],["settings","⚙️","관리자설정"]] : []),
+        ...(canSetGoal ? [["goalSetting","🎯","직원 목표설정"]] : []),
+        ...(canSeeGoalProgress ? [["goalProgress","📊","목표 현황"]] : []),
         ["lead","🗂","교육섭외 DB"],
         ["itinerary","📋","일정표 관리"],
       ] : [
@@ -4372,7 +4382,9 @@
       if (canPerfStaff) {
         $("perfSaveStaffSelect").innerHTML = staffs.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join("");
         $("perfSaveStaffSelect").value = currentStaffName();
+        $("perfSaveStaffSelect").onchange = updatePerfUnitPriceHint;
       }
+      updatePerfUnitPriceHint();
 
       const canPerfViewTeamOrAll = canPerfViewAll || hasPermission('perf_view_team');
       $("perfReportScope").querySelector('option[value="all"]').disabled = !canPerfViewTeamOrAll;
@@ -4418,12 +4430,13 @@
         itinerary:["일정표 관리","등록된 교육섭외 일정표를 관리하는 화면입니다."],
         settings:["관리자설정","관리자용 설정 화면입니다."],
         goals:["지정목표","관리자가 설정한 나의 목표와 달성률을 확인합니다."],
-        goalProgress:["목표 현황","직원별 금일·이번달 목표 달성 현황입니다."]
+        goalProgress:["목표 현황","직원별 금일·이번달 목표 달성 현황입니다."],
+        goalSetting:["직원 목표설정","직원별 목표를 설정하고 현황을 확인합니다."]
       };
 
       $("pageTitle").textContent = (titles[view]||["",""])[0];
       $("pageDesc").textContent  = (titles[view]||["",""])[1];
-      if($("mobPageTitle")) $("mobPageTitle").textContent = titles[view][0];
+      if($("mobPageTitle")) $("mobPageTitle").textContent = (titles[view]||["",""])[0];
       closeMobMenu();
 
       applyRoleUI();
@@ -4432,6 +4445,7 @@
       renderAll();
       if(view === "goals") renderGoals();
       if(view === "goalProgress") crmRenderGoalTable();
+      if(view === "goalSetting"){ crmRefreshGoalStaffDropdown(); crmRenderGoalTable(); }
     }
 
     function renderCallRanking(todayCalls){
@@ -5245,6 +5259,25 @@
       if(type === "상조") return "구좌";
       if(type === "건식") return "박스";
       return "금액(원)";
+    }
+
+    function updatePerfUnitPriceHint(){
+      const hint = $("perfUnitPriceHint");
+      if(!hint) return;
+      const canSel = hasPermission('perf_staff_select');
+      const staffName = canSel ? ($("perfSaveStaffSelect")||{}).value : currentStaffName();
+      const s = staffs.find(x => x.name === staffName);
+      const p = s ? (paySettings[s.no] || {}) : {};
+      const parts = [];
+      if(p.sanjo)        parts.push(`상조 1구좌당 <b>${p.sanjo.toLocaleString()}원</b>`);
+      if(p.health)       parts.push(`건식 1박스당 <b>${p.health.toLocaleString()}원</b>`);
+      if(p.insurancePct) parts.push(`보험 계약금 <b>${p.insurancePct}%</b>`);
+      if(parts.length){
+        hint.innerHTML = "💰 단가: " + parts.join("&nbsp;&nbsp;|&nbsp;&nbsp;");
+        hint.style.display = "";
+      } else {
+        hint.style.display = "none";
+      }
     }
 
     function onPerformanceTypeChange(){
@@ -8731,8 +8764,12 @@
       const sel = $("crmGoalStaffSelect");
       if(!sel) return;
       const cur = sel.value;
+      // goal_set_team 권한만 있는 경우 본인 팀원만 표시
+      const teamOnly = !isSuperAdmin() && !hasPermission('goal_manage') && !hasPermission('goal_set_all') && hasPermission('goal_set_team');
+      const myTeamNos = teamOnly ? getMyTeamMemberNos() : null;
+      const filtered = teamOnly ? staffs.filter(s => myTeamNos.includes(s.no)) : staffs;
       sel.innerHTML = `<option value="">-- 직원 선택 --</option>` +
-        staffs.map(s => `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
+        filtered.map(s => `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)}</option>`).join("");
       if(cur) sel.value = cur;
     }
 
@@ -8757,9 +8794,15 @@
     }
 
     function crmSaveGoal(){
-      if(!hasPermission('goal_manage')) return;
+      const canSave = isSuperAdmin() || hasPermission('goal_manage') || hasPermission('goal_set_all') || hasPermission('goal_set_team');
+      if(!canSave) return;
       const no = ($("crmGoalStaffSelect")||{}).value||"";
       if(!no) return alert("직원을 선택해 주세요.");
+      // goal_set_team: 본인 팀원만 저장 가능
+      if(!isSuperAdmin() && !hasPermission('goal_manage') && !hasPermission('goal_set_all') && hasPermission('goal_set_team')){
+        const myTeamNos = getMyTeamMemberNos();
+        if(!myTeamNos.includes(no)) return alert("본인 팀원에게만 목표를 설정할 수 있습니다.");
+      }
       staffGoals[no] = {
         calls:       Number(($("crmGoalCalls")||{}).value)||0,
         dailyScheds: Number(($("crmGoalDailyScheds")||{}).value)||0,
