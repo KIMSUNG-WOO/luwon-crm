@@ -6200,9 +6200,13 @@
 
       _pendingLeadResult.set(String(l.id), { result: trimmed, resultDate: rDate, resultEnteredAt: rEnteredAt || "", resultTime: "" });
       _leadsLocalUpdateTs = Date.now();
-      // setTimeout으로 렌더 지연 → 현재 클릭 이벤트 완전히 처리된 후 DOM 재생성
-      // (blur 중 renderLeads 즉시 호출 시 체크박스 클릭 이벤트가 새 DOM에 전달 안 되는 버그 방지)
-      setTimeout(() => { renderLeads(); runHomeSummary(); }, 0);
+      // 다른 결과값 입력창으로 이동 중이면 renderLeads 생략 (재생성 시 포커스 날아감 방지)
+      // _leadEditingResultId가 설정됐다면 사용자가 이미 다음 입력창에 있는 것
+      setTimeout(() => {
+        if(_leadEditingResultId) return; // 다른 결과값 입력 중 → 렌더 건너뜀
+        renderLeads();
+        runHomeSummary();
+      }, 0);
 
       sbClient.from("education_db")
         .update({ result: trimmed, result_date: rDate, result_time: "", result_entered_at: rEnteredAt })
