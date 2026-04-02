@@ -5204,6 +5204,7 @@
 
     let _leadPage = 1;
     const _leadPerPage = 50;
+    const _leadCheckedIds = new Set(); // 체크된 lead ID 보관 (DOM 재생성 시에도 유지)
     let _schedPage = 1;
     const _schedPerPage = 30;
     let _leadRowHeights = {};      // { leadId: px } — 세션 유지, 새로고침 시 초기화
@@ -5275,7 +5276,7 @@
 
         const rowNum = start + rows.indexOf(l) + 1;
         const numCell = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;">${rowNum}</td>`;
-        const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>`;
+        const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"${_leadCheckedIds.has(String(l.id)) ? ' checked' : ''} onchange="_leadCheckedIds[this.checked?'add':'delete'](this.dataset.id)"></td>`;
         const actionCell = admin
           ? `<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`
           : "";
@@ -5289,17 +5290,7 @@
         return `<tr data-id="${l.id}">${numCell}${chkCell}<td style="position:relative;">${rowResizeHandle}${cleanBizBadge}${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(phone)}">${escapeHtml(phone)}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
       }).join("");
 
-      // 렌더 전 체크된 ID 저장 → 렌더 후 복원 (renderLeads 호출 시 체크 풀림 방지)
-      const _checkedIds = new Set(
-        Array.from(document.querySelectorAll('.lead-chk:checked')).map(c => c.dataset.id)
-      );
-      body.innerHTML = html;  // DOM 업데이트 1회만
-      // 체크 상태 복원
-      if(_checkedIds.size > 0){
-        document.querySelectorAll('.lead-chk').forEach(c => {
-          if(_checkedIds.has(c.dataset.id)) c.checked = true;
-        });
-      }
+      body.innerHTML = html;  // DOM 업데이트 1회만 (_leadCheckedIds로 checked 속성 이미 주입됨)
       renderLeadPagination(allRows.length, totalPages);
       if(!_leadTableResizeInit){
         loadLeadTableLayout();                  // 저장된 열 너비 복원
@@ -5870,7 +5861,11 @@
     }
 
     function toggleLeadCheckAll(chk){
-      document.querySelectorAll('.lead-chk').forEach(c => c.checked = chk.checked);
+      document.querySelectorAll('.lead-chk').forEach(c => {
+        c.checked = chk.checked;
+        if(chk.checked) _leadCheckedIds.add(c.dataset.id);
+        else _leadCheckedIds.delete(c.dataset.id);
+      });
     }
 
     // ── 클린사업장 등록 ────────────────────────────────────────────
