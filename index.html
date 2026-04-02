@@ -4434,10 +4434,33 @@
         </div>${rows}</div>`;
     }
 
+    // ── 콜량 집계 helper: 결과값 입력 건수 + 오늘 등록 일정 건수 ──
+    function _localDateStr(isoStr){
+      if(!isoStr) return "";
+      const d = new Date(isoStr);
+      return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    }
+    function calcTodayCallCount(staffNo, staffName){
+      const today = todayStr();
+      const resultCalls = leads.filter(l => {
+        if(!(l.ownerNo===staffNo || l.ownerName===staffName)) return false;
+        if(!l.result || l.result==="" || l.result==="선택") return false;
+        if(l.resultEnteredAt) return _localDateStr(l.resultEnteredAt) === today;
+        return l.resultDate === today;
+      }).length;
+      const itinCalls = schedules.filter(s =>
+        s.createdByNo === staffNo && String(s.createdAt||"").startsWith(today)
+      ).length;
+      return resultCalls + itinCalls;
+    }
+
     function runHomeSummary(){
       if(hasPermission('home_stats_all')) runAdminSummary();
       else if(hasPermission('home_stats_team')) runTeamSummary();
       else runMySummary();
+      // goals 뷰가 열려있으면 실시간 갱신
+      const gv = $("view-goals");
+      if(gv && !gv.classList.contains("hidden")) renderGoals();
     }
 
     function runAdminSummary(){
@@ -4458,17 +4481,14 @@
       $("homeCardDesc4").textContent  = `${calLabel} 전직원 일정 (진행일 기준)`;
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today)).length;
-      // 콜량: 결과값이 있고, 오늘 입력된 건수 (resultEnteredAt → 로컬 날짜 변환 비교, 없으면 resultDate)
+      // 콜량: 결과값 입력 건수 + 오늘 등록 일정 건수 (전직원)
       const _todayCalls = leads.filter(l => {
         if(!l.result || l.result === "" || l.result === "선택") return false;
-        if(l.resultEnteredAt){
-          const d = new Date(l.resultEnteredAt);
-          const localDate = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
-          return localDate === today;
-        }
+        if(l.resultEnteredAt) return _localDateStr(l.resultEnteredAt) === today;
         return l.resultDate === today;
       });
-      $("homeValue2").textContent = _todayCalls.length;
+      const _todayItinCalls = schedules.filter(s => String(s.createdAt||"").startsWith(today)).length;
+      $("homeValue2").textContent = _todayCalls.length + _todayItinCalls;
       if(hasPermission('home_call_ranking')) renderCallRanking(_todayCalls);
       else { const el = $("homeCallRanking"); if(el) el.style.display = "none"; }
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
@@ -4508,14 +4528,13 @@
       const _teamCalls = leads.filter(l => {
         if(!(teamNos.includes(l.ownerNo) || teamNames.includes(l.ownerName))) return false;
         if(!l.result || l.result === "" || l.result === "선택") return false;
-        if(l.resultEnteredAt){
-          const d = new Date(l.resultEnteredAt);
-          const localDate = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
-          return localDate === today;
-        }
+        if(l.resultEnteredAt) return _localDateStr(l.resultEnteredAt) === today;
         return l.resultDate === today;
       });
-      $("homeValue2").textContent = _teamCalls.length;
+      const _teamItinCalls = schedules.filter(s =>
+        teamNos.includes(s.createdByNo) && String(s.createdAt||"").startsWith(today)
+      ).length;
+      $("homeValue2").textContent = _teamCalls.length + _teamItinCalls;
 
       if(hasPermission('home_call_ranking')){
         renderCallRanking(_teamCalls);
@@ -4552,17 +4571,8 @@
       $("homeCardDesc4").textContent  = `${calLabel} 내 일정 (진행일 기준)`;
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
-      // 콜량: 내 DB 중 결과값 입력된 건수 (resultEnteredAt → 로컬 날짜 변환 비교)
-      $("homeValue2").textContent = leads.filter(l => {
-        if(!(l.ownerNo === no || l.ownerName === currentStaffName())) return false;
-        if(!l.result || l.result === "" || l.result === "선택") return false;
-        if(l.resultEnteredAt){
-          const d = new Date(l.resultEnteredAt);
-          const localDate = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
-          return localDate === today;
-        }
-        return l.resultDate === today;
-      }).length;
+      // 콜량: 결과값 입력 건수 + 오늘 등록 일정 건수
+      $("homeValue2").textContent = calcTodayCallCount(no, currentStaffName());
       renderCallRanking(null); // 직원 모드: 랭킹 숨김
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => {
@@ -8750,9 +8760,8 @@
       const b1 = $("crmGoalBadge1");
       if(b1){
         if(goal && goal.calls > 0){
-          const today = todayStr();
-          const val1  = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
-          const pct1  = Math.round((val1/goal.calls)*100);
+          const val1 = calcTodayCallCount(no, currentStaffName());
+          const pct1 = Math.round((val1/goal.calls)*100);
           b1.innerHTML = `<span class="crm-goal-badge${pct1>=100?" done":pct1>=50?" warn":""}">목표 ${goal.calls}건 · ${pct1}%</span>`;
         } else { b1.innerHTML = ""; }
       }
@@ -8761,7 +8770,7 @@
       const b2 = $("crmGoalBadge2");
       if(b2){
         if(goal && goal.calls > 0){
-          const val2 = leads.filter(l => (l.ownerNo===no||l.ownerName===currentStaffName()) && l.result && l.result!=="" && l.resultEnteredAt && l.resultEnteredAt.startsWith(today)).length;
+          const val2 = calcTodayCallCount(no, currentStaffName());
           const pct2 = Math.round((val2/goal.calls)*100);
           b2.innerHTML = `<span class="crm-goal-badge${pct2>=100?" done":pct2>=50?" warn":""}">목표 ${goal.calls}건 · ${pct2}%</span>`;
         } else { b2.innerHTML = ""; }
@@ -8795,9 +8804,9 @@
       const today = todayStr();
       const month = monthPrefix();
 
-      // 금일 콜량: 오늘 등록한 일정 수 (createdAt = today, createdByNo = no)
-      const todayCalls  = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
-      // 금일 섭외건수: 오늘 등록한 일정 수 (동일 기준 – 콜과 별개로 UI 표시)
+      // 금일 콜량: 결과값 입력 건수 + 오늘 등록 일정 건수
+      const todayCalls  = calcTodayCallCount(no, currentStaffName());
+      // 금일 섭외건수: 오늘 등록한 일정 수
       const todayScheds = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
       // 이번달 섭외건수
       const monthScheds = schedules.filter(s => String(s.createdAt||"").startsWith(month) && s.createdByNo === no).length;
