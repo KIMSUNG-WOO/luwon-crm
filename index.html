@@ -2139,6 +2139,7 @@
             <table>
               <thead>
                 <tr>
+                  <th style="width:36px;text-align:center;">No.</th>
                   <th>등록시간</th>
                   <th>섭외자</th>
                   <th>섭외</th>
@@ -2484,6 +2485,7 @@
             <table style="font-size:12px;">
               <thead>
                 <tr>
+                  <th style="width:36px;text-align:center;">No.</th>
                   <th>업체명</th>
                   <th>주소</th>
                   <th>업체연락처</th>
@@ -2501,6 +2503,7 @@
               <tbody id="itineraryTableBody"></tbody>
             </table>
           </div>
+          <div id="itinPagination" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0;flex-wrap:wrap;"></div>
         </div>
 
         <!-- ── 지정목표 뷰 (직원용) ── -->
@@ -4552,7 +4555,7 @@
       $("homeValue4").textContent = schedules.filter(s => {
         if(!s.date) return false;
         const d = new Date(s.date + "T00:00:00");
-        return d.getFullYear() === calY && d.getMonth() === calM && s.createdByNo === no;
+        return d.getFullYear() === calY && d.getMonth() === calM && (s.createdByNo === no || s.assignee === currentStaffName());
       }).length;
     }
 
@@ -4853,10 +4856,12 @@
 
         // 1페이지로 리셋 후 렌더 (새 일정이 반드시 화면에 보이도록)
         _schedPage = 1;
+        _itinPage = 1;
         renderSchedules();
         loadAggregate();
         renderCalendar();
         runHomeSummary();
+        if(state.currentView === "goals") renderGoals();
         saveAppData();
 
         safeCopy(buildFullCopyText(newSched));
@@ -5079,8 +5084,9 @@
       const start = (_schedPage - 1) * _schedPerPage;
       const rows  = allRows.slice(start, start + _schedPerPage);
 
-      body.innerHTML = rows.map(row => `
+      body.innerHTML = rows.map((row, idx) => `
         <tr>
+          <td style="text-align:center;font-size:12px;color:var(--muted);font-weight:600;">${start + idx + 1}</td>
           <td style="font-size:11px;white-space:nowrap;color:var(--muted);">${escapeHtml(formatKSTTimestamp(row.createdAt))}</td>
           <td>${escapeHtml(row.assignee)}</td>
           <td>${escapeHtml(row.type || "교육섭외")}</td>
@@ -5141,6 +5147,7 @@
       loadAggregate();
       renderCalendar();
       runHomeSummary();
+      if(state.currentView === "goals") renderGoals();
       saveAppData();
     }
 
@@ -5568,6 +5575,8 @@
     }
     let _schedPage = 1;
     const _schedPerPage = 30;
+    let _itinPage = 1;
+    const _itinPerPage = 30;
     let _leadRowHeights = {};      // { leadId: px } — 세션 유지, 새로고침 시 초기화
     let _leadTableResizeInit = false; // 열 리사이즈 핸들 한 번만 부착
 
@@ -6863,11 +6872,24 @@
       renderItineraries();
     }
 
+    function renderItinPagination(total, totalPages){
+      const el = $("itinPagination");
+      if(!el) return;
+      if(totalPages <= 1){ el.innerHTML = ""; return; }
+      let html = "";
+      if(_itinPage > 1) html += `<button class="ghost-btn" style="padding:4px 10px;font-size:12px;" onclick="_itinPage=${_itinPage-1};renderItineraries()">‹ 이전</button>`;
+      const s2 = Math.max(1,_itinPage-2), e2 = Math.min(totalPages,_itinPage+2);
+      for(let i=s2;i<=e2;i++) html += `<button class="ghost-btn${i===_itinPage?" active":""}" style="padding:4px 10px;font-size:12px;${i===_itinPage?"background:var(--primary);color:#fff;":""}" onclick="_itinPage=${i};renderItineraries()">${i}</button>`;
+      if(_itinPage < totalPages) html += `<button class="ghost-btn" style="padding:4px 10px;font-size:12px;" onclick="_itinPage=${_itinPage+1};renderItineraries()">다음 ›</button>`;
+      html += `<span style="font-size:11px;color:var(--muted);margin-left:4px;">${total}건 / ${totalPages}페이지</span>`;
+      el.innerHTML = html;
+    }
+
     function renderItineraries(){
       renderItineraryMiniCal();
       const body = $("itineraryTableBody");
       if(!body) return;
-      const rows  = getVisibleItineraries().sort((a,b) => (a.date||'').localeCompare(b.date||''));
+      const allRows = getVisibleItineraries().sort((a,b) => (a.date||'').localeCompare(b.date||''));
       const canEdit   = isSuperAdmin() || hasPermission('itinerary_edit') || hasPermission('schedule_view_team') || hasPermission('schedule_view_all');
       const canDelete = isSuperAdmin() || hasPermission('itinerary_delete') || hasPermission('schedule_delete');
 
@@ -6875,13 +6897,20 @@
         ? `${itinCalState.selectedDate} 날짜에 등록된 일정표가 없습니다.`
         : `등록된 일정표가 없습니다. 일정등록에서 일정을 추가하면 자동으로 생성됩니다.`;
 
-      if(!rows.length){
-        body.innerHTML = `<tr><td colspan="12"><div class="empty">${emptyMsg}</div></td></tr>`;
+      if(!allRows.length){
+        body.innerHTML = `<tr><td colspan="13"><div class="empty">${emptyMsg}</div></td></tr>`;
+        renderItinPagination(0,0);
         return;
       }
 
-      body.innerHTML = rows.map(itin => `
+      const totalPages = Math.ceil(allRows.length / _itinPerPage);
+      if(_itinPage > totalPages) _itinPage = totalPages;
+      const itinStart = (_itinPage - 1) * _itinPerPage;
+      const rows = allRows.slice(itinStart, itinStart + _itinPerPage);
+
+      body.innerHTML = rows.map((itin, idx) => `
         <tr>
+          <td style="text-align:center;font-size:12px;color:var(--muted);font-weight:600;">${itinStart + idx + 1}</td>
           <td>${escapeHtml(itin.company)}</td>
           <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(itin.address)}</td>
           <td>${escapeHtml(formatPhone(itin.bizPhone))}</td>
@@ -6902,6 +6931,7 @@
           </td>
         </tr>
       `).join("");
+      renderItinPagination(allRows.length, totalPages);
     }
 
     function deleteItinerary(id){
@@ -8731,9 +8761,10 @@
         const s = staffs.find(x => x.no === no);
         const g = staffGoals[no];
         const name = escapeHtml(s ? s.name : no);
-        // 현황: 이번달 등록 일정 수
+        const staffName = s ? s.name : "";
+        // 현황: 이번달 일정 (진행일 기준, createdByNo 또는 섭외자명 매칭)
         const curMonthScheds = schedules.filter(sc =>
-          sc.date && sc.date.startsWith(month) && sc.createdByNo === no
+          sc.date && sc.date.startsWith(month) && (sc.createdByNo === no || sc.assignee === staffName)
         ).length;
         const pct = g.scheds > 0 ? Math.min(100, Math.round(curMonthScheds / g.scheds * 100)) : 0;
         const pctColor = pct >= 100 ? "#059669" : pct >= 50 ? "#f59e0b" : "#3b82f6";
@@ -8761,38 +8792,36 @@
       const today = todayStr();
       const month = monthPrefix();
 
-      // 뱃지1: 오늘 등록 일정 (콜 목표 기반)
-      const b1 = $("crmGoalBadge1");
-      if(b1){
-        if(goal && goal.calls > 0){
-          const today = todayStr();
-          const val1  = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
-          const pct1  = Math.round((val1/goal.calls)*100);
-          b1.innerHTML = `<span class="crm-goal-badge${pct1>=100?" done":pct1>=50?" warn":""}">목표 ${goal.calls}건 · ${pct1}%</span>`;
-        } else { b1.innerHTML = ""; }
+      function _miniGauge(el, cur, target, label){
+        if(!el) return;
+        if(!target){ el.innerHTML = ""; return; }
+        const pct   = Math.min(100, Math.round(cur/target*100));
+        const color = pct>=100?"#059669":pct>=50?"#f59e0b":"#3b82f6";
+        el.innerHTML = `<div style="margin-top:6px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:3px;">
+            <span>${label} 목표 <b style="color:var(--text);">${target}건</b></span>
+            <span style="color:${color};font-weight:700;">${cur}/${target} (${pct}%)</span>
+          </div>
+          <div style="height:6px;background:var(--line2);border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;transition:width .5s ease;"></div>
+          </div>
+        </div>`;
       }
 
-      // 뱃지2: 오늘 콜량 (콜 목표 기반)
-      const b2 = $("crmGoalBadge2");
-      if(b2){
-        if(goal && goal.calls > 0){
-          const val2 = leads.filter(l =>
-            (l.ownerNo===no||l.ownerName===currentStaffName()) &&
-            l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
-          ).length;
-          const pct2 = Math.round((val2/goal.calls)*100);
-          b2.innerHTML = `<span class="crm-goal-badge${pct2>=100?" done":pct2>=50?" warn":""}">목표 ${goal.calls}건 · ${pct2}%</span>`;
-        } else { b2.innerHTML = ""; }
-      }
+      // 뱃지1: 금일 일정등록 — dailyScheds 목표 게이지
+      const b1val = schedules.filter(s => s.date === today && (s.createdByNo===no || s.assignee===currentStaffName())).length;
+      _miniGauge($("crmGoalBadge1"), b1val, goal?.dailyScheds||0, "금일 섭외");
 
-      // 뱃지4: 이번달 등록 일정 (일정 목표 기반)
-      const b4 = $("crmGoalBadge4");
-      if(b4){
-        if(goal && goal.scheds > 0){
-          const val4 = schedules.filter(s => s.date && s.date.startsWith(month) && s.createdByNo===no).length;
-          const pct4 = Math.round((val4/goal.scheds)*100);
-          b4.innerHTML = `<span class="crm-goal-badge${pct4>=100?" done":pct4>=50?" warn":""}">목표 ${goal.scheds}건 · ${pct4}%</span>`;
-        } else { b4.innerHTML = ""; }
+      // 뱃지2: 금일 콜량 — calls 목표 게이지
+      const b2val = leads.filter(l =>
+        (l.ownerNo===no||l.ownerName===currentStaffName()) &&
+        l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
+      ).length;
+      _miniGauge($("crmGoalBadge2"), b2val, goal?.calls||0, "금일 콜");
+
+      // 뱃지4: 이번달 섭외 — scheds 목표 게이지
+      const b4val = schedules.filter(s => s.date && s.date.startsWith(month) && (s.createdByNo===no || s.assignee===currentStaffName())).length;
+      _miniGauge($("crmGoalBadge4"), b4val, goal?.scheds||0, "이번달 섭외");
       }
     }
 
@@ -8823,10 +8852,10 @@
         (l.ownerNo === no || l.ownerName === user.name) &&
         l.result && l.result !== "" && l.result !== "선택" && (l.resultDate||"").startsWith(month)
       ).length;
-      // 금일 섭외건수: 오늘 일정 등록 건수
-      const todayScheds = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
-      // 이번달 섭외건수
-      const monthScheds = schedules.filter(s => s.date && s.date.startsWith(month) && s.createdByNo === no).length;
+      // 금일 섭외건수: 오늘 진행일 기준, createdByNo 또는 섭외자(assignee) 매칭
+      const todayScheds = schedules.filter(s => s.date === today && (s.createdByNo === no || s.assignee === user.name)).length;
+      // 이번달 섭외건수: 진행일 기준, createdByNo 또는 섭외자 매칭
+      const monthScheds = schedules.filter(s => s.date && s.date.startsWith(month) && (s.createdByNo === no || s.assignee === user.name)).length;
 
       const items = [
         { label:"📞 금일 콜량",           current:todayCalls,  target:goal.calls||0 },
