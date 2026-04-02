@@ -2531,6 +2531,7 @@
             <button class="tab-btn" id="settingsTabGoal" onclick="setSettingsTab('goal')">목표 설정</button>
             <button class="tab-btn" id="settingsTabLog" onclick="setSettingsTab('log')">활동 로그</button>
             <button class="tab-btn" id="settingsTabMsg" onclick="setSettingsTab('msg')">직원 쪽지</button>
+            <button class="tab-btn" id="settingsTabPerm" onclick="setSettingsTab('perm')">권한 관리</button>
           </div>
 
           <!-- ── 직원 / 사번 탭 ── -->
@@ -2599,6 +2600,27 @@
               </div>
               <div style="text-align:right;margin-top:14px;">
                 <button class="small-btn" onclick="saveAdminAccount()">저장</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── 권한 관리 탭 ── -->
+          <div id="settingsPanePerm" class="hidden">
+            <div class="panel" style="margin-bottom:16px;">
+              <h5 style="margin:0 0 6px;font-size:15px;">관리자 권한 부여</h5>
+              <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">관리자(role=admin)로 지정된 직원에게 아래 권한을 체크박스로 부여할 수 있습니다.</p>
+              <div style="margin-bottom:14px;">
+                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">권한 부여할 관리자 선택</label>
+                <select id="permTargetStaff" onchange="renderPermCheckboxes()"
+                  style="width:100%;max-width:320px;height:42px;border:1px solid var(--line);border-radius:14px;padding:0 12px;font-size:14px;background:#fff;">
+                  <option value="">-- 관리자 선택 --</option>
+                </select>
+              </div>
+              <div id="permCheckboxArea" style="display:none;">
+                <div id="permCheckboxList"></div>
+                <div style="text-align:right;margin-top:16px;">
+                  <button class="small-btn" onclick="savePermissions()">💾 권한 저장</button>
+                </div>
               </div>
             </div>
           </div>
@@ -3346,6 +3368,36 @@
     const RANK_COLORS  = { "대리":"#3b82f6","과장":"#8b5cf6","부팀장":"#f59e0b","팀장":"#ef4444","부지점장":"#0f172a","지점장":"#be123c" };
     // 지점장(관리자 김성우) 번호 – 직급 변경 불가
     const ADMIN_JIJUMJANG_NO = "0408";
+
+    // 권한 항목 정의 (관리자에게 위임 가능한 권한 목록)
+    const PERM_DEFS = [
+      { key:'excel_upload',         label:'엑셀 업로드 (DB 일괄 업로드)',     group:'교육섭외 DB' },
+      { key:'lead_edit',            label:'사업장 수정',                      group:'교육섭외 DB' },
+      { key:'lead_delete_one',      label:'사업장 삭제 (개별)',               group:'교육섭외 DB' },
+      { key:'lead_delete_selected', label:'선택 삭제',                       group:'교육섭외 DB' },
+      { key:'lead_delete_all',      label:'전체 삭제',                       group:'교육섭외 DB' },
+      { key:'lead_complete',        label:'교육이수 처리',                    group:'교육섭외 DB' },
+      { key:'lead_clean_set',       label:'클린사업장 배지 설정',             group:'교육섭외 DB' },
+      { key:'lead_status_toggle',   label:'진행상태 변경',                    group:'교육섭외 DB' },
+      { key:'schedule_view_all',    label:'전체 직원 일정 조회',              group:'일정 관리' },
+      { key:'schedule_delete',      label:'일정 삭제',                       group:'일정 관리' },
+      { key:'schedule_staff_filter',label:'직원별 일정 필터',                 group:'일정 관리' },
+      { key:'perf_view_all',        label:'전체 직원 실적 조회',              group:'실적 관리' },
+      { key:'perf_staff_select',    label:'타 직원 이름으로 실적 입력',       group:'실적 관리' },
+      { key:'perf_margin_view',     label:'마진/수익 열람',                   group:'실적 관리' },
+      { key:'perf_excel_download',  label:'실적 엑셀 다운로드',              group:'실적 관리' },
+      { key:'notice_write',         label:'공지 작성',                       group:'공지사항' },
+      { key:'notice_edit',          label:'공지 수정',                       group:'공지사항' },
+      { key:'notice_delete',        label:'공지 삭제',                       group:'공지사항' },
+      { key:'rule_inspection',      label:'점검제외 규칙 관리',               group:'설정' },
+      { key:'rule_online_edu',      label:'온라인교육 사업장 규칙 관리',      group:'설정' },
+      { key:'rule_clean_biz',       label:'클린사업장 규칙 관리',             group:'설정' },
+      { key:'home_stats_all',       label:'전체 직원 통계 (관리자 홈)',       group:'홈 대시보드' },
+      { key:'home_call_ranking',    label:'금일 콜량 랭킹',                   group:'홈 대시보드' },
+      { key:'home_card_detail',     label:'홈 카드 더블클릭 상세보기',        group:'홈 대시보드' },
+      { key:'mode_switch',          label:'관리자 ↔ 직원 모드 전환',         group:'모드' },
+    ];
+
     let staffRanks = {
       "0408": "지점장"
     };
@@ -3456,18 +3508,20 @@
         const merged = [...(data||[])];
 
         if(!merged.length) return;
-        staffs    = merged.map(r => ({ name:r.name, no:r.staff_no, role:r.role, branch:r.branch, rank:r.rank }));
-        authUsers = merged.map(r => ({ staffNo:r.staff_no, password:r.password, name:r.name, role:r.role, branch:r.branch }));
+        staffs    = merged.map(r => { const p=r.permissions; const pa=Array.isArray(p)?p:(p?(() => { try{return JSON.parse(p);}catch(e){return [];} })():[]);  return { name:r.name, no:r.staff_no, role:r.role, branch:r.branch, rank:r.rank, permissions:pa }; });
+        authUsers = merged.map(r => { const p=r.permissions; const pa=Array.isArray(p)?p:(p?(() => { try{return JSON.parse(p);}catch(e){return [];} })():[]);  return { staffNo:r.staff_no, password:r.password, name:r.name, role:r.role, branch:r.branch, permissions:pa }; });
         merged.forEach(r => { staffRanks[r.staff_no] = r.rank || "대리"; });
         // localStorage에만 캐시 (sbSyncAll 호출 금지 → loadFromSupabase 전에 row 데이터 덮어쓰기 방지)
         try{ const raw=localStorage.getItem(APP_DATA_KEY); const d=raw?JSON.parse(raw):{}; d.staffs=staffs; d.authUsers=authUsers; d.staffRanks=staffRanks; localStorage.setItem(APP_DATA_KEY,JSON.stringify(d)); }catch(e){}
       }catch(e){ console.warn("직원 목록 로드 오류:", e.message); }
     }
 
-    async function upsertStaffToSupabase(staffNo, password, name, role, branch, rank){
+    async function upsertStaffToSupabase(staffNo, password, name, role, branch, rank, permissions){
       try{
+        const upsertData = { staff_no:staffNo, password, name, role, branch, rank };
+        if(permissions !== undefined) upsertData.permissions = permissions;
         const { error } = await sbClient.from("staff_accounts").upsert(
-          { staff_no:staffNo, password, name, role, branch, rank },
+          upsertData,
           { onConflict:"staff_no" }
         );
         if(error) throw error;
@@ -3624,7 +3678,8 @@
         hydrateUserUI();
         renderAll();
         const savedView = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_){ return "home"; } })();
-        const safeView = (!isAdminMode() && ["staff","settings","progress"].includes(savedView)) ? "home" : savedView;
+        const safeView = (!isSuperAdmin() && ["staff","settings"].includes(savedView)) ? "home" :
+                         (!hasPermission('home_stats_all') && savedView === "progress") ? "home" : savedView;
         setView(safeView);
         return true;
       }catch(e){ return false; }
@@ -3657,7 +3712,8 @@
       //    (이 시점엔 patchSetView가 이미 실행되어 setView가 패치된 상태)
       if(state.currentUser){
         const _sv = (() => { try{ return sessionStorage.getItem("luwon_view") || "home"; }catch(_e){ return "home"; } })();
-        const _safe = (!isAdminMode() && ["staff","settings","progress"].includes(_sv)) ? "home" : _sv;
+        const _safe = (!isSuperAdmin() && ["staff","settings"].includes(_sv)) ? "home" :
+                      (!hasPermission('home_stats_all') && _sv === "progress") ? "home" : _sv;
         setView(_safe);
       }
 
@@ -3910,7 +3966,8 @@
               .select("*").eq("staff_no", staffNo).eq("password", password).maybeSingle()
           );
           if(!error && data){
-            user = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch };
+            const _pRaw=data.permissions; const _pArr=Array.isArray(_pRaw)?_pRaw:(_pRaw?(()=>{try{return JSON.parse(_pRaw);}catch(e){return[];}})():[]);
+            user = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch, permissions:_pArr };
             // 로컬 배열 동기화
             const idx = authUsers.findIndex(u => u.staffNo === user.staffNo);
             if(idx >= 0) authUsers[idx] = user; else authUsers.unshift(user);
@@ -3949,9 +4006,11 @@
         sbRetry(() => sbClient.from("staff_accounts").select("*").eq("staff_no", staffNo).maybeSingle())
           .then(({ data, error }) => {
             if(!error && data){
-              const u = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch };
+              const _bpRaw=data.permissions; const _bpArr=Array.isArray(_bpRaw)?_bpRaw:(_bpRaw?(()=>{try{return JSON.parse(_bpRaw);}catch(e){return[];}})():[]);
+              const u = { staffNo:data.staff_no, password:data.password, name:data.name, role:data.role, branch:data.branch, permissions:_bpArr };
               const idx = authUsers.findIndex(x => x.staffNo === u.staffNo);
               if(idx >= 0) authUsers[idx] = u; else authUsers.unshift(u);
+              if(state.currentUser && state.currentUser.staffNo === u.staffNo){ state.currentUser.permissions = u.permissions; }
               staffRanks[data.staff_no] = data.rank || "대리";
               saveAppData();
             }
@@ -3999,7 +4058,8 @@
       // 모드 표시
       const modeEl = $("profileStatMode");
       if(modeEl){
-        if(isJijum){
+        const isAdminRoleStaff = !isJijum && user.role === "admin";
+        if(isJijum || isAdminRoleStaff){
           modeEl.textContent = state.currentMode === "admin" ? "관리자" : "직원";
           modeEl.style.color = state.currentMode === "admin" ? "#fda4af" : "#93c5fd";
         } else {
@@ -4016,17 +4076,21 @@
       const scEl = $("profileStatSchedCount");
       if(scEl) scEl.textContent = mySchedCount + "건";
 
-      // 지점장만 모드 토글 표시
-      $("modeToggle").classList.toggle("hidden", !isJijum);
+      // 지점장 또는 mode_switch 권한 있는 관리자 → 모드 토글 표시
+      const canSwitchMode = isJijum || (
+        user.role === "admin" &&
+        (user.permissions || []).includes("mode_switch")
+      );
+      $("modeToggle").classList.toggle("hidden", !canSwitchMode);
       const mobModeWrap = $("mobModeWrap");
-      if(mobModeWrap) mobModeWrap.classList.toggle("hidden", !isJijum);
+      if(mobModeWrap) mobModeWrap.classList.toggle("hidden", !canSwitchMode);
       // Sync active state
       const isAdmin = state.currentMode === "admin";
       if($("mobStaffModeBtn")) $("mobStaffModeBtn").classList.toggle("active", !isAdmin);
       if($("mobAdminModeBtn")) $("mobAdminModeBtn").classList.toggle("active", isAdmin);
-      if(isJijum){
-        $("staffModeBtn").classList.toggle("active", state.currentMode === "staff");
-        $("adminModeBtn").classList.toggle("active", state.currentMode === "admin");
+      if(canSwitchMode){
+        if($("staffModeBtn")) $("staffModeBtn").classList.toggle("active", state.currentMode === "staff");
+        if($("adminModeBtn")) $("adminModeBtn").classList.toggle("active", state.currentMode === "admin");
       }
 
       renderMenu();
@@ -4034,7 +4098,13 @@
     }
 
     function switchMode(mode){
-      if(!state.currentUser || state.currentUser.staffNo !== ADMIN_JIJUMJANG_NO) return;
+      if(!state.currentUser) return;
+      const isSA = state.currentUser.staffNo === ADMIN_JIJUMJANG_NO;
+      const canSwitch = isSA || (
+        state.currentUser.role === "admin" &&
+        (state.currentUser.permissions || []).includes("mode_switch")
+      );
+      if(!canSwitch) return;
       state.currentMode = mode;
       hydrateUserUI();
       renderAll();
@@ -4042,11 +4112,29 @@
       closeMobMenu();
     }
 
-    function isAdminMode(){
-      // 관리자 모드는 지점장(ADMIN_JIJUMJANG_NO)만 가능
-      return state.currentUser
+    // 최고관리자 전용 (0408만)
+    function isSuperAdmin(){
+      return !!(state.currentUser
         && state.currentUser.staffNo === ADMIN_JIJUMJANG_NO
-        && state.currentMode === "admin";
+        && state.currentMode === "admin");
+    }
+
+    // 최고관리자 OR admin-role 직원이 관리자 모드일 때 true
+    function isAdminMode(){
+      if(!state.currentUser || state.currentMode !== "admin") return false;
+      if(state.currentUser.staffNo === ADMIN_JIJUMJANG_NO) return true;
+      if(state.currentUser.role === "admin") return true;
+      return false;
+    }
+
+    // 특정 권한 확인 — 최고관리자는 항상 true, admin-role은 permissions 배열 확인
+    function hasPermission(key){
+      if(!state.currentUser) return false;
+      if(state.currentUser.staffNo === ADMIN_JIJUMJANG_NO && state.currentMode === "admin") return true;
+      if(state.currentUser.role === "admin" && state.currentMode === "admin"){
+        return (state.currentUser.permissions || []).includes(key);
+      }
+      return false;
     }
 
     function currentStaffNo(){ return state.currentUser ? state.currentUser.staffNo : ""; }
@@ -4056,18 +4144,19 @@
       const box = $("menuBox");
       const isAdmin = isAdminMode();
 
-      const menus = isAdmin ? [
+      // admin-role 직원이 관리자 모드인지 확인
+      const isElevated = isAdmin || (state.currentUser?.role === "admin" && state.currentMode === "admin");
+
+      const menus = isElevated ? [
         ["home","🏠","홈"],
         ["notice","📢","공지사항"],
         ["schedule","🗓","일정등록 현황"],
         ["aggregate","📌","익일취합"],
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
-        ["progress","📈","진행률"],
-        ["staff","👥","직원관리"],
+        ...(isAdmin ? [["progress","📈","진행률"],["staff","👥","직원관리"],["settings","⚙️","관리자설정"]] : []),
         ["lead","🗂","교육섭외 DB"],
         ["itinerary","📋","일정표 관리"],
-        ["settings","⚙️","관리자설정"]
       ] : [
         ["home","🏠","홈"],
         ["notice","📢","공지사항"],
@@ -4088,39 +4177,43 @@
     }
 
     function applyRoleUI(){
-      const admin = isAdminMode();
+      const canNoticeWrite  = hasPermission('notice_write');
+      const canPerfStaff    = hasPermission('perf_staff_select');
+      const canPerfViewAll  = hasPermission('perf_view_all');
+      const canExcelUpload  = hasPermission('excel_upload');
+      const canSchedFilter  = hasPermission('schedule_staff_filter');
 
-      $("noticeFormBox").classList.toggle("hidden", !admin);
+      $("noticeFormBox").classList.toggle("hidden", !canNoticeWrite);
 
       $("scheduleAssignee").value = currentStaffName();
 
       $("perfSaveStaff").value = currentStaffName();
-      $("perfSaveStaffSelect").classList.toggle("hidden", !admin);
-      $("perfSaveStaff").classList.toggle("hidden", admin);
+      $("perfSaveStaffSelect").classList.toggle("hidden", !canPerfStaff);
+      $("perfSaveStaff").classList.toggle("hidden", canPerfStaff);
 
-      if (admin) {
+      if (canPerfStaff) {
         $("perfSaveStaffSelect").innerHTML = staffs.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join("");
         $("perfSaveStaffSelect").value = currentStaffName();
       }
 
-      $("perfReportScope").querySelector('option[value="all"]').disabled = !admin;
-      if(!admin) $("perfReportScope").value = "mine";
+      $("perfReportScope").querySelector('option[value="all"]').disabled = !canPerfViewAll;
+      if(!canPerfViewAll) $("perfReportScope").value = "mine";
 
-      $("aggScope").querySelector('option[value="all"]').disabled = !admin;
-      if(!admin) $("aggScope").value = "mine";
+      $("aggScope").querySelector('option[value="all"]').disabled = !canPerfViewAll;
+      if(!canPerfViewAll) $("aggScope").value = "mine";
 
-      if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !admin);
-      if(admin) refreshLeadStaffDropdown();
-      // 일정표 관리 직원 필터 - 관리자만 표시
-      if($("itineraryFilterBox")) $("itineraryFilterBox").classList.toggle("hidden", !admin);
-      if(admin) refreshItineraryStaffDropdown();
+      if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !canExcelUpload);
+      if(canExcelUpload) refreshLeadStaffDropdown();
+      // 일정표 관리 직원 필터
+      if($("itineraryFilterBox")) $("itineraryFilterBox").classList.toggle("hidden", !canSchedFilter);
+      if(canSchedFilter) refreshItineraryStaffDropdown();
       onPerformanceTypeChange();
     }
 
     function setView(view){
-      if(view === "staff" && !isAdminMode()) return;
-      if(view === "settings" && !isAdminMode()) return;
-      if(view === "progress" && !isAdminMode()) return;
+      if(view === "staff" && !isSuperAdmin()) return;
+      if(view === "settings" && !isSuperAdmin()) return;
+      if(view === "progress" && !hasPermission('home_stats_all')) return;
 
       state.currentView = view;
       try{ sessionStorage.setItem("luwon_view", view); }catch(e){}
@@ -4187,7 +4280,7 @@
     }
 
     function runHomeSummary(){
-      if(isAdminMode()) runAdminSummary();
+      if(hasPermission('home_stats_all')) runAdminSummary();
       else runMySummary();
     }
 
@@ -4273,11 +4366,11 @@
     }
 
     function getVisibleSchedules(){
-      return isAdminMode() ? schedules.slice() : schedules.filter(s => s.createdByNo === currentStaffNo());
+      return hasPermission('schedule_view_all') ? schedules.slice() : schedules.filter(s => s.createdByNo === currentStaffNo());
     }
 
     function getVisiblePerformances(){
-      return isAdminMode() ? performances.slice() : performances.filter(p => p.createdByNo === currentStaffNo() || p.staff === currentStaffName());
+      return hasPermission('perf_view_all') ? performances.slice() : performances.filter(p => p.createdByNo === currentStaffNo() || p.staff === currentStaffName());
     }
 
     let _leadStaffFilter = "";
@@ -4315,10 +4408,10 @@
             <td>${escapeHtml(n.body)}</td>
             <td>${escapeHtml(n.tag)}</td>
             <td>
-              ${isAdminMode() ? `
+              ${(hasPermission('notice_edit') || hasPermission('notice_delete')) ? `
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                  <button class="ghost-btn" type="button" onclick="editNotice(${n.id})">수정</button>
-                  <button class="danger-btn" type="button" onclick="deleteNotice(${n.id})">삭제</button>
+                  ${hasPermission('notice_edit') ? `<button class="ghost-btn" type="button" onclick="editNotice(${n.id})">수정</button>` : ''}
+                  ${hasPermission('notice_delete') ? `<button class="danger-btn" type="button" onclick="deleteNotice(${n.id})">삭제</button>` : ''}
                 </div>
               ` : "-"}
             </td>
@@ -4335,7 +4428,7 @@
     }
 
     function saveNotice(){
-      if(!isAdminMode()) return;
+      if(!hasPermission('notice_write')) return;
 
       const title = $("noticeTitle").value.trim();
       const tag = $("noticeTag").value.trim() || "공지";
@@ -4544,7 +4637,7 @@
     // ── 홈 카드 더블클릭 상세 팝업 ──────────────────────────────
     let _openDetailCardNo = 0; // 현재 열린 상세 카드 번호 (0=닫힘)
     function onHomeCardDblClick(cardNo){
-      if(!isAdminMode()) return; // 관리자 모드에서만 동작
+      if(!hasPermission('home_card_detail')) return; // 권한 있는 관리자만 동작
       _openDetailCardNo = cardNo;
       const today    = todayStr();
       const tomorrow = tomorrowStr();
@@ -4825,7 +4918,7 @@
 
       const rows = schedules.filter(row => {
         if(row.date !== nextDate) return false;
-        if(scope === "all" && isAdminMode()) return true;
+        if(scope === "all" && hasPermission('perf_view_all')) return true;
         return row.createdByNo === currentStaffNo();
       }).sort((a,b) => `${a.assignee} ${a.time}`.localeCompare(`${b.assignee} ${b.time}`, "ko"));
 
@@ -4895,7 +4988,7 @@
       const type = $("perfSaveType").value;
       let rawValue = $("perfSaveValue").value.trim();
       const memo = $("perfSaveMemo").value.trim();
-      const staffName = isAdminMode() ? $("perfSaveStaffSelect").value : currentStaffName();
+      const staffName = hasPermission('perf_staff_select') ? $("perfSaveStaffSelect").value : currentStaffName();
 
       if(type === "보험"){
         rawValue = rawValue.replace(/[^\d]/g, "");
@@ -4991,7 +5084,7 @@
       const start = $("perfReportStart").value;
       const end   = $("perfReportEnd").value;
       const scope = $("perfReportScope").value;
-      const admin = isAdminMode();
+      const admin = hasPermission('perf_margin_view');
 
       const rows = performances.filter(p => {
         if(scope !== "all" || !admin){
@@ -5217,7 +5310,7 @@
     function renderLeads(){
       const body = $("leadTableBody");
       const allRows = getVisibleLeads();
-      const admin = isAdminMode();
+      const admin = hasPermission('lead_edit') || hasPermission('lead_delete_one') || hasPermission('lead_status_toggle') || isSuperAdmin();
 
       // 관리자면 수정/삭제 열 표시
       const th = $("leadActionTh");
@@ -5376,7 +5469,7 @@
     let _editLeadId = null;
 
     function openLeadEditModal(id){
-      if(!isAdminMode()) return;
+      if(!hasPermission('lead_edit')) return;
       const l = leads.find(x => String(x.id) === String(id));
       if(!l) return;
       _editLeadId = id;
@@ -5457,7 +5550,7 @@
     }
 
     async function deleteLead(id){
-      if(!isAdminMode()) return;
+      if(!hasPermission('lead_delete_one')) return;
       if(!confirm("이 데이터를 삭제할까요?")) return;
       const numId = Number(id); // 타입 통일 (string → number)
       try{
@@ -5476,7 +5569,7 @@
     }
 
     async function toggleLeadStatus(id){
-      if(!isAdminMode()) return;
+      if(!hasPermission('lead_status_toggle')) return;
       const l = leads.find(x => x.id === id);
       if(!l) return;
 
@@ -5724,7 +5817,7 @@
     };
 
     function parseExcelFile(input){
-      if(!isAdminMode()) return alert("관리자만 엑셀 업로드 가능합니다.");
+      if(!hasPermission('excel_upload')) return alert("관리자만 엑셀 업로드 가능합니다.");
       const file = input.files[0];
       if(!file) return;
 
@@ -5798,7 +5891,7 @@
     // ── 전체삭제 / 선택삭제 ──────────────────────────────────────
 
     async function deleteAllLeads(){
-      if(!isAdminMode()) return;
+      if(!hasPermission('lead_delete_all')) return;
       const cnt = getVisibleLeads().length;
       if(!confirm(`현재 표시된 데이터 ${cnt}건을 모두 삭제할까요?\n이 작업은 되돌릴 수 없어요.`)) return;
       const ids = getVisibleLeads().map(l => l.id);
@@ -5818,7 +5911,7 @@
     }
 
     async function deleteSelectedLeads(){
-      if(!isAdminMode()) return;
+      if(!hasPermission('lead_delete_selected')) return;
       // .lead-chk 클래스 + data-id 속성 기준으로 체크된 항목 수집
       const ids = Array.from(document.querySelectorAll('.lead-chk:checked'))
         .map(c => Number(c.dataset.id))
@@ -5841,7 +5934,7 @@
     }
 
     async function markSelectedAsCompleted(){
-      if(!isAdminMode()) return;
+      if(!hasPermission('lead_complete')) return;
       const checked = Array.from(document.querySelectorAll('.lead-chk:checked')).map(c => Number(c.dataset.id));
       if(!checked.length) return alert("처리할 항목을 먼저 선택해 주세요.");
       if(!confirm(`선택한 ${checked.length}건을 교육 이수 처리할까요?`)) return;
@@ -5923,7 +6016,7 @@
 
     // ── 클린사업장 배지 토글 (관리자 전용) ─────────────────────────
     async function toggleCleanBiz(id){
-      if(!isAdminMode()){ alert("클린사업장 설정은 관리자만 변경할 수 있습니다."); return; }
+      if(!hasPermission('lead_clean_set')){ alert("클린사업장 설정은 관리자만 변경할 수 있습니다."); return; }
       const l = leads.find(x => x.id === id);
       if(!l) return;
       const newVal = !l.cleanBiz;
@@ -6394,7 +6487,7 @@
     function getVisibleItinerariesBase(){
       const staffFilter = $("itineraryStaffFilter") ? $("itineraryStaffFilter").value : "";
       let result;
-      if(isAdminMode()){
+      if(hasPermission('schedule_view_all')){
         result = itineraries.slice();
         if(staffFilter) result = result.filter(i => i.assignee === staffFilter);
       } else {
@@ -6488,7 +6581,7 @@
       const body = $("itineraryTableBody");
       if(!body) return;
       const rows  = getVisibleItineraries().sort((a,b) => (a.date||'').localeCompare(b.date||''));
-      const admin = isAdminMode();
+      const admin = hasPermission('schedule_delete');
 
       const emptyMsg = itinCalState.selectedDate
         ? `${itinCalState.selectedDate} 날짜에 등록된 일정표가 없습니다.`
@@ -6524,7 +6617,7 @@
     }
 
     function deleteItinerary(id){
-      if(!isAdminMode()) return;
+      if(!hasPermission('schedule_delete')) return;
       if(!confirm("이 일정표를 삭제할까? 복구 불가!")) return;
       sbDeleteRecord("itineraries", id);
       itineraries = itineraries.filter(x => String(x.id) !== String(id));
@@ -7093,8 +7186,7 @@
       state.settingsTab = tab;
 
       // ── 모든 탭 버튼 active 상태 갱신 ──
-      const allTabs = ["staff","pay","inspection","cleanBiz","system","goal","log","msg"];
-      allTabs.forEach(t => {
+      ["staff","pay","inspection","cleanBiz","system","goal","log","msg","perm"].forEach(t => {
         const btn = $("settingsTab" + t.charAt(0).toUpperCase() + t.slice(1));
         if(btn) btn.classList.toggle("active", t === tab);
       });
@@ -7108,6 +7200,7 @@
       if($("settingsPaneGoal"))       $("settingsPaneGoal").classList.toggle("hidden",       tab !== "goal");
       if($("settingsPaneLog"))        $("settingsPaneLog").classList.toggle("hidden",        tab !== "log");
       if($("settingsPaneMsg"))        $("settingsPaneMsg").classList.toggle("hidden",        tab !== "msg");
+      if($("settingsPanePerm"))       $("settingsPanePerm").classList.toggle("hidden",       tab !== "perm");
 
       // ── 탭별 렌더 함수 호출 ──
       if(tab === "staff")      renderSettingsStaff();
@@ -7126,6 +7219,7 @@
             staffs.map(s => `<option value="${escapeHtml(s.no)}">${escapeHtml(s.name)}</option>`).join("");
         }
       }
+      if(tab === "perm") refreshPermTargetDropdown();
     }
 
     // ══════════════════════════════════════════════════
@@ -7155,7 +7249,7 @@
     }
 
     function addInspectionRule(){
-      if(!isAdminMode()) return;
+      if(!hasPermission('rule_inspection')) return;
       const company = ($("inspRuleCompany").value || "").trim();
       const type    = $("inspRuleType").value;
       if(!company) return alert("사업장명을 입력해 주세요.");
@@ -7170,7 +7264,7 @@
     }
 
     function editInspectionRule(id){
-      if(!isAdminMode()) return;
+      if(!hasPermission('rule_inspection')) return;
       const rule = inspectionRules.find(r => r.id === id);
       if(!rule) return;
       const newCompany = prompt("사업장명을 수정하세요:", rule.company);
@@ -7184,7 +7278,7 @@
     }
 
     function deleteInspectionRule(id){
-      if(!isAdminMode()) return;
+      if(!hasPermission('rule_inspection')) return;
       const rule = inspectionRules.find(r => r.id === id);
       if(!rule) return;
       if(!confirm(`[${rule.company}] 규칙을 삭제할까요?`)) return;
@@ -7216,7 +7310,7 @@
     }
 
     function addOnlineEduRule(){
-      if(!isAdminMode()) return;
+      if(!hasPermission('rule_online_edu')) return;
       const company = ($("onlineEduCompany").value || "").trim();
       if(!company) return alert("사업장명을 입력해 주세요.");
       if(onlineEduRules.find(r => r.company === company))
@@ -7229,7 +7323,7 @@
     }
 
     function deleteOnlineEduRule(id){
-      if(!isAdminMode()) return;
+      if(!hasPermission('rule_online_edu')) return;
       const rule = onlineEduRules.find(r => r.id === id);
       if(!rule) return;
       if(!confirm(`[${rule.company}] 온라인 교육 허용을 해제할까요?`)) return;
@@ -7471,6 +7565,80 @@
       refreshAdminAcctDropdown();
       saveAppData();
       await deleteStaffFromSupabase(no); // Supabase에서도 삭제
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // 권한 관리 (관리자에게 권한 부여)
+    // ══════════════════════════════════════════════════════════
+    function refreshPermTargetDropdown(){
+      const sel = $("permTargetStaff");
+      if(!sel) return;
+      const cur = sel.value;
+      sel.innerHTML = `<option value="">-- 관리자 선택 --</option>` +
+        staffs.filter(s => s.no !== ADMIN_JIJUMJANG_NO && s.role === "admin").map(s =>
+          `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)} (${escapeHtml(s.no)})</option>`
+        ).join("");
+      if(cur) sel.value = cur;
+    }
+
+    function renderPermCheckboxes(){
+      const staffNo = ($("permTargetStaff")||{}).value || "";
+      const area = $("permCheckboxArea");
+      const list = $("permCheckboxList");
+      if(!area || !list) return;
+      if(!staffNo){ area.style.display = "none"; return; }
+
+      const staffData = staffs.find(s => s.no === staffNo);
+      const currentPerms = staffData ? (staffData.permissions || []) : [];
+
+      const groups = {};
+      PERM_DEFS.forEach(p => {
+        if(!groups[p.group]) groups[p.group] = [];
+        groups[p.group].push(p);
+      });
+
+      list.innerHTML = Object.entries(groups).map(([grp, items]) => `
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--line);">${escapeHtml(grp)}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px 24px;">
+            ${items.map(p => `
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                <input type="checkbox" id="perm_${p.key}" value="${p.key}" ${currentPerms.includes(p.key) ? 'checked' : ''}
+                  style="width:15px;height:15px;cursor:pointer;">
+                ${escapeHtml(p.label)}
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+
+      area.style.display = "block";
+    }
+
+    async function savePermissions(){
+      const staffNo = ($("permTargetStaff")||{}).value || "";
+      if(!staffNo) return alert("관리자를 선택해 주세요.");
+      if(!isSuperAdmin()) return alert("최고관리자만 권한을 설정할 수 있습니다.");
+
+      const checkedPerms = PERM_DEFS
+        .filter(p => { const el = $("perm_" + p.key); return el && el.checked; })
+        .map(p => p.key);
+
+      const si = staffs.findIndex(s => s.no === staffNo);
+      if(si >= 0) staffs[si].permissions = checkedPerms;
+      const ai = authUsers.findIndex(u => u.staffNo === staffNo);
+      if(ai >= 0) authUsers[ai].permissions = checkedPerms;
+
+      try{
+        const { error } = await sbRetry(() =>
+          sbClient.from("staff_accounts").update({ permissions: checkedPerms }).eq("staff_no", staffNo)
+        );
+        if(error) throw error;
+        saveAppData();
+        alert("✅ 권한이 저장되었습니다.\n적용 권한: " + checkedPerms.length + "개");
+      }catch(e){
+        alert("권한 저장 실패: " + (e.message || e));
+      }
     }
 
     // ── 관리자 계정 드롭다운 갱신 ──
@@ -7777,7 +7945,7 @@
     }
 
     function _checkAdminPass(inputId){
-      if(!isAdminMode()) return false;
+      if(!isSuperAdmin()) return false;
       const input = $(inputId);
       const val   = input ? input.value.trim() : "";
       if(!val){ alert("관리자 번호를 입력해 주세요."); return false; }
@@ -7886,7 +8054,7 @@
       if(!_crmLeadSearchTerm){ renderLeads(); return; }
       const body = $("leadTableBody");
       const allRows = crmGetFilteredLeads();
-      const admin = isAdminMode();
+      const admin = hasPermission('lead_edit') || hasPermission('lead_delete_one') || hasPermission('lead_status_toggle') || isSuperAdmin();
 
       if(!allRows.length){
         body.innerHTML = `<tr><td colspan="${admin?13:12}"><div class="crm-empty-illust"><svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#e2e8f0" stroke-width="2"/><path d="M20 28h16M28 20v16" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/></svg><p>"${escapeHtml(_crmLeadSearchTerm)}" 검색 결과가 없습니다.</p></div></td></tr>`;
@@ -8004,7 +8172,7 @@
        [추가] 기능 3: 엑셀 내보내기
     ══════════════════════════════════════════════════════════ */
     function crmExportLeadExcel(){
-      if(!isAdminMode()) return;
+      if(!hasPermission('excel_upload')) return;
       const rows = crmGetFilteredLeads();
       if(!rows.length) return alert("내보낼 데이터가 없습니다.");
       const data = rows.map(l=>({
@@ -8020,7 +8188,7 @@
     }
 
     function crmExportSchedExcel(){
-      if(!isAdminMode()) return;
+      if(!hasPermission('schedule_view_all')) return;
       const rows = getVisibleSchedules();
       if(!rows.length) return alert("내보낼 데이터가 없습니다.");
       const data = rows.map(s=>({
@@ -8037,11 +8205,11 @@
     }
 
     function crmExportPerfExcel(){
-      if(!isAdminMode()) return;
+      if(!hasPermission('perf_excel_download')) return;
       const start = ($("perfReportStart")||{}).value||"";
       const end   = ($("perfReportEnd")||{}).value||"";
       const scope = ($("perfReportScope")||{}).value||"mine";
-      const admin = isAdminMode();
+      const admin = hasPermission('perf_view_all');
       const rows  = performances.filter(p=>{
         if(scope!=="all"||!admin){ if(!(p.createdByNo===currentStaffNo()||p.staff===currentStaffName())) return false; }
         if(start && p.date<start) return false;
@@ -8064,7 +8232,7 @@
        [추가] 기능 4: 데이터 백업 / 복원
     ══════════════════════════════════════════════════════════ */
     function crmBackupData(){
-      if(!isAdminMode()) return;
+      if(!isSuperAdmin()) return;
       const payload = {
         _backup_version:1,
         _backup_date: new Date().toISOString(),
@@ -8086,7 +8254,7 @@
     }
 
     function crmRestoreData(input){
-      if(!isAdminMode()) return;
+      if(!isSuperAdmin()) return;
       const file = input.files[0];
       if(!file) return;
       if(!confirm("백업 파일에서 데이터를 복원하면 현재 데이터가 덮어씌워집니다. 계속하시겠습니까?")) {
@@ -8371,7 +8539,7 @@
       });
       // 설정 탭 - 비관리자면 비활성 표시
       const settingsBtn = $("crmMobTabSettings");
-      if(settingsBtn) settingsBtn.style.opacity = isAdminMode() ? "1" : ".4";
+      if(settingsBtn) settingsBtn.style.opacity = isSuperAdmin() ? "1" : ".4";
     }
 
     /* saveAppData / loadAppData 는 상단에서 통합 처리됨 (staffGoals, sbSyncAll 포함) */
@@ -8389,17 +8557,17 @@
         // 실적조회 뷰 진입 시 엑셀 버튼 가시성
         if(view === "performance-report"){
           const perfExcelBox = $("crmPerfExcelBox");
-          if(perfExcelBox) perfExcelBox.classList.toggle("hidden", !isAdminMode());
+          if(perfExcelBox) perfExcelBox.classList.toggle("hidden", !hasPermission('perf_excel_download'));
         }
         // 교육섭외 DB 뷰 진입 시 엑셀 버튼 가시성
         if(view === "lead"){
           const leadExcelBtn = $("crmLeadExcelBtn");
-          if(leadExcelBtn) leadExcelBtn.classList.toggle("hidden", !isAdminMode());
+          if(leadExcelBtn) leadExcelBtn.classList.toggle("hidden", !hasPermission('excel_upload'));
         }
         // 일정등록 현황 뷰 진입 시 엑셀 버튼 가시성
         if(view === "schedule"){
           const schedExcelBtn = $("crmSchedExcelBtn");
-          if(schedExcelBtn) schedExcelBtn.classList.toggle("hidden", !isAdminMode());
+          if(schedExcelBtn) schedExcelBtn.classList.toggle("hidden", !hasPermission('schedule_view_all'));
         }
       };
     })();
