@@ -7953,8 +7953,9 @@
       const sel = $("teamAdminSelect");
       if(!sel) return;
       const cur = sel.value;
+      // 슈퍼관리자 포함, admin 역할 전원 표시
       sel.innerHTML = `<option value="">-- 관리자 선택 --</option>` +
-        staffs.filter(s => s.no !== ADMIN_JIJUMJANG_NO && s.role === "admin").map(s =>
+        staffs.filter(s => s.role === "admin" || s.no === ADMIN_JIJUMJANG_NO).map(s =>
           `<option value="${escapeHtml(s.no)}" ${cur===s.no?"selected":""}>${escapeHtml(s.name)} (${escapeHtml(s.no)})</option>`
         ).join("");
       if(cur) sel.value = cur;
@@ -7966,8 +7967,9 @@
       const adminNo = ($("teamAdminSelect")||{}).value || "";
       const existingTeam = staffTeams.find(t => t.adminNo === adminNo);
       const existingMembers = existingTeam ? (existingTeam.memberNos || []) : [];
-      const nonAdmins = staffs.filter(s => s.no !== ADMIN_JIJUMJANG_NO && s.role !== "admin");
-      if(!nonAdmins.length){ box.innerHTML = `<span style="color:var(--muted);font-size:13px;">일반 직원이 없습니다.</span>`; return; }
+      // 담당 관리자 본인 제외, 나머지 전직원(관리자 포함) 팀원으로 추가 가능
+      const nonAdmins = staffs.filter(s => s.no !== adminNo);
+      if(!nonAdmins.length){ box.innerHTML = `<span style="color:var(--muted);font-size:13px;">팀원으로 추가할 직원이 없습니다.</span>`; return; }
       box.innerHTML = nonAdmins.map(s => `
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;padding:4px 8px;background:white;border-radius:8px;border:1px solid var(--line);">
           <input type="checkbox" class="team-member-chk" value="${escapeHtml(s.no)}" ${existingMembers.includes(s.no)?'checked':''} style="width:15px;height:15px;cursor:pointer;">
