@@ -9659,6 +9659,7 @@
 
   <!-- 서비스워커 등록 + 업데이트 시 자동 새로고침 -->
   <script>
+    // ── SW 등록 + 새 버전 배포 시 자동 새로고침 ──
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
         .then(reg => {
@@ -9673,8 +9674,8 @@
               }
             });
           });
-          // 주기적으로 SW 업데이트 체크 (10분마다)
-          setInterval(() => reg.update(), 10 * 60 * 1000);
+          // 5분마다 SW 업데이트 체크 → sw.js 버전 변경 감지
+          setInterval(() => reg.update(), 5 * 60 * 1000);
         })
         .catch(() => {});
       // 다른 탭에서 SW가 교체되면 이 탭도 새로고침
@@ -9682,6 +9683,23 @@
         window.location.reload();
       });
     }
+
+    // ── 탭 숨김 후 10분 초과 복귀 시 자동 새로고침 ──
+    // (SW와 무관하게, 오래된 코드가 실행 중인 경우 확실히 최신 버전 수령)
+    (function(){
+      let _hiddenAt = 0;
+      const RELOAD_AFTER_MS = 10 * 60 * 1000; // 10분
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          _hiddenAt = Date.now();
+        } else {
+          // 탭 복귀 — 10분 이상 숨겨져 있었으면 새로고침
+          if (_hiddenAt && Date.now() - _hiddenAt >= RELOAD_AFTER_MS) {
+            window.location.reload();
+          }
+        }
+      });
+    })();
   </script>
 </body>
 </html>
