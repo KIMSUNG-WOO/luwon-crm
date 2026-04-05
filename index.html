@@ -3324,6 +3324,34 @@
     </div>
   </div>
 
+  <!-- ── 일정변경 미니 캘린더 모달 ── -->
+  <div class="modal-backdrop" id="rescheduleModal">
+    <div class="modal-card" style="max-width:360px;padding:0;">
+      <div class="modal-head" style="padding:16px 20px 12px;">
+        <div>
+          <h4 style="margin:0 0 2px;">📅 일정 변경</h4>
+          <p id="rescheduleSchedLabel" style="margin:0;font-size:12px;color:var(--muted);"></p>
+        </div>
+        <button class="modal-close" type="button" onclick="closeRescheduleModal()">닫기</button>
+      </div>
+      <div style="padding:0 16px 8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <button class="ghost-btn" style="padding:4px 12px;" onclick="reschedulePrevMonth()">◀</button>
+          <span id="rescheduleMonthLabel" style="font-size:15px;font-weight:700;"></span>
+          <button class="ghost-btn" style="padding:4px 12px;" onclick="rescheduleNextMonth()">▶</button>
+        </div>
+        <div id="rescheduleCalGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;"></div>
+      </div>
+      <div id="rescheduleTimeBox" style="display:none;padding:12px 16px 16px;border-top:1px solid var(--line);margin-top:8px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px;">선택한 날짜: <span id="reschedulePickedDateLabel" style="color:#3b82f6;"></span></div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input id="rescheduleTimeInput" placeholder="예: 10:00" style="flex:1;height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font-size:14px;">
+          <button class="small-btn" onclick="confirmReschedule()">변경 확정</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-backdrop" id="calendarModal">
     <div class="modal-card">
       <div class="modal-head">
@@ -3680,7 +3708,7 @@
           Object.keys(staffRanks).length     ? sbClient.from("app_settings").upsert({key:"staffRanks",    value:staffRanks},    {onConflict:"key"}) : null,
           (adminRates.sanjo||adminRates.health) ? sbClient.from("app_settings").upsert({key:"adminRates",  value:adminRates},    {onConflict:"key"}) : null,
           cleanBizRules.length               ? sbClient.from("app_settings").upsert({key:"cleanBizRules", value:cleanBizRules}, {onConflict:"key"}) : null,
-          notices.length                     ? sbClient.from("app_settings").upsert({key:"notices",       value:notices},       {onConflict:"key"}) : null,
+          sbClient.from("app_settings").upsert({key:"notices", value:notices}, {onConflict:"key"}),
         ].filter(Boolean);
         await Promise.allSettled(settOps);
       }catch(e){ console.warn("sbSyncAll 오류:", e.message); }
@@ -4865,6 +4893,13 @@
         if(!date){ _restoreBtn(); return alert("날짜는 꼭 입력해 주세요."); }
         if(!time){ _restoreBtn(); return alert("시간은 꼭 입력해 주세요."); }
         if(!company){ _restoreBtn(); return alert("업체는 꼭 입력해 주세요."); }
+
+        // 중복 업체 확인
+        const dupSched = schedules.find(s => s.company && s.company.trim() === company.trim());
+        if(dupSched){
+          const ok = confirm(`중복 업체가 있습니다.\n[${dupSched.company}] (${dupSched.date} ${dupSched.time})\n그래도 등록하시겠습니까?`);
+          if(!ok){ _restoreBtn(); return; }
+        }
 
         const newSched = {
           id: Date.now(),
@@ -7444,6 +7479,7 @@
                   <button class="ghost-btn" type="button" onclick="copyScheduleFullText(${row.id})">복사</button>
                   <button class="danger-btn" type="button" onclick="deleteScheduleById(${row.id}); reopenCalendarModalAfterDelete('${dateStr}')">삭제</button>
                   <button class="ghost-btn" type="button" onclick="loadManualEditorFromSchedule(${row.id})">수정</button>
+                  <button class="ghost-btn" type="button" onclick="openRescheduleModal(${row.id},'${dateStr}')">일정변경</button>
                 </div>
               </div>
             `).join("")}
@@ -7458,6 +7494,93 @@
       $("calendarModal").classList.remove("show");
       state.modalDate = null;
       state.manualEditId = null;
+    }
+
+    // ── 일정변경 미니 캘린더 ──────────────────────────────────────
+    let _reschedId = null, _reschedFromDate = null;
+    let _reschedCalY = 0, _reschedCalM = 0;
+    let _reschedPick = null; // "YYYY-MM-DD"
+
+    function openRescheduleModal(schedId, fromDate){
+      _reschedId = schedId;
+      _reschedFromDate = fromDate;
+      _reschedPick = null;
+      const base = new Date((fromDate||todayStr())+"T12:00:00");
+      _reschedCalY = base.getFullYear();
+      _reschedCalM = base.getMonth();
+      const s = schedules.find(x => String(x.id)===String(schedId));
+      $("rescheduleSchedLabel").textContent = s ? `${s.company}  /  현재: ${s.date} ${s.time}` : "";
+      $("rescheduleTimeBox").style.display = "none";
+      renderRescheduleGrid();
+      $("rescheduleModal").classList.add("show");
+    }
+
+    function closeRescheduleModal(){
+      $("rescheduleModal").classList.remove("show");
+      _reschedId = null;
+    }
+
+    function reschedulePrevMonth(){
+      if(--_reschedCalM < 0){ _reschedCalM = 11; _reschedCalY--; }
+      renderRescheduleGrid();
+    }
+
+    function rescheduleNextMonth(){
+      if(++_reschedCalM > 11){ _reschedCalM = 0; _reschedCalY++; }
+      renderRescheduleGrid();
+    }
+
+    function renderRescheduleGrid(){
+      const y = _reschedCalY, m = _reschedCalM;
+      $("rescheduleMonthLabel").textContent = `${y}년 ${m+1}월`;
+      const firstDow = new Date(y, m, 1).getDay();
+      const daysInM  = new Date(y, m+1, 0).getDate();
+      const today    = todayStr();
+      const days = ["일","월","화","수","목","금","토"];
+      let html = days.map(d=>`<div style="font-size:11px;color:var(--muted);font-weight:700;padding:4px 0;">${d}</div>`).join("");
+      for(let i=0;i<firstDow;i++) html+=`<div></div>`;
+      for(let d=1;d<=daysInM;d++){
+        const ds=`${y}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        const isPick = ds===_reschedPick;
+        const isTday = ds===today;
+        const isFrom = ds===_reschedFromDate;
+        const bg = isPick?"#3b82f6":isFrom?"#fef3c7":isTday?"#eff6ff":"transparent";
+        const col = isPick?"#fff":isFrom?"#92400e":isTday?"#3b82f6":"var(--text)";
+        html+=`<div onclick="reschedulePickDay('${ds}')" style="cursor:pointer;padding:6px 2px;border-radius:8px;font-size:13px;font-weight:${(isPick||isTday)?700:400};background:${bg};color:${col};">${d}</div>`;
+      }
+      $("rescheduleCalGrid").innerHTML = html;
+    }
+
+    function reschedulePickDay(ds){
+      _reschedPick = ds;
+      renderRescheduleGrid();
+      const s = schedules.find(x => String(x.id)===String(_reschedId));
+      $("rescheduleTimeInput").value = s ? s.time : "";
+      $("reschedulePickedDateLabel").textContent = ds;
+      $("rescheduleTimeBox").style.display = "";
+    }
+
+    async function confirmReschedule(){
+      if(!_reschedPick) return alert("날짜를 선택해 주세요.");
+      const rawTime = ($("rescheduleTimeInput")||{}).value||"";
+      const newTime = normalizeManualTime(rawTime)||rawTime;
+      if(!newTime) return alert("시간을 입력해 주세요.");
+      const s = schedules.find(x => String(x.id)===String(_reschedId));
+      if(!s) return;
+      s.date = _reschedPick;
+      s.time = newTime;
+      if(sbClient) await sbClient.from("schedules").update({date:_reschedPick, time:newTime}).eq("id", s.id);
+      const itin = itineraries.find(x => String(x.scheduleId)===String(s.id));
+      if(itin){
+        itin.date = _reschedPick;
+        itin.time = newTime;
+        if(sbClient) await sbClient.from("itineraries").update({date:_reschedPick, time:newTime}).eq("id", itin.id);
+      }
+      saveAppData();
+      renderSchedules(); renderItineraries(); loadAggregate(); renderCalendar(); runHomeSummary();
+      closeRescheduleModal();
+      openCalendarModal(_reschedPick);
+      alert(`✅ 일정이 ${_reschedPick} ${newTime}으로 변경되었습니다.`);
     }
 
     function reopenCalendarModalAfterDelete(dateStr){
