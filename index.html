@@ -9058,25 +9058,19 @@
       if(!user){ el.innerHTML = `<div class="panel"><div class="empty">로그인 후 확인 가능합니다.</div></div>`; return; }
       const no   = user.staffNo;
       const goal = staffGoals[no];
-      if(!goal || (!goal.calls && !goal.dailyScheds && !goal.scheds)){
+      if(!goal || (!goal.dailyScheds && !goal.scheds)){
         el.innerHTML = `<div class="panel"><div class="empty">📋 관리자가 아직 목표를 설정하지 않았습니다.</div></div>`;
         return;
       }
       const today = todayStr();
       const month = monthPrefix();
 
-      // 금일 콜량: 오늘 결과값 입력 건수 (result_date = today, 내 담당 lead)
-      const todayCalls  = leads.filter(l =>
-        (l.ownerNo === no || l.ownerName === user.name) &&
-        l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
-      ).length;
       // 금일 섭외건수: 오늘 진행일 기준, createdByNo 또는 섭외자(assignee) 매칭
       const todayScheds = schedules.filter(s => s.date === today && (s.createdByNo === no || s.assignee === user.name)).length;
       // 이번달 섭외건수: 진행일 기준, createdByNo 또는 섭외자 매칭
       const monthScheds = schedules.filter(s => s.date && s.date.startsWith(month) && (s.createdByNo === no || s.assignee === user.name)).length;
 
       const items = [
-        { label:"📞 금일 콜량",           current:todayCalls,  target:goal.calls||0 },
         { label:"📅 금일 일정등록",        current:todayScheds, target:goal.dailyScheds||0 },
         { label:"🗓 이번달 일정등록",      current:monthScheds, target:goal.scheds||0 }
       ].filter(i => i.target > 0 || i.current > 0);
