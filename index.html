@@ -2030,7 +2030,7 @@
               <div class="s" id="homeCardDesc1">내가 오늘 등록한 일정 수</div>
               <div id="crmGoalBadge1"></div>
             </div>
-            <div class="summary-card" ondblclick="onHomeCardDblClick(2)" style="cursor:pointer;" title="더블클릭 시 상세 보기">
+            <div class="summary-card" id="homeCard2" ondblclick="onHomeCardDblClick(2)" style="cursor:pointer;" title="더블클릭 시 상세 보기">
               <div class="k" id="homeCardLabel2">내 오늘 콜량</div>
               <div class="v" id="homeValue2">0</div>
               <div class="s" id="homeCardDesc2">결과값 입력된 DB 건수</div>
@@ -4519,6 +4519,7 @@
       // 레이블을 전직원 기준으로 변경
       $("homeCardLabel1").textContent = "금일 전직원 등록 일정";
       $("homeCardDesc1").textContent  = "오늘 전직원이 등록한 일정 수";
+      if($("homeCard2")) $("homeCard2").style.display = "";
       $("homeCardLabel2").textContent = "오늘 전직원 콜량";
       $("homeCardDesc2").textContent  = "결과값 입력된 DB 건수 (전직원)";
       $("homeCardLabel3").textContent = "전직원 익일 일정";
@@ -4559,6 +4560,7 @@
 
       $("homeCardLabel1").textContent = `${teamLabel} 금일 등록 일정`;
       $("homeCardDesc1").textContent  = `오늘 ${teamLabel} 전체 등록 일정`;
+      if($("homeCard2")) $("homeCard2").style.display = "";
       $("homeCardLabel2").textContent = `${teamLabel} 오늘 콜량`;
       $("homeCardDesc2").textContent  = `결과값 입력된 DB 건수 (${teamLabel})`;
       $("homeCardLabel3").textContent = `${teamLabel} 익일 일정`;
@@ -4611,11 +4613,8 @@
       $("homeCardDesc4").textContent  = `${calLabel} 내 일정 (진행일 기준)`;
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today) && s.createdByNo === no).length;
-      // 콜량: 내 DB 중 결과값 입력된 건수 (resultEnteredAt → 로컬 날짜 변환 비교)
-      $("homeValue2").textContent = leads.filter(l =>
-        (l.ownerNo === no || l.ownerName === currentStaffName()) &&
-        l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
-      ).length;
+      // 직원 모드: 콜량 카드 숨김 (관리자만 표시)
+      if($("homeCard2")) $("homeCard2").style.display = "none";
       renderCallRanking(null); // 직원 모드: 랭킹 숨김
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow && s.createdByNo === no).length;
       $("homeValue4").textContent = schedules.filter(s => {
