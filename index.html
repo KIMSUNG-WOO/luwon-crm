@@ -3891,6 +3891,9 @@
         .on("postgres_changes", { event:"*", schema:"public", table:"education_db" }, () => {
           // 로컬 업데이트 직후 2초간 realtime 재로드 억제 (optimistic update 덮어쓰기 방지)
           if(Date.now() - _leadsLocalUpdateTs < 2000) return;
+          // 결과값 입력 중이면 realtime 재로드 억제 (포커스 날아감 방지)
+          const _activeIsResultEl = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('result-input');
+          if(_leadEditingResultId || _activeIsResultEl) return;
           try{ loadData(); }catch(e){}
         })
         // 일정
@@ -5723,6 +5726,7 @@
           <input type="text" class="result-input"
             value="${escapeHtml(l.result||"")}"
             placeholder="결과 입력"
+            onmousedown="setLeadResultEditing(${l.id})"
             onfocus="setLeadResultEditing(${l.id})"
             onblur="onResultBlur(${l.id},this.value)"
             onkeydown="if(event.key==='Enter')this.blur()">
@@ -6076,8 +6080,9 @@
           if(pendingResult !== undefined) Object.assign(l, pendingResult);
         });
         saveAppData(); // 최신 상태를 로컬에도 저장
-        // 드롭다운 열려있으면 renderLeads 건너뜀 (DOM 재생성 → 드롭다운 강제 닫힘 방지)
-        if(!_leadEditingResultId) renderLeads();
+        // 결과값 입력 중이면 renderLeads 건너뜀 (DOM 재생성 → 포커스 날아감 방지)
+        const _activeIsResult = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('result-input');
+        if(!_leadEditingResultId && !_activeIsResult) renderLeads();
         runHomeSummary();
         loadProgress();
       } catch(err){
