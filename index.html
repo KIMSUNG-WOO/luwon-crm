@@ -6687,7 +6687,9 @@
           } else {
             _pendingLeadResult.delete(String(l.id));
             if(rEnteredAt) sbClient.from("education_db").update({ result_entered_at: rEnteredAt }).eq("id", l.id).then(()=>{});
-            saveAppData();
+            // saveAppData() 제거 — education_db에 직접 저장했으므로 app_settings sync 불필요
+            // saveAppData() → sbSyncAll() → app_settings upsert → realtime → renderAll() → 포커스 소멸 방지
+            try{ localStorage.setItem(APP_DATA_KEY, JSON.stringify({ staffs, authUsers, paySettings, staffRanks, adminRates, performances, leads, schedules, itineraries, notices, inspectionRules, onlineEduRules, cleanBizRules, staffGoals, staffPermissions, staffTeams })); }catch(e){}
           }
         });
     }
