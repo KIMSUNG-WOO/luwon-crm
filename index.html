@@ -3893,7 +3893,7 @@
           if(Date.now() - _leadsLocalUpdateTs < 2000) return;
           // 결과값 입력 중이면 realtime 재로드 억제 (포커스 날아감 방지)
           const _activeIsResultEl = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('result-input');
-          if(_leadEditingResultId || _activeIsResultEl) return;
+          if(_leadEditingResultId || _activeIsResultEl || _mouseIsDown) return;
           try{ loadData(); }catch(e){}
         })
         // 일정
@@ -5726,7 +5726,6 @@
           <input type="text" class="result-input"
             value="${escapeHtml(l.result||"")}"
             placeholder="결과 입력"
-            onmousedown="setLeadResultEditing(${l.id})"
             onfocus="setLeadResultEditing(${l.id})"
             onblur="onResultBlur(${l.id},this.value)"
             onkeydown="if(event.key==='Enter')this.blur()">
@@ -6082,7 +6081,7 @@
         saveAppData(); // 최신 상태를 로컬에도 저장
         // 결과값 입력 중이면 renderLeads 건너뜀 (DOM 재생성 → 포커스 날아감 방지)
         const _activeIsResult = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('result-input');
-        if(!_leadEditingResultId && !_activeIsResult) renderLeads();
+        if(!_leadEditingResultId && !_activeIsResult && !_mouseIsDown) renderLeads();
         runHomeSummary();
         loadProgress();
       } catch(err){
@@ -6599,6 +6598,9 @@
     const _pendingLeadStatus = new Map(); // id→status: loadData 덮어쓰기 방지
     const _pendingLeadResult = new Map(); // id→{result,resultDate,resultEnteredAt}: loadData 덮어쓰기 방지
     let _leadEditingResultId = null; // 드롭다운 열림 상태: renderLeads 차단용
+    let _mouseIsDown = false; // 마우스 누르는 중: realtime 리렌더 방지
+    document.addEventListener('mousedown', () => { _mouseIsDown = true; });
+    document.addEventListener('mouseup',   () => { _mouseIsDown = false; });
     function setLeadResultEditing(id){ _leadEditingResultId = id; }
     function clearLeadResultEditing(){ _leadEditingResultId = null; }
     let _resultFixLeadId = null;
