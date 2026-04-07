@@ -6669,6 +6669,7 @@
       // _leadEditingResultId가 설정됐다면 사용자가 이미 다음 입력창에 있는 것
       setTimeout(() => {
         if(_leadEditingResultId) return; // 다른 결과값 입력 중 → 렌더 건너뜀
+        if(_mouseIsDown) return; // 클릭 중 DOM 재생성하면 포커스 소멸 → 건너뜀
         renderLeads();
         runHomeSummary();
       }, 0);
