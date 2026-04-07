@@ -3992,6 +3992,9 @@
         })
         // 앱 설정 (목표/단가/직급 등)
         .on("postgres_changes", { event:"*", schema:"public", table:"app_settings" }, async () => {
+          // 결과값 입력 중이거나 마우스 클릭 중이면 renderAll 억제 (포커스 날아감 방지)
+          const _activeIsResultEl = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('result-input');
+          if(_leadEditingResultId || _activeIsResultEl || _mouseIsDown) return;
           try{
             const { data, error } = await sbClient.from("app_settings").select("*");
             if(!error && data){
