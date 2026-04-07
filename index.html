@@ -5675,7 +5675,14 @@
     let _leadRowHeights = {};      // { leadId: px } — 세션 유지, 새로고침 시 초기화
     let _leadTableResizeInit = false; // 열 리사이즈 핸들 한 번만 부착
 
+    let _renderLeadsPending = false;
+
     function renderLeads(){
+      // 결과값 입력 중이면 어떤 경로로 호출돼도 DOM 재생성 차단 (포커스 소멸 방지)
+      const _activeIsResult = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('result-input');
+      if(_leadEditingResultId || _activeIsResult) { _renderLeadsPending = true; return; }
+      _renderLeadsPending = false;
+
       const body = $("leadTableBody");
       const allRows = getVisibleLeads();
       const admin = hasPermission('lead_edit') || hasPermission('lead_delete_one') || hasPermission('lead_status_toggle') || isSuperAdmin();
@@ -6673,9 +6680,10 @@
       setTimeout(() => {
         if(_leadEditingResultId) return; // 다른 결과값 입력 중 → 렌더 건너뜀
         if(_mouseIsDown) return; // 클릭 중 DOM 재생성하면 포커스 소멸 → 건너뜀
+        _renderLeadsPending = false;
         renderLeads();
         runHomeSummary();
-      }, 0);
+      }, 50);
 
       sbClient.from("education_db")
         .update({ result: trimmed, result_date: rDate, result_time: "" })
