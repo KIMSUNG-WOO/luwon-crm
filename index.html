@@ -6184,17 +6184,9 @@
     }
 
     async function syncAfterUpload(rows){
-      const staffNo = rows[0]?.ownerNo || "";
+      // 기존 데이터 삭제 없이 추가만 함 — 콜량(result) 보존, 새 업로드가 앞페이지로 배치
 
-      // 1단계: 해당 직원의 기존 데이터 전체 삭제 (데이터 축적 방지)
-      if(staffNo){
-        const { error: delErr } = await sbRetry(() =>
-          sbClient.from("education_db").delete().eq("staff_no", staffNo)
-        );
-        if(delErr) throw delErr;
-      }
-
-      // 2단계: 새 데이터 INSERT
+      // 새 데이터 INSERT
       // id 필드 제외 — GENERATED ALWAYS IDENTITY 컬럼이므로 Supabase가 자동 할당
       const inserts = rows.map(row => ({
         type:       row.type || "교육섭외",
