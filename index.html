@@ -2133,6 +2133,7 @@
             </div>
             <select id="schedStaffFilter" class="hidden" onchange="onSchedStaffFilter()" style="height:38px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:700;cursor:pointer;"></select>
             <button id="crmSchedExcelBtn" class="ghost-btn hidden" onclick="crmExportSchedExcel()">📥 엑셀 다운로드</button>
+            <button id="schedDupBtn" class="ghost-btn hidden" onclick="toggleSchedDups()" style="border-color:#fca5a5;color:#dc2626;">🔴 중복 보기</button>
           </div>
 
           <div class="table-wrap" style="margin-top:16px;">
@@ -2474,12 +2475,13 @@
               <div class="itin-cal-grid" id="itinCalGrid"></div>
             </div>
 
-            <!-- 오른쪽: 직원 필터 (관리자 전용) -->
+            <!-- 오른쪽: 직원 필터 + 중복 버튼 (관리자 전용) -->
             <div id="itineraryFilterBox" class="hidden">
               <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">섭외자 필터</div>
               <select id="itineraryStaffFilter" style="height:38px;padding:0 12px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:600;cursor:pointer;min-width:140px;" onchange="renderItineraries()">
                 <option value="">전체 보기</option>
               </select>
+              <button id="itinDupBtn" onclick="toggleItinDups()" style="margin-top:8px;width:100%;height:36px;border-radius:8px;border:1.5px solid #fca5a5;background:#fff1f2;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;">🔴 중복 보기</button>
             </div>
           </div>
 
@@ -4431,6 +4433,9 @@
       $("aggScope").querySelector('option[value="all"]').disabled = !canAggViewTeamOrAll;
       if(!canAggViewTeamOrAll) $("aggScope").value = "mine";
 
+      // 중복 보기 버튼: 관리자 이상만 표시
+      const canSeeDup = isSuperAdmin() || isAdminMode();
+      if($("schedDupBtn")) $("schedDupBtn").classList.toggle("hidden", !canSeeDup);
       if($("excelUploadBox")) $("excelUploadBox").classList.toggle("hidden", !canExcelUpload);
       if(canExcelUpload) refreshLeadStaffDropdown();
       refreshSchedStaffDropdown();
@@ -5152,8 +5157,14 @@
         return tb - ta;
       });
 
+      // 중복 감지: 업체명 기준으로 2개 이상인 항목
+      const schedCompanyCount = {};
+      allRows.forEach(r => { const k=(r.company||"").trim(); schedCompanyCount[k]=(schedCompanyCount[k]||0)+1; });
+      const isDupSched = r => schedCompanyCount[(r.company||"").trim()] > 1;
+      if(_schedShowDupsOnly) allRows = allRows.filter(isDupSched);
+
       if(!allRows.length){
-        body.innerHTML = `<tr><td colspan="13"><div class="empty">등록된 일정이 없습니다.</div></td></tr>`;
+        body.innerHTML = `<tr><td colspan="13"><div class="empty">${_schedShowDupsOnly?"중복 일정이 없습니다.":"등록된 일정이 없습니다."}</div></td></tr>`;
         renderSchedPagination(0,0);
         return;
       }
@@ -5164,7 +5175,7 @@
       const rows  = allRows.slice(start, start + _schedPerPage);
 
       body.innerHTML = rows.map((row, idx) => `
-        <tr>
+        <tr style="${isDupSched(row)?"background:#fff1f2;":""}">
           <td style="text-align:center;font-size:12px;color:var(--muted);font-weight:600;">${start + idx + 1}</td>
           <td style="font-size:11px;white-space:nowrap;color:var(--muted);">${escapeHtml(formatKSTTimestamp(row.createdAt))}</td>
           <td>${escapeHtml(row.assignee)}</td>
@@ -5228,6 +5239,30 @@
       runHomeSummary();
       if(state.currentView === "goals") renderGoals();
       saveAppData();
+    }
+
+    function toggleSchedDups(){
+      _schedShowDupsOnly = !_schedShowDupsOnly;
+      _schedPage = 1;
+      const btn = $("schedDupBtn");
+      if(btn){
+        btn.textContent = _schedShowDupsOnly ? "📋 전체 보기" : "🔴 중복 보기";
+        btn.style.background = _schedShowDupsOnly ? "#fff1f2" : "";
+        btn.style.fontWeight  = _schedShowDupsOnly ? "800" : "";
+      }
+      renderSchedules();
+    }
+
+    function toggleItinDups(){
+      _itinShowDupsOnly = !_itinShowDupsOnly;
+      _itinPage = 1;
+      const btn = $("itinDupBtn");
+      if(btn){
+        btn.textContent = _itinShowDupsOnly ? "📋 전체 보기" : "🔴 중복 보기";
+        btn.style.background = _itinShowDupsOnly ? "#fee2e2" : "#fff1f2";
+        btn.style.fontWeight  = _itinShowDupsOnly ? "800" : "";
+      }
+      renderItineraries();
     }
 
     function groupByAssignee(rows){
@@ -5672,6 +5707,8 @@
       else _leadCheckedIds.delete(el.dataset.id);
     }
     let _schedPage = 1;
+    let _schedShowDupsOnly = false;
+    let _itinShowDupsOnly  = false;
     const _schedPerPage = 30;
     let _itinPage = 1;
     const _itinPerPage = 10;
@@ -7002,13 +7039,21 @@
       renderItineraryMiniCal();
       const body = $("itineraryTableBody");
       if(!body) return;
-      const allRows = getVisibleItineraries().sort((a,b) => (a.date||'').localeCompare(b.date||''));
+      let allRows = getVisibleItineraries().sort((a,b) => (a.date||'').localeCompare(b.date||''));
       const canEdit   = isSuperAdmin() || hasPermission('itinerary_edit') || hasPermission('schedule_view_team') || hasPermission('schedule_view_all');
       const canDelete = isSuperAdmin() || hasPermission('itinerary_delete') || hasPermission('schedule_delete');
 
-      const emptyMsg = itinCalState.selectedDate
-        ? `${itinCalState.selectedDate} 날짜에 등록된 일정표가 없습니다.`
-        : `등록된 일정표가 없습니다. 일정등록에서 일정을 추가하면 자동으로 생성됩니다.`;
+      // 중복 감지: 업체명 기준으로 2개 이상인 항목
+      const itinCompanyCount = {};
+      allRows.forEach(r => { const k=(r.company||"").trim(); itinCompanyCount[k]=(itinCompanyCount[k]||0)+1; });
+      const isDupItin = r => itinCompanyCount[(r.company||"").trim()] > 1;
+      if(_itinShowDupsOnly) allRows = allRows.filter(isDupItin);
+
+      const emptyMsg = _itinShowDupsOnly
+        ? "중복 일정표가 없습니다."
+        : itinCalState.selectedDate
+          ? `${itinCalState.selectedDate} 날짜에 등록된 일정표가 없습니다.`
+          : `등록된 일정표가 없습니다. 일정등록에서 일정을 추가하면 자동으로 생성됩니다.`;
 
       if(!allRows.length){
         body.innerHTML = `<tr><td colspan="13"><div class="empty">${emptyMsg}</div></td></tr>`;
@@ -7022,7 +7067,7 @@
       const rows = allRows.slice(itinStart, itinStart + _itinPerPage);
 
       body.innerHTML = rows.map((itin, idx) => `
-        <tr>
+        <tr style="${isDupItin(itin)?"background:#fff1f2;":""}">
           <td style="text-align:center;font-size:12px;color:var(--muted);font-weight:600;">${itinStart + idx + 1}</td>
           <td>${escapeHtml(itin.company)}</td>
           <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(itin.address)}</td>
