@@ -3746,13 +3746,15 @@
               if(!n.specialNote)    n.specialNote    = p.specialNote    || "";
               if(!n.bizPhone)       n.bizPhone       = p.bizPhone       || "";
               if(!n.managerPhone)   n.managerPhone   = p.managerPhone   || "";
+              if(!n.createdByNo)    n.createdByNo    = p.createdByNo    || "";
             }
             // 2순위: 부모 schedule에서 복원 (로컬도 없는 경우)
-            if(!n.bizPhone || !n.managerPhone){
+            if(!n.bizPhone || !n.managerPhone || !n.createdByNo){
               const s = schedules.find(s => String(s.id) === String(n.id));
               if(s){
                 if(!n.bizPhone)     n.bizPhone     = s.phone || "";
                 if(!n.managerPhone) n.managerPhone = s.phone || "";
+                if(!n.createdByNo)  n.createdByNo  = s.createdByNo || "";
               }
             }
             if(!n.specialNote) n.specialNote = buildDefaultSpecialNote();
@@ -3941,6 +3943,7 @@
                     if(!n.specialNote)    n.specialNote    = p.specialNote    || "";
                     if(!n.supportContent) n.supportContent = p.supportContent || "";
                     if(!n.industry)       n.industry       = p.industry       || "";
+                    if(!n.createdByNo)    n.createdByNo    = p.createdByNo    || "";
                   }
                   return n;
                 })
@@ -5671,7 +5674,7 @@
     let _schedPage = 1;
     const _schedPerPage = 30;
     let _itinPage = 1;
-    const _itinPerPage = 30;
+    const _itinPerPage = 10;
     let _leadRowHeights = {};      // { leadId: px } — 세션 유지, 새로고침 시 초기화
     let _leadTableResizeInit = false; // 열 리사이즈 핸들 한 번만 부착
 
