@@ -8649,12 +8649,17 @@
       const q = _crmLeadSearchTerm;
       if(!q) return getVisibleLeads();
       const qPhone = q.replace(/[^0-9]/g,"");
-      return getVisibleLeads().filter(l =>
-        (l.company||"").toLowerCase().includes(q) ||
-        (l.manager||"").toLowerCase().includes(q) ||
-        (l.address||"").toLowerCase().includes(q) ||
-        (l.ownerName||"").toLowerCase().includes(q) ||
-        (qPhone && (l.phone||"").replace(/[^0-9]/g,"").includes(qPhone))
+      const visibleLeads = getVisibleLeads();
+      const visibleIds = new Set(visibleLeads.map(l => l.id));
+      // 전화번호(4자리 이상 숫자)는 전체 DB 검색, 나머지는 권한 범위 내 검색
+      return leads.filter(l =>
+        (visibleIds.has(l.id) && (
+          (l.company||"").toLowerCase().includes(q) ||
+          (l.manager||"").toLowerCase().includes(q) ||
+          (l.address||"").toLowerCase().includes(q) ||
+          (l.ownerName||"").toLowerCase().includes(q)
+        )) ||
+        (qPhone.length >= 4 && (l.phone||"").replace(/[^0-9]/g,"").includes(qPhone))
       );
     }
 
