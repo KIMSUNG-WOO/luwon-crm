@@ -4412,7 +4412,16 @@
 
       $("noticeFormBox").classList.toggle("hidden", !canNoticeWrite);
 
-      $("scheduleAssignee").value = currentStaffName();
+      const _isElevated = isSuperAdmin() || isAdminMode();
+      $("scheduleAssignee").classList.toggle("hidden", _isElevated);
+      if($("scheduleAssigneeSelect")){
+        $("scheduleAssigneeSelect").classList.toggle("hidden", !_isElevated);
+        if(_isElevated){
+          $("scheduleAssigneeSelect").innerHTML = staffs.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join("");
+          $("scheduleAssigneeSelect").value = currentStaffName();
+        }
+      }
+      if(!_isElevated) $("scheduleAssignee").value = currentStaffName();
 
       $("perfSaveStaff").value = currentStaffName();
       $("perfSaveStaffSelect").classList.toggle("hidden", !canPerfStaff);
@@ -4890,7 +4899,9 @@
       const _restoreBtn = () => { if(_saveBtn){ _saveBtn.disabled = false; _saveBtn.textContent = '✅ 일정 저장'; } };
 
       try{
-        const assignee = currentStaffName();
+        const assignee = ($("scheduleAssigneeSelect") && !$("scheduleAssigneeSelect").classList.contains("hidden"))
+          ? ($("scheduleAssigneeSelect").value || currentStaffName())
+          : currentStaffName();
         const type    = normalizeText($("scheduleType").value) || "교육섭외";
         const date    = normalizeText($("scheduleDate").value);
         const time    = normalizeManualTime($("scheduleTime").value);
@@ -4956,6 +4967,8 @@
         $("scheduleDate").value = tomorrowStr();
         $("scheduleType").value = "교육섭외";
         $("scheduleAssignee").value = currentStaffName();
+        if($("scheduleAssigneeSelect") && !$("scheduleAssigneeSelect").classList.contains("hidden"))
+          $("scheduleAssigneeSelect").value = currentStaffName();
         updateNateonPreview();
         closeScheduleModal();
       }catch(e){
@@ -5071,6 +5084,8 @@
       if(!state.currentUser) return;
       // 열 때마다 항상 완전 초기화 (이전 입력값 잔존 방지)
       $("scheduleAssignee").value = currentStaffName();
+      if($("scheduleAssigneeSelect") && !$("scheduleAssigneeSelect").classList.contains("hidden"))
+        $("scheduleAssigneeSelect").value = currentStaffName();
       $("scheduleDate").value     = tomorrowStr();
       $("scheduleType").value     = "교육섭외";
       ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { const el=$(id); if(el) el.value=""; });
@@ -7378,7 +7393,16 @@
     }
 
     function getCalendarSchedulesForDate(dateStr){
-      return getVisibleSchedules()
+      let pool;
+      if(isSuperAdmin() || hasPermission('home_stats_all')){
+        pool = schedules;
+      } else if(hasPermission('home_stats_team')){
+        const teamNos = getMyTeamMemberNos();
+        pool = schedules.filter(s => teamNos.includes(s.createdByNo));
+      } else {
+        pool = schedules.filter(s => s.createdByNo === currentStaffNo() || s.assignee === currentStaffName());
+      }
+      return pool
         .filter(s => s.date === dateStr)
         .sort((a,b) => `${a.time} ${a.assignee}`.localeCompare(`${b.time} ${b.assignee}`, "ko"));
     }
@@ -9829,6 +9853,7 @@
       <div class="sched-modal-body">
         <div class="sched-modal-grid">
           <input id="scheduleAssignee" placeholder="섭외자" readonly>
+          <select id="scheduleAssigneeSelect" class="hidden" style="height:44px;padding:0 12px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:14px;font-weight:600;cursor:pointer;"></select>
           <input id="scheduleType" placeholder="섭외" value="교육섭외">
           <input id="scheduleDate" type="date">
           <input id="scheduleTime" placeholder="시간 예) 1000 / 1700 / 09:30">
