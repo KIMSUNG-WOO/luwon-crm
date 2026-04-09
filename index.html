@@ -6066,13 +6066,25 @@
 
     async function loadData(){
       try{
-        const { data, error } = await sbClient
-          .from("education_db")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .order("id", { ascending: true }); // 동일 업로드 배치 내 엑셀 행 순서 유지
-
-        if(error) throw error;
+        // 1000행 제한 우회: 1000행씩 나눠서 전체 조회
+        let allFetched = [];
+        const CHUNK = 1000;
+        let from = 0;
+        while(true){
+          const { data: chunk, error } = await sbClient
+            .from("education_db")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .order("id", { ascending: true })
+            .range(from, from + CHUNK - 1);
+          if(error) throw error;
+          if(!chunk || chunk.length === 0) break;
+          allFetched = allFetched.concat(chunk);
+          if(chunk.length < CHUNK) break;
+          from += CHUNK;
+        }
+        const data = allFetched;
+        if(!data) throw new Error("데이터 없음");
 
         // 타임스탬프 비교용 이전 상태 스냅샷
         const prevLeads = leads.slice();
