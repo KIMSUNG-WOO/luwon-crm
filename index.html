@@ -5738,6 +5738,9 @@
       if(_leadEditingResultId || _activeIsResult) { _renderLeadsPending = true; return; }
       _renderLeadsPending = false;
 
+      // 검색어가 있으면 필터된 결과 유지 (realtime 등 외부 호출도 검색 상태 보존)
+      if(_crmLeadSearchTerm){ crmRenderFilteredLeads(); return; }
+
       const body = $("leadTableBody");
       const allRows = getVisibleLeads();
       const admin = hasPermission('lead_edit') || hasPermission('lead_delete_one') || hasPermission('lead_status_toggle') || isSuperAdmin();
@@ -8732,7 +8735,7 @@
           (l.address||"").toLowerCase().includes(q) ||
           (l.ownerName||"").toLowerCase().includes(q)
         )) ||
-        (qPhone.length >= 4 && (l.phone||"").replace(/[^0-9]/g,"").includes(qPhone))
+        (qPhone.length >= 4 && (l.phone||"").split("/").some(p => p.replace(/[^0-9]/g,"").includes(qPhone)))
       );
     }
 
