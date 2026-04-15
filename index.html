@@ -6201,18 +6201,6 @@
       }
     }
 
-    // 키맨 값으로 업로드 시 자동 상태 판별
-    function autoStatusFromManager(manager){
-      const m = (manager || "").trim();
-      if(!m) return "교육 이수"; // 빈칸 → 초록불
-      if(/^[a-zA-Z]/.test(m)) return "교육 이수"; // 영어로 시작 → 초록불
-      // 직함만 단독으로 시작하는 경우 → 초록불
-      const TITLE_STARTS = ["대표","원장","담당자","인사담당자","인사담당","채용담당자","채용담당","관리부장","인사채용","인사","채용","HR","담당"];
-      if(TITLE_STARTS.some(t => m.startsWith(t))) return "교육 이수";
-      // 그 외 (이름만, 이름+직함, 이름+괄호 등) → 빨간불
-      return "점검제외처리";
-    }
-
     async function syncAfterUpload(rows){
       // 기존 데이터 삭제 없이 추가만 함 — 콜량(result) 보존, 새 업로드가 앞페이지로 배치
 
@@ -6305,7 +6293,7 @@
             if(!item.company) return; // 사업장명 없으면 스킵
 
             item.phone    = item.phone || "";
-            item.status   = autoStatusFromManager(item.manager);
+            item.status   = "점검제외처리";
             item.repName  = item.repName || "";
             item.ownerNo  = targetStaffNo;
             item.ownerName= targetStaffName;
