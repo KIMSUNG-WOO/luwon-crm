@@ -7062,8 +7062,11 @@
       const body = $("itineraryTableBody");
       if(!body) return;
       let allRows = getVisibleItineraries().sort((a,b) => (a.date||'').localeCompare(b.date||''));
-      const canEdit   = isSuperAdmin() || hasPermission('itinerary_edit') || hasPermission('schedule_view_team') || hasPermission('schedule_view_all');
-      const canDelete = isSuperAdmin() || hasPermission('itinerary_delete') || hasPermission('schedule_delete');
+      const _gCanEdit   = isSuperAdmin() || hasPermission('itinerary_edit') || hasPermission('schedule_view_team') || hasPermission('schedule_view_all');
+      const _gCanDelete = isSuperAdmin() || hasPermission('itinerary_delete') || hasPermission('schedule_delete');
+      // 직원 본인 일정표도 수정/삭제 허용
+      const canEditRow   = (r) => _gCanEdit   || r.createdByNo === currentStaffNo() || r.assignee === currentStaffName();
+      const canDeleteRow = (r) => _gCanDelete || r.createdByNo === currentStaffNo() || r.assignee === currentStaffName();
 
       // 중복 감지: 업체명 기준으로 2개 이상인 항목
       const itinCompanyCount = {};
@@ -7105,8 +7108,8 @@
           <td>
             <div style="display:flex;gap:4px;flex-wrap:wrap;">
               <button class="small-btn" type="button" onclick="openItineraryCard('${itin.id}')">섭외지</button>
-              ${canEdit ? `<button class="ghost-btn" type="button" onclick="openItineraryEditModal('${itin.id}')">수정</button>` : ""}
-              ${canDelete ? `<button class="danger-btn" type="button" onclick="deleteItinerary('${itin.id}')">삭제</button>` : ""}
+              ${canEditRow(itin)   ? `<button class="ghost-btn" type="button" onclick="openItineraryEditModal('${itin.id}')">수정</button>` : ""}
+              ${canDeleteRow(itin) ? `<button class="danger-btn" type="button" onclick="deleteItinerary('${itin.id}')">삭제</button>` : ""}
             </div>
           </td>
         </tr>
@@ -7114,16 +7117,35 @@
       renderItinPagination(allRows.length, totalPages);
     }
 
-    function deleteItinerary(id){
-      if(!isSuperAdmin() && !hasPermission('itinerary_delete') && !hasPermission('schedule_delete')) return;
-      if(!confirm("이 일정표를 삭제할까? 복구 불가!")) return;
-      // 삭제 레지스트리에 등록 → loadFromSupabase 자동복구가 재생성하지 않음
-      markItinDeleted(id);
-      // 같은 id 또는 scheduleId를 가진 중복 항목도 함께 삭제
-      const toDelete = itineraries.filter(x => String(x.id) === String(id) || String(x.scheduleId) === String(id));
-      toDelete.forEach(x => sbDeleteRecord("itineraries", x.id));
-      itineraries = itineraries.filter(x => String(x.id) !== String(id) && String(x.scheduleId) !== String(id));
+    async function deleteItinerary(id){
+      const itin = itineraries.find(x => String(x.id) === String(id));
+      const isOwn = itin && (itin.createdByNo === currentStaffNo() || itin.assignee === currentStaffName());
+      if(!isSuperAdmin() && !hasPermission('itinerary_delete') && !hasPermission('schedule_delete') && !isOwn) return;
+      if(!confirm("이 일정표를 삭제할까요?\n(일정등록 현황 및 캘린더에서도 함께 삭제됩니다.)")) return;
+
+      const schedId = itin ? itin.scheduleId : null;
+      if(schedId){
+        // schedule 삭제 → 일정등록현황·캘린더 자동 제거
+        markSchedDeleted(schedId);
+        markItinDeleted(id);
+        const linkedItins = itineraries.filter(x => String(x.scheduleId) === String(schedId));
+        await Promise.all([
+          ...linkedItins.map(i => sbDeleteRecord("itineraries", i.id)),
+          sbDeleteRecord("schedules", schedId)
+        ]);
+        schedules   = schedules.filter(x => String(x.id) !== String(schedId));
+        itineraries = itineraries.filter(x => String(x.scheduleId) !== String(schedId) && String(x.id) !== String(id));
+      } else {
+        // scheduleId 없는 경우 일정표만 삭제
+        markItinDeleted(id);
+        const toDelete = itineraries.filter(x => String(x.id) === String(id) || String(x.scheduleId) === String(id));
+        toDelete.forEach(x => sbDeleteRecord("itineraries", x.id));
+        itineraries = itineraries.filter(x => String(x.id) !== String(id) && String(x.scheduleId) !== String(id));
+      }
+      renderSchedules();
       renderItineraries();
+      renderCalendar();
+      runHomeSummary();
       saveAppData();
     }
 
@@ -8727,15 +8749,14 @@
       const qPhone = q.replace(/[^0-9]/g,"");
       const visibleLeads = getVisibleLeads();
       const visibleIds = new Set(visibleLeads.map(l => l.id));
-      // 전화번호(4자리 이상 숫자)는 전체 DB 검색, 나머지는 권한 범위 내 검색
       return leads.filter(l =>
-        (visibleIds.has(l.id) && (
+        visibleIds.has(l.id) && (
           (l.company||"").toLowerCase().includes(q) ||
           (l.manager||"").toLowerCase().includes(q) ||
           (l.address||"").toLowerCase().includes(q) ||
-          (l.ownerName||"").toLowerCase().includes(q)
-        )) ||
-        (qPhone.length >= 4 && (l.phone||"").split("/").some(p => p.replace(/[^0-9]/g,"").includes(qPhone)))
+          (l.ownerName||"").toLowerCase().includes(q) ||
+          (qPhone.length >= 4 && (l.phone||"").split("/").some(p => p.replace(/[^0-9]/g,"").includes(qPhone)))
+        )
       );
     }
 
