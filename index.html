@@ -2421,6 +2421,8 @@
               <button id="btnDeleteAll" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteAllLeads()">🗑 전체삭제</button>
               <button id="btnDeleteSel" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #fecdd3;background:#fff1f2;color:#e11d48;font-size:13px;font-weight:800;cursor:pointer;" onclick="deleteSelectedLeads()">☑ 선택삭제</button>
               <button id="btnMarkEdu" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1px solid #bbf7d0;background:#f0fdf4;color:#15803d;font-size:13px;font-weight:800;cursor:pointer;" onclick="markSelectedAsCompleted()">✅ 선택 교육이수처리</button>
+              <button id="btnFilterEmptyManager" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1.5px solid #fde68a;background:#fffbeb;color:#92400e;font-size:13px;font-weight:800;cursor:pointer;" onclick="toggleFilterEmptyManager()">🔍 키맨 취합</button>
+              <button id="btnFilterEmptyRepName" class="hidden" style="height:40px;padding:0 14px;border-radius:12px;border:1.5px solid #fde68a;background:#fffbeb;color:#92400e;font-size:13px;font-weight:800;cursor:pointer;" onclick="toggleFilterEmptyRepName()">🔍 대표자명 취합</button>
             </div>
           </div>
 
@@ -5731,6 +5733,8 @@
     let _leadTableResizeInit = false; // 열 리사이즈 핸들 한 번만 부착
 
     let _renderLeadsPending = false;
+    let _filterEmptyManager = false; // 키맨 취합 필터
+    let _filterEmptyRepName = false; // 대표자명 취합 필터
 
     function renderLeads(){
       // 결과값 입력 중이면 어떤 경로로 호출돼도 DOM 재생성 차단 (포커스 소멸 방지)
@@ -5742,7 +5746,9 @@
       if(_crmLeadSearchTerm){ crmRenderFilteredLeads(); return; }
 
       const body = $("leadTableBody");
-      const allRows = getVisibleLeads();
+      let allRows = getVisibleLeads();
+      if(_filterEmptyManager) allRows = allRows.filter(l => !(l.manager||"").trim());
+      if(_filterEmptyRepName) allRows = allRows.filter(l => !(l.repName||"").trim());
       const admin = hasPermission('lead_edit') || hasPermission('lead_delete_one') || hasPermission('lead_status_toggle') || isSuperAdmin();
 
       // 관리자면 수정/삭제 열 표시
@@ -5753,6 +5759,11 @@
       if($("btnDeleteAll")) $("btnDeleteAll").classList.toggle("hidden", !admin);
       if($("btnDeleteSel")) $("btnDeleteSel").classList.toggle("hidden", !admin);
       if($("btnMarkEdu"))   $("btnMarkEdu").classList.toggle("hidden", !admin);
+      if($("btnFilterEmptyManager")) $("btnFilterEmptyManager").classList.toggle("hidden", !admin);
+      if($("btnFilterEmptyRepName"))  $("btnFilterEmptyRepName").classList.toggle("hidden", !admin);
+      // 활성 필터 버튼 시각 표시
+      if($("btnFilterEmptyManager")) $("btnFilterEmptyManager").style.outline = _filterEmptyManager ? "2px solid #f59e0b" : "";
+      if($("btnFilterEmptyRepName"))  $("btnFilterEmptyRepName").style.outline  = _filterEmptyRepName  ? "2px solid #f59e0b" : "";
 
       if(!allRows.length){
         body.innerHTML = `<tr><td colspan="${admin ? 13 : 12}"><div class="empty">등록된 교육섭외 DB가 없습니다.</div></td></tr>`;
@@ -8729,6 +8740,19 @@
     /* ══════════════════════════════════════════════════════════
        [추가] 기능 2: 전체 검색 기능 (변수는 상단에 선언됨)
     ══════════════════════════════════════════════════════════ */
+
+    function toggleFilterEmptyManager(){
+      _filterEmptyManager = !_filterEmptyManager;
+      _filterEmptyRepName = false;
+      _leadPage = 1;
+      renderLeads();
+    }
+    function toggleFilterEmptyRepName(){
+      _filterEmptyRepName = !_filterEmptyRepName;
+      _filterEmptyManager = false;
+      _leadPage = 1;
+      renderLeads();
+    }
 
     function crmFilterLeads(){
       _crmLeadSearchTerm = (($("leadSearchInput")||{}).value||"").toLowerCase().trim();
