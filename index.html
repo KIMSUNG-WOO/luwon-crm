@@ -8196,19 +8196,60 @@
       if(!isAdminMode()) return;
       const s = staffs.find(x => x.no === no);
       if(!s) return;
-      if(!confirm(`[${s.name}] 직원을 삭제할까요?\n해당 직원으로 로그인할 수 없게 됩니다.`)) return;
-      staffs    = staffs.filter(x => x.no !== no);
-      authUsers = authUsers.filter(x => x.staffNo !== no);
+      const staffName = s.name;
+
+      const leadCount  = leads.filter(l => l.ownerNo === no).length;
+      const schedCount = schedules.filter(sc => sc.createdByNo === no).length;
+      const itinCount  = itineraries.filter(i => i.assignee === staffName).length;
+      const perfCount  = performances.filter(p => p.staffNo === no).length;
+
+      const msg =
+        `[${staffName}] 직원을 삭제할까요?\n\n` +
+        `⚠️ 해당 직원의 모든 데이터가 함께 삭제됩니다:\n` +
+        `• 교육섭외 DB: ${leadCount}건\n` +
+        `• 일정: ${schedCount}건\n` +
+        `• 일정표: ${itinCount}건\n` +
+        `• 실적: ${perfCount}건\n` +
+        `• 목표설정, 팀 소속, 단가설정 등\n\n` +
+        `삭제 후 복구할 수 없습니다. 계속하시겠습니까?`;
+      if(!confirm(msg)) return;
+
+      // ① 로컬 데이터 삭제
+      staffs       = staffs.filter(x => x.no !== no);
+      authUsers    = authUsers.filter(x => x.staffNo !== no);
+      leads        = leads.filter(l => l.ownerNo !== no);
+      schedules    = schedules.filter(sc => sc.createdByNo !== no);
+      itineraries  = itineraries.filter(i => i.assignee !== staffName);
+      performances = performances.filter(p => p.staffNo !== no);
       delete paySettings[no];
       delete staffRanks[no];
+      delete staffGoals[no];
+      staffTeams = (staffTeams||[]).map(t => ({ ...t, memberNos: (t.memberNos||[]).filter(m => m !== no) }));
+
+      // ② UI 갱신
       renderSettingsStaff();
       renderStaffs();
       refreshLeadStaffDropdown();
       refreshPayStaffDropdown();
       refreshItineraryStaffDropdown();
       refreshAdminAcctDropdown();
+      renderLeads();
+      renderSchedules();
+      renderItineraries();
       saveAppData();
-      await deleteStaffFromSupabase(no); // Supabase에서도 삭제
+
+      // ③ Supabase 일괄 삭제
+      try {
+        await Promise.all([
+          sbClient.from("staff_accounts").delete().eq("staff_no", no),
+          sbClient.from("leads").delete().eq("owner_no", no),
+          sbClient.from("schedules").delete().eq("created_by_no", no),
+          sbClient.from("itineraries").delete().eq("assignee", staffName),
+          sbClient.from("performances").delete().eq("staff_no", no),
+        ]);
+      } catch(e){ console.warn("직원 데이터 삭제 오류:", e.message); }
+
+      alert(`✅ [${staffName}] 직원 및 관련 데이터가 모두 삭제되었습니다.`);
     }
 
     // ══════════════════════════════════════════════════════════
