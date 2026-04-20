@@ -5747,8 +5747,8 @@
 
       const body = $("leadTableBody");
       let allRows = getVisibleLeads();
-      if(_filterEmptyManager) allRows = allRows.filter(l => !(l.manager||"").trim());
-      if(_filterEmptyRepName) allRows = allRows.filter(l => !(l.repName||"").trim());
+      if(_filterEmptyManager) allRows = allRows.filter(l => !(l.repName||"").trim());  // 키맨 열 = repName
+      if(_filterEmptyRepName) allRows = allRows.filter(l => !(l.manager||"").trim()); // 대표자명 열 = manager
       const admin = hasPermission('lead_edit') || hasPermission('lead_delete_one') || hasPermission('lead_status_toggle') || isSuperAdmin();
 
       // 관리자면 수정/삭제 열 표시
