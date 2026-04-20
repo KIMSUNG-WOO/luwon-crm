@@ -4555,11 +4555,14 @@
       $("homeCardDesc4").textContent  = `${calLabel} 전직원 일정 (진행일 기준)`;
 
       $("homeValue1").textContent = schedules.filter(s => String(s.createdAt||"").startsWith(today)).length;
-      // 콜량: 결과값이 있고, 오늘 result_date 기준
+      // 콜량: 결과값이 있고, 오늘 result_date 기준 — 점검제외/교육이수 분리
       const _todayCalls = leads.filter(l =>
         l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
       );
-      $("homeValue2").textContent = _todayCalls.length;
+      const _todayEduCalls = _todayCalls.filter(l => l.status === "교육 이수").length;
+      const _todayRegCalls = _todayCalls.length - _todayEduCalls;
+      $("homeValue2").textContent = _todayRegCalls;
+      $("homeCardDesc2").textContent = `점검제외 ${_todayRegCalls}콜 / 교육이수 ${_todayEduCalls}콜`;
       if(hasPermission('home_call_ranking')) renderCallRanking(_todayCalls);
       else { const el = $("homeCallRanking"); if(el) el.style.display = "none"; }
       $("homeValue3").textContent = schedules.filter(s => s.date === tomorrow).length;
@@ -4601,7 +4604,10 @@
         (teamNos.includes(l.ownerNo) || teamNames.includes(l.ownerName)) &&
         l.result && l.result !== "" && l.result !== "선택" && l.resultDate === today
       );
-      $("homeValue2").textContent = _teamCalls.length;
+      const _teamEduCalls = _teamCalls.filter(l => l.status === "교육 이수").length;
+      const _teamRegCalls = _teamCalls.length - _teamEduCalls;
+      $("homeValue2").textContent = _teamRegCalls;
+      $("homeCardDesc2").textContent = `점검제외 ${_teamRegCalls}콜 / 교육이수 ${_teamEduCalls}콜`;
 
       if(hasPermission('home_call_ranking')){
         renderCallRanking(_teamCalls);
@@ -9131,7 +9137,7 @@
             if(!g) return "";
             const name = escapeHtml(s ? s.name : no);
             const staffName = s ? s.name : "";
-            const todayCalls  = leads.filter(l => {
+            const _staffResults = leads.filter(l => {
               if(!(l.ownerNo===no||l.ownerName===staffName)) return false;
               if(!l.result||l.result===""||l.result==="선택") return false;
               if(l.resultEnteredAt){
@@ -9139,12 +9145,16 @@
                 return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")===today;
               }
               return l.resultDate===today;
-            }).length + schedules.filter(sc=>sc.createdByNo===no&&String(sc.createdAt||"").startsWith(today)).length;
+            });
+            const _staffEduCalls = _staffResults.filter(l => l.status === "교육 이수").length;
+            const _staffRegCalls = _staffResults.length - _staffEduCalls;
+            const todayCalls = _staffRegCalls + schedules.filter(sc=>sc.createdByNo===no&&String(sc.createdAt||"").startsWith(today)).length;
+            const todayCallsLabel = _staffEduCalls > 0 ? `${todayCalls} <span style="font-size:11px;color:#059669;font-weight:700;">(교육이수 ${_staffEduCalls})</span>` : `${todayCalls}`;
             const todayScheds = schedules.filter(sc=>String(sc.createdAt||"").startsWith(today)&&sc.createdByNo===no).length;
             const monthScheds = schedules.filter(sc=>sc.date&&sc.date.startsWith(month)&&(sc.createdByNo===no||sc.assignee===staffName)).length;
             return `<tr>
               <td><b>${name}</b></td>
-              <td>${makeBar(todayCalls,  g.calls||0)}</td>
+              <td>${makeBar(todayCalls, g.calls||0)}${_staffEduCalls > 0 ? `<div style="font-size:11px;color:#059669;font-weight:700;margin-top:2px;">교육이수 ${_staffEduCalls}콜</div>` : ""}</td>
               <td>${makeBar(todayScheds, g.dailyScheds||0)}</td>
               <td>${makeBar(monthScheds, g.scheds||0)}</td>
             </tr>`;
