@@ -3704,6 +3704,8 @@
           await Promise.allSettled(ops);
         }
         // 비어있는 설정값은 절대 Supabase에 저장하지 않음 → 기존 데이터 덮어쓰기 방지
+        // 업로드 타임스탬프 설정 → app_settings realtime 자기echo 억제 (5초)
+        _appSettingsSyncTs = Date.now();
         const settOps = [
           Object.keys(paySettings).length   ? sbClient.from("app_settings").upsert({key:"paySettings",   value:paySettings},   {onConflict:"key"}) : null,
           Object.keys(staffGoals||{}).length        ? sbClient.from("app_settings").upsert({key:"staffGoals",       value:staffGoals},       {onConflict:"key"}) : null,
@@ -3895,6 +3897,8 @@
         .channel("crm-realtime")
         // 교육섭외 DB
         .on("postgres_changes", { event:"*", schema:"public", table:"education_db" }, () => {
+          // 엑셀 업로드 중이면 realtime 억제 (업로드 중 폭발적 API 호출 방지)
+          if(_uploadInProgress) return;
           // 로컬 업데이트 직후 2초간 realtime 재로드 억제 (optimistic update 덮어쓰기 방지)
           if(Date.now() - _leadsLocalUpdateTs < 2000) return;
           // 결과값 입력 중이면 realtime 재로드 억제 (포커스 날아감 방지)
@@ -3999,6 +4003,8 @@
         })
         // 앱 설정 (목표/단가/직급 등)
         .on("postgres_changes", { event:"*", schema:"public", table:"app_settings" }, async () => {
+          // 내가 방금 sbSyncAll로 업로드한 직후 5초간 자기echo 억제 (realtime 루프 차단)
+          if(Date.now() - _appSettingsSyncTs < 5000) return;
           // 결과값 입력 중이거나 마우스 클릭 중이면 renderAll 억제 (포커스 날아감 방지)
           const _activeIsResultEl = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('result-input');
           if(_leadEditingResultId || _activeIsResultEl || _mouseIsDown) return;
@@ -6334,6 +6340,8 @@
           showLeadMsg(`⏳ ${added}건 업로드 중... 잠시만 기다려 주세요.`, "");
 
           // Supabase에 업로드 → 내부에서 loadData() 호출로 실제 ID 동기화
+          // 업로드 중 education_db realtime 억제 (API 호출 폭발 방지)
+          _uploadInProgress = true;
           try{
             await syncAfterUpload(newItems);
             showLeadMsg(`✅ 엑셀 업로드 완료! ${added}건 추가됨`, "");
@@ -6341,6 +6349,8 @@
           } catch(uploadErr){
             showLeadMsg("❌ 업로드 실패", "error");
             alert(`❌ 업로드 실패\n${uploadErr.message}`);
+          } finally{
+            _uploadInProgress = false;
           }
         } catch(err){
           alert("엑셀 파일을 읽는 중 오류가 발생했습니다.\n" + err.message);
@@ -6688,6 +6698,8 @@
     // ── 결과값 + 일정픽스 ─────────────────────────────────────────
 
     let _leadsLocalUpdateTs = 0; // realtime 억제용 타임스탬프
+    let _appSettingsSyncTs = 0;  // app_settings 자기echo 억제용 타임스탬프
+    let _uploadInProgress = false; // 엑셀 업로드 중 education_db realtime 억제
     const _pendingLeadStatus = new Map(); // id→status: loadData 덮어쓰기 방지
     const _pendingLeadResult = new Map(); // id→{result,resultDate,resultEnteredAt}: loadData 덮어쓰기 방지
     let _leadEditingResultId = null; // 드롭다운 열림 상태: renderLeads 차단용
