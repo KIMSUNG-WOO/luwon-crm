@@ -5228,7 +5228,7 @@
     }
 
     function copyScheduleFullText(id){
-      const row = schedules.find(x => x.id === id);
+      const row = schedules.find(x => String(x.id) === String(id));
       if(!row) return alert("일정을 찾을 수 없습니다.");
       safeCopy(buildFullCopyText(row));
     }
@@ -7560,9 +7560,9 @@
     }
 
     function loadManualEditorFromSchedule(id){
-      const row = schedules.find(x => x.id === id);
+      const row = schedules.find(x => String(x.id) === String(id));
       if(!row) return;
-      state.manualEditId = id;
+      state.manualEditId = row.id; // 항상 schedules 배열의 실제 id 타입으로 저장
       $("manualEditorTitle").textContent = "수기 일정 수정";
       $("manualScheduleText").value = scheduleMapToText(row);
     }
@@ -7758,7 +7758,7 @@
       safeCopy(rows.map(buildFullCopyText).join("\n\n"));
     }
 
-    function saveManualScheduleFromModal(){
+    async function saveManualScheduleFromModal(){
       const txt = $("manualScheduleText").value.trim();
       if(!txt) return alert("수기 일정 내용을 입력해 주세요.");
       if(!state.modalDate) return alert("선택된 날짜가 없습니다.");
@@ -7784,11 +7784,13 @@
         memo: normalizeText(map["특이사항"] || "")
       };
 
-      if(state.manualEditId){
-        const row = schedules.find(x => x.id === state.manualEditId);
+      const isEdit = !!state.manualEditId;
+
+      if(isEdit){
+        const row = schedules.find(x => String(x.id) === String(state.manualEditId));
         if(row){
           row.assignee = rowData.assignee;
-          row.type    = rowData.type;
+          // type/age/subject는 기존 값 유지 (텍스트 양식에 없는 필드는 덮어쓰지 않음)
           row.date    = rowData.date;
           row.time    = rowData.time;
           row.company = rowData.company;
@@ -7796,10 +7798,9 @@
           row.manager = rowData.manager;
           row.phone   = rowData.phone;
           row.people  = rowData.people;
-          row.age     = rowData.age;
-          row.subject = rowData.subject;
           row.memo    = rowData.memo;
-          if(sbClient){ (async()=>{ const { error } = await sbClient.from("schedules").upsert([schedToRow(row)], {onConflict:"id"}); if(error) console.warn("수기 일정 수정 저장 오류:", error); })(); }
+          // DB에 await로 저장 → 저장 완료 후 realtime이 최신 데이터로 덮어쓰도록
+          if(sbClient){ const { error } = await sbClient.from("schedules").upsert([schedToRow(row)], {onConflict:"id"}); if(error) console.warn("수기 일정 수정 저장 오류:", error); }
         }
       }else{
         const _newManualSched = {
@@ -7821,7 +7822,7 @@
       runHomeSummary();
       saveAppData();
       openCalendarModal(targetDate);
-      alert(state.manualEditId ? "수기 일정 수정 완료" : "수기 일정 등록 완료");
+      alert(isEdit ? "수기 일정 수정 완료" : "수기 일정 등록 완료");
     }
 
     function setSettingsTab(tab){
