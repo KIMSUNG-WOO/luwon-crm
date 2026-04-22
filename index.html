@@ -4514,7 +4514,7 @@
       });
       const ranking = Object.entries(byStaff)
         .map(([name, d]) => ({ name, count: d.total, edu: d.edu, reg: d.total - d.edu }))
-        .sort((a, b) => b.count - a.count);
+        .sort((a, b) => b.reg - a.reg);
       const medals = ["🥇","🥈","🥉"];
       const rows = ranking.map((r, i) =>
         `<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:8px;background:${i===0?"rgba(59,130,246,0.08)":"transparent"}">
