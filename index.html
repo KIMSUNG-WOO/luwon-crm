@@ -3904,7 +3904,9 @@
           // 결과값 입력 중이면 realtime 재로드 억제 (포커스 날아감 방지)
           const _activeIsResultEl = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('result-input');
           if(_leadEditingResultId || _activeIsResultEl || _mouseIsDown) return;
-          try{ loadData(); }catch(e){}
+          // realtime 재로드 시 페이지 강제변경 억제 (다른 사용자 변경으로 페이지 이동 방지)
+          _suppressLeadPageClamp = true;
+          try{ loadData().finally(() => { _suppressLeadPageClamp = false; }); }catch(e){ _suppressLeadPageClamp = false; }
         })
         // 일정
         .on("postgres_changes", { event:"*", schema:"public", table:"schedules" }, async () => {
@@ -4020,7 +4022,9 @@
                 if(row.key==="adminRates"    && row.value) Object.assign(adminRates, row.value);
                 if(row.key==="cleanBizRules"  && Array.isArray(row.value)) cleanBizRules  = row.value;
               });
-              if(state.currentUser) renderAll();
+              // app_settings 변경 시 페이지 강제변경 억제 후 renderAll
+              _suppressLeadPageClamp = true;
+              try{ if(state.currentUser) renderAll(); }finally{ _suppressLeadPageClamp = false; }
             }
           }catch(e){}
         })
@@ -5733,6 +5737,7 @@
     }
 
     let _leadPage = 1;
+    let _suppressLeadPageClamp = false; // realtime 재로드 시 페이지 강제변경 억제
     const _leadPerPage = 50;
     const _leadCheckedIds = new Set(); // 체크된 lead ID 보관 (DOM 재생성 시에도 유지)
     function onLeadChkChange(el){ // 인라인 핸들러용 래퍼 (const는 window 스코프 불가)
@@ -5787,11 +5792,14 @@
         return;
       }
 
-      // 페이지 범위 보정
+      // 페이지 범위 보정 (realtime 재로드 시에는 페이지 강제 변경 억제)
       const totalPages = Math.ceil(allRows.length / _leadPerPage);
-      if(_leadPage < 1) _leadPage = 1;
-      if(_leadPage > totalPages) _leadPage = totalPages;
-      const start = (_leadPage - 1) * _leadPerPage;
+      if(!_suppressLeadPageClamp){
+        if(_leadPage < 1) _leadPage = 1;
+        if(_leadPage > totalPages) _leadPage = Math.max(1, totalPages);
+      }
+      const safePage = Math.min(Math.max(_leadPage, 1), Math.max(totalPages, 1));
+      const start = (safePage - 1) * _leadPerPage;
       const rows  = allRows.slice(start, start + _leadPerPage);
 
       const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "거절", "일정픽스", "교육 이수 완료", "기타"];
@@ -5861,15 +5869,15 @@
       if(!el) return;
       if(totalPages <= 1){ el.innerHTML = ""; return; }
       let html = `<span style="font-size:12px;color:#64748b;">총 ${total}건</span>`;
-      html += `<button onclick="gotoLeadPage(1)" ${_leadPage===1?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">◀◀</button>`;
-      html += `<button onclick="gotoLeadPage(${_leadPage-1})" ${_leadPage===1?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">◀</button>`;
-      const from = Math.max(1, _leadPage-2), to = Math.min(totalPages, _leadPage+2);
+      html += `<button onclick="gotoLeadPage(1)" ${safePage===1?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">◀◀</button>`;
+      html += `<button onclick="gotoLeadPage(${safePage-1})" ${safePage===1?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">◀</button>`;
+      const from = Math.max(1, safePage-2), to = Math.min(totalPages, safePage+2);
       for(let i=from;i<=to;i++){
-        html += `<button onclick="gotoLeadPage(${i})" style="padding:3px 8px;border-radius:6px;border:1px solid ${i===_leadPage?"#3b82f6":"#e2e8f0"};background:${i===_leadPage?"#3b82f6":"#fff"};color:${i===_leadPage?"#fff":"#334155"};cursor:pointer;font-size:12px;">${i}</button>`;
+        html += `<button onclick="gotoLeadPage(${i})" style="padding:3px 8px;border-radius:6px;border:1px solid ${i===safePage?"#3b82f6":"#e2e8f0"};background:${i===safePage?"#3b82f6":"#fff"};color:${i===safePage?"#fff":"#334155"};cursor:pointer;font-size:12px;">${i}</button>`;
       }
-      html += `<button onclick="gotoLeadPage(${_leadPage+1})" ${_leadPage===totalPages?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">▶</button>`;
-      html += `<button onclick="gotoLeadPage(${totalPages})" ${_leadPage===totalPages?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">▶▶</button>`;
-      html += `<span style="font-size:12px;color:#64748b;">${_leadPage}/${totalPages}페이지</span>`;
+      html += `<button onclick="gotoLeadPage(${safePage+1})" ${safePage===totalPages?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">▶</button>`;
+      html += `<button onclick="gotoLeadPage(${totalPages})" ${safePage===totalPages?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">▶▶</button>`;
+      html += `<span style="font-size:12px;color:#64748b;">${safePage}/${totalPages}페이지</span>`;
       el.innerHTML = html;
     }
 
@@ -6249,7 +6257,7 @@
         status:     row.status || "",
         staff_no:   row.ownerNo || "",
         staff_name: row.ownerName || "",
-        created_at: row.createdAt || new Date().toISOString().slice(0,10),
+        created_at: new Date().toISOString(), // 현재 시각 전체 타임스탬프 → 정렬 시 최상단 배치
         clean_biz:  false
       }));
       // 한 번에 너무 많으면 "Failed to fetch" 발생 → 100행씩 나눠서 전송
@@ -6259,6 +6267,8 @@
         const { error } = await sbRetry(() => sbClient.from("education_db").insert(chunk));
         if(error) throw error;
       }
+      // 업로드 완료 후 1페이지로 이동 → 새로 올린 데이터가 맨 앞에 보이도록
+      _leadPage = 1;
       await loadData();
     }
 
