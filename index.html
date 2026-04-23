@@ -6249,7 +6249,7 @@
         status:     row.status || "",
         staff_no:   row.ownerNo || "",
         staff_name: row.ownerName || "",
-        created_at: row.createdAt || new Date().toISOString().slice(0,10),
+        created_at: new Date().toISOString(),
         clean_biz:  false
       }));
       // 한 번에 너무 많으면 "Failed to fetch" 발생 → 100행씩 나눠서 전송
@@ -6259,6 +6259,7 @@
         const { error } = await sbRetry(() => sbClient.from("education_db").insert(chunk));
         if(error) throw error;
       }
+      _leadPage = 1;
       await loadData();
     }
 
