@@ -5787,11 +5787,10 @@
         return;
       }
 
-      // 페이지 범위 보정
+      // 페이지 범위 보정 — _leadPage 직접 수정 안 함 (realtime 재로드 시 페이지 자동변경 방지)
       const totalPages = Math.ceil(allRows.length / _leadPerPage);
-      if(_leadPage < 1) _leadPage = 1;
-      if(_leadPage > totalPages) _leadPage = totalPages;
-      const start = (_leadPage - 1) * _leadPerPage;
+      const curPage = Math.min(Math.max(_leadPage, 1), Math.max(totalPages, 1));
+      const start = (curPage - 1) * _leadPerPage;
       const rows  = allRows.slice(start, start + _leadPerPage);
 
       const RESULT_OPTIONS = ["", "부재", "결번", "확인후연락", "거절", "일정픽스", "교육 이수 완료", "기타"];
@@ -5848,7 +5847,7 @@
       }).join("");
 
       body.innerHTML = html;  // DOM 업데이트 1회만 (_leadCheckedIds로 checked 속성 이미 주입됨)
-      renderLeadPagination(allRows.length, totalPages);
+      renderLeadPagination(allRows.length, totalPages, curPage);
       if(!_leadTableResizeInit){
         loadLeadTableLayout();                  // 저장된 열 너비 복원
         if(initLeadTableColResize()) _leadTableResizeInit = true; // 뷰가 보일 때만 완료 표시
@@ -5856,20 +5855,20 @@
       applyLeadRowHeights();
     }
 
-    function renderLeadPagination(total, totalPages){
+    function renderLeadPagination(total, totalPages, curPage){
       const el = $("leadPagination");
       if(!el) return;
       if(totalPages <= 1){ el.innerHTML = ""; return; }
       let html = `<span style="font-size:12px;color:#64748b;">총 ${total}건</span>`;
-      html += `<button onclick="gotoLeadPage(1)" ${_leadPage===1?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">◀◀</button>`;
-      html += `<button onclick="gotoLeadPage(${_leadPage-1})" ${_leadPage===1?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">◀</button>`;
-      const from = Math.max(1, _leadPage-2), to = Math.min(totalPages, _leadPage+2);
+      html += `<button onclick="gotoLeadPage(1)" ${curPage===1?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">◀◀</button>`;
+      html += `<button onclick="gotoLeadPage(${curPage-1})" ${curPage===1?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">◀</button>`;
+      const from = Math.max(1, curPage-2), to = Math.min(totalPages, curPage+2);
       for(let i=from;i<=to;i++){
-        html += `<button onclick="gotoLeadPage(${i})" style="padding:3px 8px;border-radius:6px;border:1px solid ${i===_leadPage?"#3b82f6":"#e2e8f0"};background:${i===_leadPage?"#3b82f6":"#fff"};color:${i===_leadPage?"#fff":"#334155"};cursor:pointer;font-size:12px;">${i}</button>`;
+        html += `<button onclick="gotoLeadPage(${i})" style="padding:3px 8px;border-radius:6px;border:1px solid ${i===curPage?"#3b82f6":"#e2e8f0"};background:${i===curPage?"#3b82f6":"#fff"};color:${i===curPage?"#fff":"#334155"};cursor:pointer;font-size:12px;">${i}</button>`;
       }
-      html += `<button onclick="gotoLeadPage(${_leadPage+1})" ${_leadPage===totalPages?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">▶</button>`;
-      html += `<button onclick="gotoLeadPage(${totalPages})" ${_leadPage===totalPages?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">▶▶</button>`;
-      html += `<span style="font-size:12px;color:#64748b;">${_leadPage}/${totalPages}페이지</span>`;
+      html += `<button onclick="gotoLeadPage(${curPage+1})" ${curPage===totalPages?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">▶</button>`;
+      html += `<button onclick="gotoLeadPage(${totalPages})" ${curPage===totalPages?"disabled":""} style="padding:3px 8px;border-radius:6px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:12px;">▶▶</button>`;
+      html += `<span style="font-size:12px;color:#64748b;">${curPage}/${totalPages}페이지</span>`;
       el.innerHTML = html;
     }
 
@@ -8861,8 +8860,8 @@
       }
 
       const totalPages = Math.ceil(allRows.length / _leadPerPage);
-      if(_leadPage > totalPages) _leadPage = totalPages;
-      const start = (_leadPage-1)*_leadPerPage;
+      const curPage = Math.min(Math.max(_leadPage, 1), Math.max(totalPages, 1));
+      const start = (curPage-1)*_leadPerPage;
       const rows  = allRows.slice(start, start+_leadPerPage);
       const RESULT_OPTIONS = ["","부재","결번","확인후연락","거절","일정픽스","교육 이수 완료","기타"];
       const html = rows.map((l, idx) => {
@@ -8894,7 +8893,7 @@
         return `<tr data-id="${l.id}">${numCell}${chkCell}<td style="position:relative;">${rowResizeHandleF}${cleanBizBadgeF}${escapeHtml(l.company||"")}</td><td title="${escapeHtml(l.address||"")}">${addrCell}</td><td title="${escapeHtml(l.manager||"")}">${escapeHtml(l.manager||"")}</td><td title="${escapeHtml(l.repName||"")}">${escapeHtml(l.repName||"")}</td><td title="${escapeHtml(l.phone||"")}">${escapeHtml(l.phone||"")}</td><td>${escapeHtml(l.people||"")}</td><td title="${escapeHtml(l.industry||"")}">${escapeHtml(l.industry||"")}</td><td>${escapeHtml(l.ownerName||"")}</td><td>${statusCell}</td>${resultCell}${memoCell}${actionCell}</tr>`;
       }).join("");
       body.innerHTML = html;
-      renderLeadPagination(allRows.length, totalPages);
+      renderLeadPagination(allRows.length, totalPages, curPage);
       if(!_leadTableResizeInit){
         loadLeadTableLayout();
         if(initLeadTableColResize()) _leadTableResizeInit = true;
