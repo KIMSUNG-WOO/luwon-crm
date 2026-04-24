@@ -2531,56 +2531,6 @@
           </div>
         </div>
 
-        <!-- ── 직원 목표설정 뷰 (관리자용) ── -->
-        <div class="view hidden" id="view-goalSetting">
-          <div class="section-head">
-            <div>
-              <h4>🎯 직원 목표설정</h4>
-              <p>직원별 금일·이번달 목표를 설정하고 현황을 확인합니다.</p>
-            </div>
-          </div>
-          <div class="panel" style="margin-bottom:16px;">
-            <h5 style="margin:0 0 6px;font-size:15px;">🎯 직원별 목표 설정</h5>
-            <p style="margin:0 0 14px;font-size:12px;color:var(--muted);">직원별 금일·이번달 목표를 설정합니다. 직원 홈 화면 및 지정목표 메뉴에서 달성률을 확인합니다.</p>
-            <div style="margin-bottom:14px;">
-              <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">직원 선택</label>
-              <select id="crmGoalStaffSelect" onchange="crmOnGoalStaffChange()"
-                style="width:100%;max-width:240px;height:42px;border:1px solid var(--line);border-radius:14px;padding:0 14px;font-size:14px;background:var(--panel);color:var(--text);">
-                <option value="">-- 직원 선택 --</option>
-              </select>
-            </div>
-            <div class="form-grid" id="crmGoalFields" style="opacity:.4;pointer-events:none;max-width:560px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
-              <div>
-                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">📞 금일 목표 콜량 (건)</label>
-                <input id="crmGoalCalls" type="number" min="0" placeholder="예: 50">
-              </div>
-              <div>
-                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">📅 금일 목표 섭외건수 (건)</label>
-                <input id="crmGoalDailyScheds" type="number" min="0" placeholder="예: 5">
-              </div>
-              <div>
-                <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">🗓 이번달 목표 섭외건수 (건)</label>
-                <input id="crmGoalScheds" type="number" min="0" placeholder="예: 50">
-              </div>
-            </div>
-            <div style="text-align:right;margin-top:12px;max-width:560px;">
-              <button class="small-btn" onclick="crmSaveGoal()">목표 저장</button>
-            </div>
-          </div>
-          <div class="panel" style="margin-bottom:16px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-              <h5 style="font-size:15px;">👥 직원별 목표 현황</h5>
-              <button class="small-btn" onclick="crmRenderGoalTable()">🔄 조회</button>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>직원명</th><th>금일 콜 목표</th><th>금일 섭외 목표</th><th>이번달 섭외 목표</th><th>현황</th></tr></thead>
-                <tbody id="crmGoalTableBody"><tr><td colspan="5"><div class="empty">설정된 목표가 없습니다.</div></td></tr></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
         <!-- ── 지정목표 뷰 (직원용) ── -->
         <div class="view hidden" id="view-goals">
           <div class="section-head">
@@ -2739,29 +2689,6 @@
           <!-- ── 단가 / 수익 탭 ── -->
           <div id="settingsPanePay" class="hidden">
 
-            <!-- 지점장 기준 단가 설정 -->
-            <div class="panel" style="margin-bottom:16px;border:2px solid #fca5a5;background:#fff7f7;">
-              <h5 style="margin:0 0 4px;font-size:15px;color:#be123c;">🏢 지점장 기준 단가 (총량)</h5>
-              <p style="margin:0 0 14px;font-size:12px;color:#9f1239;">지점장이 받는 총 단가입니다. 직원 단가를 뺀 나머지가 지점장 마진이 됩니다.</p>
-              <div class="form-grid">
-                <div>
-                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">상조 (1건당, 원)</label>
-                  <input id="adminRateSanjo" type="number" min="0" placeholder="100000" value="100000">
-                </div>
-                <div>
-                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">건식 (1건당, 원)</label>
-                  <input id="adminRateHealth" type="number" min="0" placeholder="40000" value="40000">
-                </div>
-                <div>
-                  <label style="font-size:12px;color:var(--muted);font-weight:700;display:block;margin-bottom:6px;">보험 (계약금액의 %)</label>
-                  <input id="adminRateIns" type="number" min="0" step="0.1" placeholder="107.5" value="107.5">
-                </div>
-              </div>
-              <div style="text-align:right;margin-top:10px;">
-                <button class="small-btn" style="background:#be123c;" onclick="saveAdminRates()">지점장 단가 저장</button>
-              </div>
-            </div>
-
             <!-- 직원별 단가 설정 -->
             <div class="panel" style="margin-bottom:16px;">
               <h5 style="margin:0 0 6px;font-size:15px;">직원별 단가 설정</h5>
@@ -2792,57 +2719,6 @@
               </div>
             </div>
 
-            <!-- 수익 현황 -->
-            <div class="panel">
-              <h5 style="margin:0 0 14px;font-size:15px;">이번달 수익 현황</h5>
-              <!-- 기준 단가 요약 -->
-              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#475569;">
-                기준 단가 — 상조 <b style="color:#1e40af;">10만원/건</b> &nbsp;|&nbsp; 건식 <b style="color:#065f46;">4만원/건</b> &nbsp;|&nbsp; 보험 <b style="color:#7c3aed;">107.5%</b>
-                &nbsp;&nbsp;·&nbsp;&nbsp; 마진 = 기준단가 − 직원단가 (상품별)
-              </div>
-              <!-- 총합 카드 -->
-              <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px;">
-                <div class="kpi-card"><div class="k">이번달 실적 건수</div><div class="v" id="payCountAll">-</div></div>
-                <div class="kpi-card"><div class="k">직원 지급 총액</div><div class="v" id="payTotalAll">-</div></div>
-                <div class="kpi-card" style="border:2px solid #fca5a5;background:#fff7f7;"><div class="k" style="color:#be123c;">지점장 마진 합계</div><div class="v" style="color:#be123c;" id="payMarginAll">-</div></div>
-              </div>
-              <!-- 상품별 마진 카드 -->
-              <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;">
-                <div class="kpi-card" style="border:1.5px solid #bfdbfe;background:#eff6ff;">
-                  <div class="k" style="color:#1e40af;">상조 마진</div>
-                  <div class="v" style="color:#1e40af;font-size:16px;" id="payMarginSanjo">-</div>
-                  <div style="font-size:10px;color:#64748b;margin-top:4px;" id="payMarginSanjoDetail">-</div>
-                </div>
-                <div class="kpi-card" style="border:1.5px solid #a7f3d0;background:#ecfdf5;">
-                  <div class="k" style="color:#065f46;">건식 마진</div>
-                  <div class="v" style="color:#065f46;font-size:16px;" id="payMarginHealth">-</div>
-                  <div style="font-size:10px;color:#64748b;margin-top:4px;" id="payMarginHealthDetail">-</div>
-                </div>
-                <div class="kpi-card" style="border:1.5px solid #ddd6fe;background:#f5f3ff;">
-                  <div class="k" style="color:#7c3aed;">보험 마진</div>
-                  <div class="v" style="color:#7c3aed;font-size:16px;" id="payMarginInsur">-</div>
-                  <div style="font-size:10px;color:#64748b;margin-top:4px;" id="payMarginInsurDetail">-</div>
-                </div>
-              </div>
-              <div>
-                <h5 style="margin:0 0 10px;font-size:13px;color:var(--muted);">직원별 이번달 수익 · 마진 (상품별)</h5>
-                <div class="table-wrap">
-                  <table>
-                    <thead><tr>
-                      <th>직원명</th>
-                      <th>실적</th>
-                      <th>직원단가</th>
-                      <th>직원수익</th>
-                      <th style="color:#1e40af;">상조마진</th>
-                      <th style="color:#065f46;">건식마진</th>
-                      <th style="color:#7c3aed;">보험마진</th>
-                      <th style="color:#be123c;">마진합계</th>
-                    </tr></thead>
-                    <tbody id="payStaffTableBody"><tr><td colspan="8"><div class="empty">데이터 없음</div></td></tr></tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- ── 시스템 탭 ── -->
@@ -4379,7 +4255,6 @@
       const isElevated = isAdmin || (state.currentUser?.role === "admin" && state.currentMode === "admin");
 
       const canSeeGoalProgress = isSuperAdmin() || hasPermission('goal_manage') || hasPermission('goal_view_team');
-      const canSetGoal = isSuperAdmin() || hasPermission('goal_manage') || hasPermission('goal_set_team') || hasPermission('goal_set_all');
       const menus = isElevated ? [
         ["home","🏠","홈"],
         ["notice","📢","공지사항"],
@@ -4388,7 +4263,6 @@
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
         ...(isAdmin ? [["staff","👥","직원관리"],["settings","⚙️","관리자설정"]] : []),
-        ...(canSetGoal ? [["goalSetting","🎯","직원 목표설정"]] : []),
         ...(canSeeGoalProgress ? [["goalProgress","📊","목표 현황"]] : []),
         ["lead","🗂","교육섭외 DB"],
         ["itinerary","📋","일정표 관리"],
@@ -4489,8 +4363,7 @@
         itinerary:["일정표 관리","등록된 교육섭외 일정표를 관리하는 화면입니다."],
         settings:["관리자설정","관리자용 설정 화면입니다."],
         goals:["지정목표","관리자가 설정한 나의 목표와 달성률을 확인합니다."],
-        goalProgress:["목표 현황","직원별 금일·이번달 목표 달성 현황입니다."],
-        goalSetting:["직원 목표설정","직원별 목표를 설정하고 현황을 확인합니다."]
+        goalProgress:["목표 현황","직원별 금일·이번달 목표 달성 현황입니다."]
       };
 
       $("pageTitle").textContent = (titles[view]||["",""])[0];
@@ -4504,7 +4377,6 @@
       renderAll();
       if(view === "goals") renderGoals();
       if(view === "goalProgress") crmRenderGoalTable();
-      if(view === "goalSetting"){ crmRefreshGoalStaffDropdown(); crmRenderGoalTable(); }
     }
 
     function renderCallRanking(todayCalls){
