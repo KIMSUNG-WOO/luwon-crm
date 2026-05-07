@@ -4997,6 +4997,19 @@
       $("schedModalOverlay").classList.remove("open");
     }
 
+    // DB 행의 일정등록 단축버튼 → 해당 행 사업장 정보 미리 채워서 모달 열기
+    function openScheduleModalFromLead(leadId){
+      openScheduleModal(); // 기존 초기화 그대로 수행
+      const l = leads.find(x => x.id === leadId);
+      if(!l) return;
+      if($("scheduleCompany")) $("scheduleCompany").value = l.company  || "";
+      if($("scheduleAddress")) $("scheduleAddress").value = l.address  || "";
+      if($("scheduleManager")) $("scheduleManager").value = l.repName  || ""; // 키맨
+      if($("schedulePhone"))   $("schedulePhone").value   = l.phone    || "";
+      if($("schedulePeople"))  $("schedulePeople").value  = l.people   || "";
+      updateSchedModalNateon(); // 네이트온 미리보기 갱신
+    }
+
     function onSchedOverlayClick(e){
       if(e.target === $("schedModalOverlay")) closeScheduleModal();
     }
@@ -5704,7 +5717,7 @@
         const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})">${hasMemo?"📝 메모":"메모"}</button></td>`;
 
         const rowNum = start + rows.indexOf(l) + 1;
-        const numCell = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;">${rowNum}</td>`;
+        const numCell = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;padding:4px 2px;"><button onclick="openScheduleModalFromLead(${l.id})" style="font-size:9px;padding:1px 5px;border-radius:4px;border:1px solid #3b82f6;background:#eff6ff;color:#3b82f6;cursor:pointer;font-weight:700;line-height:1.4;display:block;width:100%;margin-bottom:2px;" title="일정등록">일정</button>${rowNum}</td>`;
         const chkCell = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"${_leadCheckedIds.has(String(l.id)) ? ' checked' : ''} onchange="onLeadChkChange(this)"></td>`;
         const actionCell = admin
           ? `<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`
@@ -8754,7 +8767,7 @@
         const hasMemo = !!(l.memo&&l.memo.trim());
         const memoCell = `<td><button class="memo-btn${hasMemo?" has-memo":""}" onclick="openLeadMemoModal(${l.id})">${hasMemo?"📝 메모":"메모"}</button></td>`;
         const rowNum   = start + idx + 1;
-        const numCell  = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;">${rowNum}</td>`;
+        const numCell  = `<td style="text-align:center;color:var(--muted);font-size:11px;font-weight:700;padding:4px 2px;"><button onclick="openScheduleModalFromLead(${l.id})" style="font-size:9px;padding:1px 5px;border-radius:4px;border:1px solid #3b82f6;background:#eff6ff;color:#3b82f6;cursor:pointer;font-weight:700;line-height:1.4;display:block;width:100%;margin-bottom:2px;" title="일정등록">일정</button>${rowNum}</td>`;
         const chkCell  = `<td><input type="checkbox" class="lead-chk" data-id="${l.id}"></td>`;
         const actionCell = admin?`<td style="white-space:nowrap;"><button class="tbl-edit-btn" onclick="openLeadEditModal(${l.id})">수정</button> <button class="tbl-del-btn" onclick="deleteLead(${l.id})">삭제</button></td>`:"";
         const cleanBizBadgeF = l.cleanBiz
