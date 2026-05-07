@@ -7533,7 +7533,7 @@
                 <div class="modal-actions">
                   <button class="small-btn" type="button" onclick="saveCalendarEntry(${row.id})">저장</button>
                   <button class="ghost-btn" type="button" onclick="copyScheduleFullText(${row.id})">복사</button>
-                  <button class="danger-btn" type="button" onclick="deleteScheduleById(${row.id}); reopenCalendarModalAfterDelete('${dateStr}')">삭제</button>
+                  <button class="danger-btn" type="button" onclick="deleteCalendarEntry(${row.id}, '${dateStr}')">삭제</button>
                   <button class="ghost-btn" type="button" onclick="loadManualEditorFromSchedule(${row.id})">수정</button>
                   <button class="ghost-btn" type="button" onclick="openRescheduleModal(${row.id},'${dateStr}')">일정변경</button>
                 </div>
@@ -7643,6 +7643,12 @@
       setTimeout(() => {
         openCalendarModal(dateStr);
       }, 50);
+    }
+
+    // 캘린더 모달에서 삭제: 삭제 완료 후 모달 갱신 (타이밍 이슈 방지)
+    async function deleteCalendarEntry(id, dateStr){
+      await deleteScheduleById(id);
+      openCalendarModal(dateStr);
     }
 
     function toggleEtcInput(id){
