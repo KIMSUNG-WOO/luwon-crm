@@ -4978,6 +4978,8 @@
       $("scheduleDate").value     = tomorrowStr();
       $("scheduleType").value     = "교육섭외";
       ["scheduleTime","scheduleCompany","scheduleAddress","scheduleManager","schedulePhone","schedulePeople","scheduleAge","scheduleSubject","scheduleMemo"].forEach(id => { const el=$(id); if(el) el.value=""; });
+      if($("scheduleSubject")) $("scheduleSubject").value = "안전보건교육";
+      if($("schedulePeople"))  $("schedulePeople").value  = "명";
       updateSchedModalNateon();
       $("schedModalOverlay").classList.add("open");
       // 날짜 변경 등 입력 시 미리보기 업데이트
@@ -5004,7 +5006,7 @@
       if($("scheduleAddress")) $("scheduleAddress").value = l.address  || "";
       if($("scheduleManager")) $("scheduleManager").value = l.repName  || ""; // 키맨
       if($("schedulePhone"))   $("schedulePhone").value   = l.phone    || "";
-      if($("schedulePeople"))  $("schedulePeople").value  = l.people   || "";
+      if($("schedulePeople"))  { const p = l.people||""; $("schedulePeople").value = p ? (p.endsWith("명") ? p : p+"명") : "명"; }
       updateSchedModalNateon(); // 네이트온 미리보기 갱신
     }
 
