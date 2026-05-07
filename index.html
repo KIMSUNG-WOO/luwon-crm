@@ -6892,7 +6892,14 @@
 
     function getVisibleItineraries(){
       let result = getVisibleItinerariesBase();
-      if(itinCalState.selectedDate) result = result.filter(i => i.date === itinCalState.selectedDate);
+      if(itinCalState.selectedDate){
+        // 특정 날짜 선택 시 → 그 날만
+        result = result.filter(i => i.date === itinCalState.selectedDate);
+      } else {
+        // 날짜 미선택 시 → 캘린더에 표시 중인 달 전체
+        const monthPrefix = `${itinCalState.year}-${String(itinCalState.month+1).padStart(2,'0')}`;
+        result = result.filter(i => i.date && i.date.startsWith(monthPrefix));
+      }
       return result;
     }
 
@@ -6970,12 +6977,16 @@
     function itinCalPrev(){
       if(itinCalState.month === 0){ itinCalState.month = 11; itinCalState.year--; }
       else itinCalState.month--;
+      itinCalState.selectedDate = null; // 달 이동 시 날짜 선택 해제
       renderItineraryMiniCal();
+      renderItineraries();
     }
     function itinCalNext(){
       if(itinCalState.month === 11){ itinCalState.month = 0; itinCalState.year++; }
       else itinCalState.month++;
+      itinCalState.selectedDate = null; // 달 이동 시 날짜 선택 해제
       renderItineraryMiniCal();
+      renderItineraries();
     }
     function clearItinDate(){
       itinCalState.selectedDate = null;
