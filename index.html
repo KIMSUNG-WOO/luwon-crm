@@ -5387,6 +5387,19 @@
       return { margin, configured };
     }
 
+    // 관리자 실적조회 드롭다운 초기화: 내실적 제거, 전체실적 + 직원별 옵션 구성
+    function initPerfScopeSelect(){
+      const sel = $("perfReportScope");
+      if(!sel) return;
+      const isAdmin = isSuperAdmin() || hasPermission('perf_view_all');
+      if(!isAdmin) return; // 직원은 기존 HTML 옵션 그대로 유지
+      const prevVal = sel.value;
+      const staffOpts = staffs.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join("");
+      sel.innerHTML = `<option value="all">전체 실적</option>${staffOpts}`;
+      // 이전 선택값 복원 (직원 이름 선택 유지)
+      if(prevVal && Array.from(sel.options).some(o => o.value === prevVal)) sel.value = prevVal;
+    }
+
     function renderPerformances(){
       const body  = $("performanceTableBody");
       const start = $("perfReportStart").value;
@@ -5402,6 +5415,9 @@
           const teamNos = getMyTeamMemberNos();
           const teamNames = staffs.filter(s => teamNos.includes(s.no)).map(s => s.name);
           if(!(teamNos.includes(p.createdByNo) || teamNames.includes(p.staff) || p.createdByNo === currentStaffNo() || p.staff === currentStaffName())) return false;
+        } else if(scope !== "mine" && scope !== "all"){
+          // 특정 직원 이름으로 필터 (관리자가 직원 선택한 경우)
+          if(p.staff !== scope) return false;
         } else {
           if(!(p.createdByNo === currentStaffNo() || p.staff === currentStaffName())) return false;
         }
@@ -9298,6 +9314,7 @@
         if(view === "performance-report"){
           const perfExcelBox = $("crmPerfExcelBox");
           if(perfExcelBox) perfExcelBox.classList.toggle("hidden", !hasPermission('perf_excel_download'));
+          initPerfScopeSelect(); // 관리자: 내실적 제거 + 직원별 옵션 구성
         }
         // 교육섭외 DB 뷰 진입 시 엑셀 버튼 가시성
         if(view === "lead"){
