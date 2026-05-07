@@ -4254,7 +4254,6 @@
       // admin-role 직원이 관리자 모드인지 확인
       const isElevated = isAdmin || (state.currentUser?.role === "admin" && state.currentMode === "admin");
 
-      const canSeeGoalProgress = isSuperAdmin() || hasPermission('goal_manage') || hasPermission('goal_view_team');
       const menus = isElevated ? [
         ["home","🏠","홈"],
         ["notice","📢","공지사항"],
@@ -4263,7 +4262,6 @@
         ["performance-save","💾","실적저장"],
         ["performance-report","📊","실적조회"],
         ...(isAdmin ? [["staff","👥","직원관리"],["settings","⚙️","관리자설정"]] : []),
-        ...(canSeeGoalProgress ? [["goalProgress","📊","목표 현황"]] : []),
         ["lead","🗂","교육섭외 DB"],
         ["itinerary","📋","일정표 관리"],
       ] : [
