@@ -5410,8 +5410,8 @@
         return true;
       });
 
-      // 마진 컬럼 가시성 토글 (관리자 전체조회 시만)
-      const showMargin = admin && scope === "all";
+      // 마진 컬럼 가시성 토글 (항상 숨김)
+      const showMargin = false;
       if($("perfMarginTh"))   $("perfMarginTh").style.display   = showMargin ? "" : "none";
       if($("perfMarginCard")) $("perfMarginCard").style.display  = showMargin ? "" : "none";
 
