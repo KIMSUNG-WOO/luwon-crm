@@ -4883,7 +4883,7 @@
         "금일 전직원 등록 일정",
         "오늘 전직원 콜량",
         "전직원 익일 일정",
-        "전직원 이번달 등록 일정"
+        `전직원 ${state.calendarMonth+1}월 등록 일정`
       ];
 
       let rows = [];
@@ -4919,7 +4919,8 @@
         rows = buildStaffCount(filtered, s => s.assignee || s.createdBy || "미상");
       } else if(cardNo === 4){
         // 전직원 이번달 일정 → schedules.date 진행일 기준 (캘린더와 동일)
-        const filtered = schedules.filter(s => s.date && s.date.startsWith(month));
+        const calMonthPrefix = `${state.calendarYear}-${String(state.calendarMonth+1).padStart(2,"0")}`;
+        const filtered = schedules.filter(s => s.date && s.date.startsWith(calMonthPrefix));
         rows = buildStaffCount(filtered, s => s.assignee || s.createdBy || "미상");
       }
 
