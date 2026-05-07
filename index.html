@@ -2480,7 +2480,7 @@
             <!-- 오른쪽: 직원 필터 + 중복 버튼 (관리자 전용) -->
             <div id="itineraryFilterBox" class="hidden">
               <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">섭외자 필터</div>
-              <select id="itineraryStaffFilter" style="height:38px;padding:0 12px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:600;cursor:pointer;min-width:140px;" onchange="renderItineraries()">
+              <select id="itineraryStaffFilter" style="height:38px;padding:0 12px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:600;cursor:pointer;min-width:140px;" onchange="renderItineraries(); renderItineraryMiniCal()">
                 <option value="">전체 보기</option>
               </select>
               <button id="itinDupBtn" onclick="toggleItinDups()" style="margin-top:8px;width:100%;height:36px;border-radius:8px;border:1.5px solid #fca5a5;background:#fff1f2;color:#dc2626;font-size:12px;font-weight:700;cursor:pointer;">🔴 중복 보기</button>
@@ -6921,8 +6921,11 @@
       const { year, month, selectedDate } = itinCalState;
       titleEl.textContent = `${year}년 ${month + 1}월`;
 
-      // 이번 달 일정 있는 날짜 Set
-      const baseDates = new Set(getVisibleItinerariesBase().map(i => i.date));
+      // 날짜별 일정 갯수 (섭외자 필터 반영)
+      const dateCountMap = {};
+      getVisibleItinerariesBase().forEach(i => {
+        if(i.date) dateCountMap[i.date] = (dateCountMap[i.date] || 0) + 1;
+      });
 
       const firstDow   = new Date(year, month, 1).getDay();
       const daysInMon  = new Date(year, month + 1, 0).getDate();
@@ -6937,17 +6940,18 @@
 
       for(let d = 1; d <= daysInMon; d++){
         const ds  = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const cnt = dateCountMap[ds] || 0;
         const dow = (firstDow + d - 1) % 7;
         const cls = [
           'itin-cal-cell clickable',
-          baseDates.has(ds) ? 'has-itin'  : '',
+          cnt > 0 ? 'has-itin'      : '',
           ds === selectedDate ? 'sel'      : '',
           ds === today        ? 'is-today' : ''
         ].filter(Boolean).join(' ');
         const numCls = dow===0?'sun':dow===6?'sat':'';
         html += `<div class="${cls}" onclick="selectItinDate('${ds}')">
           <span class="${numCls}">${d}</span>
-          ${baseDates.has(ds) ? '<i></i>' : ''}
+          ${cnt > 0 ? `<i style="font-style:normal;font-size:10px;font-weight:800;">${cnt}</i>` : ''}
         </div>`;
       }
 
