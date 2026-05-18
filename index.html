@@ -3877,10 +3877,16 @@
             if(panel && !panel.classList.contains("hidden")) msgRenderPanel();
           }catch(e){ console.error("쪽지 Realtime 처리 오류:", e); }
         })
-        // 앱 설정 (목표/단가/직급 등)
-        .on("postgres_changes", { event:"*", schema:"public", table:"app_settings" }, async () => {
+        // 앱 설정 (목표/단가/직급 등) + notices 포함 — crmInitRealtime 중복 채널 제거로 여기서 통합 처리
+        .on("postgres_changes", { event:"*", schema:"public", table:"app_settings" }, async (payload) => {
           // 내가 방금 sbSyncAll로 업로드한 직후 5초간 자기echo 억제 (realtime 루프 차단)
           if(Date.now() - _appSettingsSyncTs < 5000) return;
+          // notices 변경은 renderAll 없이 renderNotices만 호출 (불필요한 전체 렌더 방지)
+          if(payload.new?.key === "notices" && Array.isArray(payload.new?.value)){
+            notices = payload.new.value;
+            renderNotices();
+            return;
+          }
           // 결과값 입력 중이거나 마우스 클릭 중이면 renderAll 억제 (포커스 날아감 방지)
           const _activeIsResultEl = document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('result-input');
           if(_leadEditingResultId || _activeIsResultEl || _mouseIsDown) return;
@@ -9249,17 +9255,8 @@
        [추가] 기능 7: 실시간 동기화 (Supabase Realtime)
     ══════════════════════════════════════════════════════════ */
     function crmInitRealtime(){
-      try{
-        // app_settings 변경(notices 포함) 감지 → renderNotices 재호출
-        sbClient.channel("crm-appsettings-realtime")
-          .on("postgres_changes", { event:"*", schema:"public", table:"app_settings" }, async (payload) => {
-            if(payload.new?.key === "notices" && Array.isArray(payload.new?.value)){
-              notices = payload.new.value;
-              renderNotices();
-            }
-          })
-          .subscribe();
-      } catch(e){ console.warn("Realtime 구독 실패:", e); }
+      // app_settings 구독은 setupRealtimeSync()의 crm-realtime 채널에서 통합 처리
+      // 별도 채널(crm-appsettings-realtime) 제거 → 중복 구독으로 인한 메시지 2배 소모 방지
     }
 
     /* ══════════════════════════════════════════════════════════
@@ -9383,7 +9380,7 @@
       msgRenderBadge();
       msgScheduleEducationCheck();
       try{ await msgAutoOnLogin(); }catch(e){}
-      // 30초마다 폴링 (Realtime 미작동 시 백업)
+      // 5분마다 폴링 (Realtime 미작동 시 백업 — 30초→300초로 변경하여 메시지 소모 절감)
       setInterval(async () => {
         if(!state.currentUser) return;
         const prevUnread = msgList.filter(m => !m.is_read).length;
@@ -9393,7 +9390,7 @@
         // 새 쪽지 도착 시 패널 열려있으면 갱신
         const panel = $("msgPanel");
         if(panel && !panel.classList.contains("hidden")) msgRenderPanel();
-      }, 30000);
+      }, 300000);
     }
 
     // ── DB에서 내 쪽지 로드 ──
